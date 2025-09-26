@@ -24,14 +24,14 @@ export default async function InspirationPage() {
   const articles = await getArticles()
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Header />
       
       {/* Page Header */}
-      <section className="bg-white py-20">
+      <section className="bg-background py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               Inspirace
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -42,7 +42,7 @@ export default async function InspirationPage() {
       </section>
 
       {/* Articles Grid */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {articles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -72,7 +72,7 @@ export default async function InspirationPage() {
                     {/* Article Content */}
                     <div className="p-6 flex flex-col h-full">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                        <h3 className="text-xl font-bold text-text-primary mb-2 group-hover:text-primary-600 transition-colors">
                           {article.title}
                         </h3>
                         {article.excerpt && (
@@ -96,7 +96,7 @@ export default async function InspirationPage() {
             </div>
           ) : (
             <div className="text-center py-20">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No articles yet</h3>
+              <h3 className="text-xl font-semibold text-text-primary mb-2">No articles yet</h3>
               <p className="text-gray-600">Check back soon for inspiring content!</p>
             </div>
           )}

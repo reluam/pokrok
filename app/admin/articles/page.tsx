@@ -50,7 +50,7 @@ export default function ArticlesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading articles...</p>
@@ -60,12 +60,12 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Articles</h1>
+            <h1 className="text-3xl font-bold text-text-primary">Manage Articles</h1>
             <p className="text-gray-600 mt-2">Create and manage your inspiration articles</p>
           </div>
           <Link
@@ -116,7 +116,7 @@ export default function ArticlesPage() {
                     <tr key={article.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-text-primary">
                             {article.title}
                           </div>
                           <div className="text-sm text-gray-500 truncate max-w-xs">

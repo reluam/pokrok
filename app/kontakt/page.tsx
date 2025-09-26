@@ -4,14 +4,14 @@ import ContactForm from '@/components/ContactForm'
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Header />
       
       {/* Page Header */}
-      <section className="bg-white py-20">
+      <section className="bg-background py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               Kontakt
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -22,13 +22,13 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Information */}
             <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Let's Connect</h2>
+                <h2 className="text-2xl font-bold text-text-primary mb-6">Let's Connect</h2>
                 <p className="text-gray-600 mb-8">
                   I'm here to help you unlock your potential and create a life you truly love. 
                   Whether you're looking for mindset coaching, career guidance, or life direction, 
@@ -42,7 +42,7 @@ export default function ContactPage() {
                     <span className="text-primary-600 font-semibold">📧</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Email</p>
+                    <p className="font-medium text-text-primary">Email</p>
                     <a href="mailto:info@harmonix.com" className="text-primary-600 hover:text-primary-700">
                       info@harmonix.com
                     </a>
@@ -54,7 +54,7 @@ export default function ContactPage() {
                     <span className="text-primary-600 font-semibold">📞</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Phone</p>
+                    <p className="font-medium text-text-primary">Phone</p>
                     <a href="tel:+390123456789" className="text-primary-600 hover:text-primary-700">
                       +39 012 345 6789
                     </a>
@@ -66,7 +66,7 @@ export default function ContactPage() {
                     <span className="text-primary-600 font-semibold">⏰</span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Response Time</p>
+                    <p className="font-medium text-text-primary">Response Time</p>
                     <p className="text-gray-600">Within 24 hours</p>
                   </div>
                 </div>

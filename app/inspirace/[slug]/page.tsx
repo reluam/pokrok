@@ -29,11 +29,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Header />
       
       {/* Article Header */}
-      <section className="bg-white py-20">
+      <section className="bg-background py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/inspirace"
@@ -47,7 +47,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <span className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full mb-4">
               {article.category || 'Uncategorized'}
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               {article.title}
             </h1>
             {article.excerpt && (
@@ -75,7 +75,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       </section>
 
       {/* Article Content */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-sm p-8 lg:p-12">
             <div className="prose prose-lg max-w-none">
