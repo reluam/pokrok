@@ -82,7 +82,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
               <div 
                 className="text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ 
-                  __html: article.content.replace(/\n/g, '<br>').replace(/#{1,6}\s/g, (match) => {
+                  __html: article.content.replace(/\n/g, '<br>').replace(/#{1,6}\s/g, (match: string) => {
                     const level = match.length - 1
                     return `<h${level} class="text-${level === 1 ? '3xl' : level === 2 ? '2xl' : 'xl'} font-bold text-gray-900 mb-${level === 1 ? '4' : level === 2 ? '3' : '2'}">`
                   }).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')
