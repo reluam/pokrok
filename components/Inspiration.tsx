@@ -12,15 +12,15 @@ interface InspirationProps {
 export default function Inspiration({ articles }: InspirationProps) {
   return (
     <section id="inspirace" className="py-20 textured-bg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-12">
           <div className="mb-8 lg:mb-0">
-            <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
-              Inspirace
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl">
-              Explore practical advice and empowering stories to support your personal growth.
-            </p>
+                <h2 className="text-h2 text-text-primary mb-4">
+                  Inspirace
+                </h2>
+                <p className="text-p18 text-gray-600 max-w-2xl">
+                  Explore practical advice and empowering stories to support your personal growth.
+                </p>
           </div>
           
           <div>
@@ -61,14 +61,14 @@ export default function Inspiration({ articles }: InspirationProps) {
                 
                 {/* Article Content */}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-text-primary mb-2 group-hover:text-primary-600 transition-colors">
-                    {article.title}
-                  </h3>
-                  {article.excerpt && (
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {article.excerpt}
-                    </p>
-                  )}
+                      <h3 className="text-h4 text-text-primary mb-2 group-hover:text-primary-600 transition-colors">
+                        {article.title}
+                      </h3>
+                      {article.excerpt && (
+                        <p className="text-p16 text-gray-600 line-clamp-2">
+                          {article.excerpt}
+                        </p>
+                      )}
                 </div>
               </div>
             </Link>

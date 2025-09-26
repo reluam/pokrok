@@ -1,5 +1,5 @@
 import Header from '@/components/Header'
-import Hero from '@/components/Hero'
+import Hero, { AboutCoach } from '@/components/Hero'
 import Services from '@/components/Services'
 import Inspiration from '@/components/Inspiration'
 import Footer from '@/components/Footer'
@@ -25,9 +25,10 @@ export default async function Home() {
   const articles = await getArticles()
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="bg-background">
       <Header />
       <Hero />
+      <AboutCoach />
       <Services />
       <Inspiration articles={articles} />
       <Footer />

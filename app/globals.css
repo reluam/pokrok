@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Asul:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -12,9 +14,20 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background-color: rgb(var(--background-rgb));
+  background-color: #FFFAF5;
+  background-image: 
+    /* Very subtle scattered pixels - just a few here and there */
+    radial-gradient(circle at 45px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 156px 18px, rgba(0,0,0,0.02) 1px, transparent 0),
+    radial-gradient(circle at 267px 89px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 334px 56px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 456px 41px, rgba(0,0,0,0.02) 1px, transparent 0),
+    radial-gradient(circle at 567px 73px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 645px 84px, rgba(0,0,0,0.03) 1px, transparent 0);
+  background-size: 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px;
   font-family: 'Inter', system-ui, sans-serif;
 }
+
 
 /* Custom styles for the textured background */
 .textured-bg {
@@ -24,8 +37,123 @@ body {
   background-size: 20px 20px;
 }
 
+/* Paper-like background with scattered pixels */
+.paper-bg {
+  background-color: #FFFAF5;
+  background-image: 
+    /* Regular dot pattern */
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0),
+    /* Scattered random pixels for paper effect */
+    radial-gradient(circle at 15px 8px, rgba(0,0,0,0.04) 1px, transparent 0),
+    radial-gradient(circle at 45px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 78px 12px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 112px 45px, rgba(0,0,0,0.035) 1px, transparent 0),
+    radial-gradient(circle at 156px 18px, rgba(0,0,0,0.02) 1px, transparent 0),
+    radial-gradient(circle at 189px 67px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 223px 34px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 267px 89px, rgba(0,0,0,0.04) 1px, transparent 0),
+    radial-gradient(circle at 301px 15px, rgba(0,0,0,0.02) 1px, transparent 0),
+    radial-gradient(circle at 334px 56px, rgba(0,0,0,0.035) 1px, transparent 0),
+    radial-gradient(circle at 378px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 412px 78px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 456px 41px, rgba(0,0,0,0.04) 1px, transparent 0),
+    radial-gradient(circle at 489px 92px, rgba(0,0,0,0.02) 1px, transparent 0),
+    radial-gradient(circle at 523px 28px, rgba(0,0,0,0.035) 1px, transparent 0),
+    radial-gradient(circle at 567px 73px, rgba(0,0,0,0.03) 1px, transparent 0),
+    radial-gradient(circle at 601px 19px, rgba(0,0,0,0.025) 1px, transparent 0),
+    radial-gradient(circle at 645px 84px, rgba(0,0,0,0.04) 1px, transparent 0),
+    radial-gradient(circle at 678px 37px, rgba(0,0,0,0.02) 1px, transparent 0);
+  background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
+}
+
 /* Custom styles for the dashed borders */
 .dashed-border {
   border-left: 2px dashed #E8871E;
   border-right: 2px dashed #E8871E;
+}
+
+/* Custom Typography Classes */
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-asul {
+  font-family: 'Asul', serif;
+}
+
+/* H1 - Poppins - Bold - 72px / 1.2 */
+.text-h1 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 68px;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+/* H2 - Poppins - Bold - 60px / 1.1 */
+.text-h2 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 58px;
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+}
+
+/* H3 - Poppins - Bold - 24px / 1.1 */
+.text-h3 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* H4 - Inter - Bold - 22px / 1.4 */
+.text-h4 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+/* P - Poppins 18 - Medium - 18px / 1.5 */
+.text-p18 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* P - Poppins 16 - Medium - 16px / 1.5 */
+.text-p16 {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* P - Asul - Regular - 18px / 1.0 */
+.text-asul18 {
+  font-family: 'Asul', serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.0;
+}
+
+/* P - Asul - Regular - 16px / 1.5 */
+.text-asul16 {
+  font-family: 'Asul', serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* P - Asul - Regular - 10px / 1.1 */
+.text-asul10 {
+  font-family: 'Asul', serif;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1.1;
 }

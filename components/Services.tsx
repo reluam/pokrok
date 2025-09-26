@@ -26,7 +26,7 @@ const services = [
 export default function Services() {
   return (
     <section className="py-20 textured-bg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 dashed-border">
           {services.map((service, index) => (
             <div key={index} className="text-center space-y-4 p-8">
@@ -35,12 +35,12 @@ export default function Services() {
                   <service.icon className="w-8 h-8 text-white" />
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-text-primary underline decoration-primary-500 decoration-2 underline-offset-4">
-                {service.title}
-              </h3>
-              <p className="text-gray-600 leading-relaxed">
-                {service.description}
-              </p>
+                  <h3 className="text-h3 text-text-primary underline decoration-primary-500 decoration-2 underline-offset-4">
+                    {service.title}
+                  </h3>
+                  <p className="text-p16 text-gray-600">
+                    {service.description}
+                  </p>
             </div>
           ))}
         </div>

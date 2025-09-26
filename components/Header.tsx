@@ -7,42 +7,44 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="bg-background shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-background pt-2.5 pb-2.5">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">H</span>
-            </div>
+            <a href="/" className="block">
+              <div className="text-h3 text-primary-500 hover:text-primary-600 transition-colors">
+                Smysluplné žití
+              </div>
+            </a>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <a href="#koucink" className="text-text-primary hover:text-primary-600 transition-colors">
+          <nav className="hidden md:flex space-x-8 ml-auto mr-8">
+            <a href="#koucink" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               Koučing
             </a>
-            <a href="#inspirace" className="text-text-primary hover:text-primary-600 transition-colors">
+            <a href="#inspirace" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               Inspirace
             </a>
-            <a href="#blog" className="text-text-primary hover:text-primary-600 transition-colors">
+            <a href="#blog" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               Blog
             </a>
-            <a href="#o-mne" className="text-text-primary hover:text-primary-600 transition-colors">
+            <a href="#o-mne" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               O mně
             </a>
           </nav>
 
-          {/* Contact Button */}
-          <div className="hidden md:block">
-            <a
-              href="/kontakt"
-              className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
-            >
-              <span>Kontakt</span>
-              <ArrowRight className="w-4 h-4" />
-            </a>
-          </div>
+              {/* Contact Button */}
+              <div className="hidden md:block">
+                <a
+                  href="/kontakt"
+                  className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
+                >
+                  <span>Kontakt</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
@@ -59,25 +61,25 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t">
-              <a href="#koucink" className="block px-3 py-2 text-text-primary hover:text-primary-600">
+              <a href="#koucink" className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 Koučing
               </a>
-              <a href="#inspirace" className="block px-3 py-2 text-text-primary hover:text-primary-600">
+              <a href="#inspirace" className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 Inspirace
               </a>
-              <a href="#blog" className="block px-3 py-2 text-text-primary hover:text-primary-600">
+              <a href="#blog" className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 Blog
               </a>
-              <a href="#o-mne" className="block px-3 py-2 text-text-primary hover:text-primary-600">
+              <a href="#o-mne" className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 O mně
               </a>
-              <a
-                href="/kontakt"
-                className="block px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center space-x-2"
-              >
-                <span>Kontakt</span>
-                <ArrowRight className="w-4 h-4" />
-              </a>
+                  <a
+                    href="/kontakt"
+                    className="block px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center space-x-2 text-asul18"
+                  >
+                    <span>Kontakt</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
             </div>
           </div>
         )}
