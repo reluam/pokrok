@@ -58,7 +58,10 @@ export default function Hero() {
                   onError={(e) => {
                     // Fallback to placeholder if image doesn't exist
                     e.currentTarget.style.display = 'none'
-                    e.currentTarget.nextElementSibling.style.display = 'flex'
+                    const nextSibling = e.currentTarget.nextElementSibling as HTMLElement
+                    if (nextSibling) {
+                      nextSibling.style.display = 'flex'
+                    }
                   }}
                 />
                 <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center hidden">
