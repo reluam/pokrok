@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { Article } from '@/lib/cms'
-import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, LogOut } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     loadArticles()
@@ -48,6 +50,17 @@ export default function ArticlesPage() {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', {
+        method: 'POST'
+      })
+      router.push('/admin/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -68,13 +81,22 @@ export default function ArticlesPage() {
             <h1 className="text-3xl font-bold text-text-primary">Manage Articles</h1>
             <p className="text-gray-600 mt-2">Create and manage your inspiration articles</p>
           </div>
-          <Link
-            href="/admin/articles/new"
-            className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Article</span>
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/admin/articles/new"
+              className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Article</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
 
         {/* Articles List */}
