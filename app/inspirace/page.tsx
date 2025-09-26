@@ -2,8 +2,9 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Article } from '@/lib/cms'
 
-async function getArticles() {
+async function getArticles(): Promise<Article[]> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/articles`, {
       cache: 'no-store' // Ensure fresh data
@@ -45,7 +46,7 @@ export default async function InspirationPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {articles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articles.map((article) => (
+              {articles.map((article: Article) => (
                 <Link
                   key={article.id}
                   href={`/inspirace/${article.slug}`}
