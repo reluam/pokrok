@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "app/api/articles/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/articles/[id]/route.ts": {
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    }
+  ]
+}
