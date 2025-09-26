@@ -7,7 +7,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-background shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -19,16 +19,16 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <a href="#koucink" className="text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="#koucink" className="text-text-primary hover:text-primary-600 transition-colors">
               Koučing
             </a>
-            <a href="#inspirace" className="text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="#inspirace" className="text-text-primary hover:text-primary-600 transition-colors">
               Inspirace
             </a>
-            <a href="#blog" className="text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="#blog" className="text-text-primary hover:text-primary-600 transition-colors">
               Blog
             </a>
-            <a href="#o-mne" className="text-gray-700 hover:text-primary-600 transition-colors">
+            <a href="#o-mne" className="text-text-primary hover:text-primary-600 transition-colors">
               O mně
             </a>
           </nav>
@@ -58,17 +58,17 @@ export default function Header() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-              <a href="#koucink" className="block px-3 py-2 text-gray-700 hover:text-primary-600">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t">
+              <a href="#koucink" className="block px-3 py-2 text-text-primary hover:text-primary-600">
                 Koučing
               </a>
-              <a href="#inspirace" className="block px-3 py-2 text-gray-700 hover:text-primary-600">
+              <a href="#inspirace" className="block px-3 py-2 text-text-primary hover:text-primary-600">
                 Inspirace
               </a>
-              <a href="#blog" className="block px-3 py-2 text-gray-700 hover:text-primary-600">
+              <a href="#blog" className="block px-3 py-2 text-text-primary hover:text-primary-600">
                 Blog
               </a>
-              <a href="#o-mne" className="block px-3 py-2 text-gray-700 hover:text-primary-600">
+              <a href="#o-mne" className="block px-3 py-2 text-text-primary hover:text-primary-600">
                 O mně
               </a>
               <a

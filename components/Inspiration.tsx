@@ -15,7 +15,7 @@ export default function Inspiration({ articles }: InspirationProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-12">
           <div className="mb-8 lg:mb-0">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
               Inspirace
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl">
@@ -61,7 +61,7 @@ export default function Inspiration({ articles }: InspirationProps) {
                 
                 {/* Article Content */}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                  <h3 className="text-xl font-bold text-text-primary mb-2 group-hover:text-primary-600 transition-colors">
                     {article.title}
                   </h3>
                   {article.excerpt && (
