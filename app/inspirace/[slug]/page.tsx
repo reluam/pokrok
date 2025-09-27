@@ -81,6 +81,16 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       {/* Article Content */}
       <section className="pt-0 pb-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Dynamic heading based on inspiration type */}
+          {article.icon !== 'other' && article.icon !== 'thought' && (
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-h3">
+              {article.icon === 'book' && 'O knize'}
+              {article.icon === 'video' && 'O videu'}
+              {article.icon === 'article' && 'O článku'}
+              {article.icon === 'webpage' && 'O webové stránce'}
+              {article.icon === 'application' && 'O aplikaci'}
+            </h2>
+          )}
           <div className="prose prose-lg max-w-none">
             <div 
               className="text-gray-700 leading-relaxed text-p16"
