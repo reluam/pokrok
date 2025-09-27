@@ -3,7 +3,8 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ExternalLink } from 'lucide-react'
+import InspirationIconComponent from '@/components/InspirationIcon'
 
 async function getArticle(slug: string) {
   try {
@@ -29,11 +30,11 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen">
       <Header />
       
       {/* Article Header */}
-      <section className="bg-background py-20">
+      <section className="pt-0 pb-5">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/inspirace"
@@ -44,15 +45,18 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           </Link>
 
           <div className="mb-8">
-            <span className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full mb-4">
-              {article.category || 'Uncategorized'}
-            </span>
-            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <InspirationIconComponent type={article.icon} size="lg" />
+              <span className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full">
+                {article.category || 'Uncategorized'}
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4 font-asul">
               {article.title}
             </h1>
-            {article.excerpt && (
-              <p className="text-xl text-gray-600 mb-6">
-                {article.excerpt}
+            {article.detail && (
+              <p className="text-xl text-gray-600 mb-6 font-asul">
+                {article.detail}
               </p>
             )}
             <div className="text-sm text-gray-500">
@@ -75,24 +79,64 @@ export default async function ArticlePage({ params }: { params: { slug: string }
       </section>
 
       {/* Article Content */}
-      <section className="py-20 bg-background">
+      <section className="pt-0 pb-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-sm p-8 lg:p-12">
-            <div className="prose prose-lg max-w-none">
-              <div 
-                className="text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ 
-                  __html: article.content.replace(/\n/g, '<br>').replace(/#{1,6}\s/g, (match: string) => {
-                    const level = match.length - 1
-                    return `<h${level} class="text-${level === 1 ? '3xl' : level === 2 ? '2xl' : 'xl'} font-bold text-gray-900 mb-${level === 1 ? '4' : level === 2 ? '3' : '2'}">`
-                  }).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')
-                }}
-              />
-            </div>
+          <div className="prose prose-lg max-w-none">
+            <div 
+              className="text-gray-700 leading-relaxed text-p16"
+              dangerouslySetInnerHTML={{ 
+                __html: article.content
+                  .split('\n')
+                  .map((line: string) => {
+                    // Check if line starts with # (heading)
+                    const headingMatch = line.match(/^(#{1,6})\s(.+)$/)
+                    if (headingMatch) {
+                      const level = headingMatch[1].length
+                      const text = headingMatch[2]
+                      return `<h${level} class="text-${level === 1 ? '3xl' : level === 2 ? '2xl' : 'xl'} font-bold text-gray-900 mb-${level === 1 ? '4' : level === 2 ? '3' : '2'} text-h3">${text}</h${level}>`
+                    }
+                    // Process bold and italic for non-heading lines
+                    return line
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                  })
+                  .join('<br>')
+              }}
+            />
           </div>
         </div>
       </section>
-
+        {/* Resource Section - Moved between header and content */}
+        {article.resource && (
+                <section className="py-8">
+                  <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <InspirationIconComponent type={article.icon} size="md" />
+                          <div>
+                            <h2 className="text-lg font-semibold text-text-primary font-asul">
+                              {article.resourceTitle || 'Externí zdroj'}
+                            </h2>
+                            <p className="text-sm text-gray-600">
+                              Prohlédněte si původní zdroj této inspirace
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href={article.resource}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm"
+                        >
+                          <span>Otevřít zdroj</span>
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
       <Footer />
     </main>
   )

@@ -1,11 +1,13 @@
 {
   "id": "sample-1",
-  "title": "PRACOVNÍ: Co je potřeba?",
-  "slug": "pracovni-co-je-potreba",
-  "excerpt": "Objevte klíčové prvky pro úspěšnou kariéru a osobní rozvoj v moderním pracovním prostředí.",
-  "content": "# PRACOVNÍ: Co je potřeba?\n\nV dnešní rychle se měnícím světě práce je důležité zaměřit se na několik klíčových oblastí:\n\n## 1. Sebeuvědomění\n\nPrvním krokem k úspěchu je pochopení sebe sama. Co vás motivuje? Jaké jsou vaše silné stránky?\n\n## 2. Flexibilita\n\nBuďte otevření změnám a novým příležitostem. Trh práce se neustále vyvíjí.\n\n## 3. Kontinuální učení\n\nInvestujte do svého rozvoje. Nové dovednosti jsou klíčem k úspěchu.\n\n## Závěr\n\nÚspěch v práci není jen o tvrdé práci, ale o správném přístupu a seberozvoji.",
-  "image": "",
-  "category": "Kariéra",
+  "title": "Atomic Habits",
+  "slug": "atomic-habits",
+  "content": "## Klíčové myšlenky\n\n- **1% pravidlo**: Malé zlepšení každý den vede k velkým změnám v čase\n- **Systém vs. cíle**: Místo soustředění na cíle se zaměřte na systémy\n- **Identita**: Změňte své návyky změnou své identity\n- **Čtyři zákony změny návyků**: Udělejte to zřejmé, atraktivní, snadné a uspokojivé\n\n## Praktické tipy\n\n- Začněte s nejmenší možnou změnou\n- Soustřeďte se na to, kým se chcete stát\n- Vytvořte prostředí, které podporuje vaše cíle\n- Sledujte své pokroky\n\nTato kniha je ideální pro každého, kdo chce změnit své návyky a dosáhnout dlouhodobých cílů.",
+  "categories": ["cile", "planovani"],
   "publishedAt": "2025-01-26T10:00:00Z",
-  "featured": true
+  "featured": true,
+  "icon": "book",
+  "detail": "Malé změny, velké výsledky - jak budovat lepší návyky a zbavovat se těch špatných. Kniha Jamese Cleara o tom, proč se často soustředíme na špatné věci a jak můžeme změnit své návyky pomocí jednoduchých, ale účinných strategií.",
+  "resource": "https://jamesclear.com/atomic-habits",
+  "resourceTitle": "Atomic Habits - James Clear"
 }

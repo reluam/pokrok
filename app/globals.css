@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Asul:wght@400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
@@ -16,55 +21,15 @@ body {
   color: rgb(var(--foreground-rgb));
   background-color: #FFFAF5;
   background-image: 
-    /* Very subtle scattered pixels - just a few here and there */
-    radial-gradient(circle at 45px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 156px 18px, rgba(0,0,0,0.02) 1px, transparent 0),
-    radial-gradient(circle at 267px 89px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 334px 56px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 456px 41px, rgba(0,0,0,0.02) 1px, transparent 0),
-    radial-gradient(circle at 567px 73px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 645px 84px, rgba(0,0,0,0.03) 1px, transparent 0);
-  background-size: 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px;
+    /* Fine grain texture */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 100px 100px;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
 
-/* Custom styles for the textured background */
-.textured-bg {
-  background-color: #FFFAF5;
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0);
-  background-size: 20px 20px;
-}
 
-/* Paper-like background with scattered pixels */
-.paper-bg {
-  background-color: #FFFAF5;
-  background-image: 
-    /* Regular dot pattern */
-    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0),
-    /* Scattered random pixels for paper effect */
-    radial-gradient(circle at 15px 8px, rgba(0,0,0,0.04) 1px, transparent 0),
-    radial-gradient(circle at 45px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 78px 12px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 112px 45px, rgba(0,0,0,0.035) 1px, transparent 0),
-    radial-gradient(circle at 156px 18px, rgba(0,0,0,0.02) 1px, transparent 0),
-    radial-gradient(circle at 189px 67px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 223px 34px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 267px 89px, rgba(0,0,0,0.04) 1px, transparent 0),
-    radial-gradient(circle at 301px 15px, rgba(0,0,0,0.02) 1px, transparent 0),
-    radial-gradient(circle at 334px 56px, rgba(0,0,0,0.035) 1px, transparent 0),
-    radial-gradient(circle at 378px 23px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 412px 78px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 456px 41px, rgba(0,0,0,0.04) 1px, transparent 0),
-    radial-gradient(circle at 489px 92px, rgba(0,0,0,0.02) 1px, transparent 0),
-    radial-gradient(circle at 523px 28px, rgba(0,0,0,0.035) 1px, transparent 0),
-    radial-gradient(circle at 567px 73px, rgba(0,0,0,0.03) 1px, transparent 0),
-    radial-gradient(circle at 601px 19px, rgba(0,0,0,0.025) 1px, transparent 0),
-    radial-gradient(circle at 645px 84px, rgba(0,0,0,0.04) 1px, transparent 0),
-    radial-gradient(circle at 678px 37px, rgba(0,0,0,0.02) 1px, transparent 0);
-  background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
-}
 
 /* Custom styles for the dashed borders */
 .dashed-border {

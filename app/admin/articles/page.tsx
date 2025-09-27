@@ -1,18 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Article } from '@/lib/cms'
+import { Article, Category } from '@/lib/cms'
 import { Plus, Edit, Trash2, Eye, LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import InspirationIconComponent from '@/components/InspirationIcon'
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
     loadArticles()
+    loadCategories()
   }, [])
 
   const loadArticles = async () => {
@@ -28,6 +31,20 @@ export default function ArticlesPage() {
       console.error('Error loading articles:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const allCategories = await response.json()
+        setCategories(allCategories)
+      } else {
+        console.error('Failed to load categories')
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
     }
   }
 
@@ -78,8 +95,8 @@ export default function ArticlesPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-text-primary">Manage Articles</h1>
-            <p className="text-gray-600 mt-2">Create and manage your inspiration articles</p>
+            <h1 className="text-3xl font-bold text-text-primary">Manage Inspirations</h1>
+            <p className="text-gray-600 mt-2">Create and manage your inspiration content</p>
           </div>
           <div className="flex items-center space-x-4">
             <Link
@@ -87,7 +104,7 @@ export default function ArticlesPage() {
               className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
-              <span>New Article</span>
+              <span>New Inspiration</span>
             </Link>
             <button
               onClick={handleLogout}
@@ -103,12 +120,12 @@ export default function ArticlesPage() {
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {articles.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No articles yet</p>
+              <p className="text-gray-500 mb-4">No inspirations yet</p>
               <Link
                 href="/admin/articles/new"
                 className="text-primary-600 hover:text-primary-700 font-medium"
               >
-                Create your first article
+                Create your first inspiration
               </Link>
             </div>
           ) : (
@@ -116,6 +133,9 @@ export default function ArticlesPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Title
                     </th>
@@ -137,19 +157,37 @@ export default function ArticlesPage() {
                   {articles.map((article) => (
                     <tr key={article.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <InspirationIconComponent type={article.icon} size="sm" />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-text-primary">
                             {article.title}
                           </div>
                           <div className="text-sm text-gray-500 truncate max-w-xs">
-                            {article.excerpt}
+                            {article.detail}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {article.categories.map(categoryId => {
+                              const category = categories.find(cat => cat.id === categoryId)
+                              return category?.name || categoryId
+                            }).join(', ')}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                          {article.category}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {article.categories.map((categoryId, index) => {
+                            const category = categories.find(cat => cat.id === categoryId)
+                            return (
+                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                {category?.name || categoryId}
+                              </span>
+                            )
+                          })}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(article.publishedAt).toLocaleDateString('cs-CZ')}

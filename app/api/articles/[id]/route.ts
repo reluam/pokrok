@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticleBySlug, saveArticle, deleteArticle } from '@/lib/cms'
+import { getArticleById, getArticleBySlug, saveArticle, deleteArticle, generateSlug } from '@/lib/cms'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const article = getArticleBySlug(params.id)
+    // Try to get by ID first, then by slug
+    let article = getArticleById(params.id)
+    if (!article) {
+      article = getArticleBySlug(params.id)
+    }
+    
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -24,17 +29,27 @@ export async function PUT(
   try {
     const body = await request.json()
     
-    const article = {
-      id: params.id,
-      title: body.title,
-      slug: body.slug,
-      excerpt: body.excerpt || '',
-      content: body.content,
-      image: body.image || undefined,
-      category: body.category,
-      publishedAt: body.publishedAt,
-      featured: body.featured || false
+    // Get existing article to preserve some fields
+    const existingArticle = getArticleById(params.id)
+    if (!existingArticle) {
+      return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
+    
+        const article = {
+          id: params.id,
+          title: body.title,
+          slug: generateSlug(body.title), // Generate new slug from title
+          content: body.content,
+          image: body.image || undefined,
+          categories: body.categories || [], // Handle multiple categories
+          publishedAt: existingArticle.publishedAt, // Keep original publish date
+          featured: body.featured || false,
+          // New inspiration fields
+          icon: body.icon,
+          detail: body.detail,
+          resource: body.resource || undefined,
+          resourceTitle: body.resourceTitle || undefined
+        }
     
     saveArticle(article)
     return NextResponse.json(article)

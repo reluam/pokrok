@@ -28,12 +28,16 @@ export async function POST(request: NextRequest) {
       id: generateId(),
       title: body.title,
       slug: generateSlug(body.title),
-      excerpt: body.excerpt || '',
       content: body.content,
       image: body.image || undefined,
-      category: body.category,
+      categories: body.categories || [], // Handle multiple categories
       publishedAt: new Date().toISOString(),
-      featured: body.featured || false
+      featured: body.featured || false,
+      // New inspiration fields
+      icon: body.icon,
+      detail: body.detail,
+      resource: body.resource || undefined,
+      resourceTitle: body.resourceTitle || undefined
     }
     
     saveArticle(article)

@@ -1,11 +1,13 @@
 {
   "id": "sample-2",
-  "title": "Smysl v době ekonomické",
-  "slug": "smysl-v-dobe-ekonomicke",
-  "excerpt": "Jak najít smysl a účel v době ekonomické nejistoty a změn. Praktické tipy pro udržení motivace.",
-  "content": "# Smysl v době ekonomické\n\nEkonomická nejistota může být výzvou, ale také příležitostí k růstu a seberozvoji.\n\n## Najděte svůj účel\n\nI v těžkých časech je důležité mít jasno v tom, co je pro vás skutečně důležité.\n\n### Praktické kroky:\n\n1. **Definujte své hodnoty** - Co je pro vás nejdůležitější?\n2. **Stanovte si malé cíle** - I malé kroky vás posunou dopředu\n3. **Buďte flexibilní** - Přizpůsobte se měnícím se podmínkám\n\n## Závěr\n\nSmysl se nenachází v okolnostech, ale v tom, jak na ně reagujeme.",
-  "image": "",
-  "category": "Životní filozofie",
+  "title": "The Power of Now",
+  "slug": "the-power-of-now",
+  "content": "Hlavní myšlenky\n\n- **Přítomnost je jediná realita**: Minulost a budoucnost existují pouze v naší mysli\n- **Ego a bolestné tělo**: Jak se identifikujeme s myšlenkami a emocemi\n- **Pozorování mysli**: Jak se stát svědkem svých myšlenek místo jejich obětí\n- **Ticho a klid**: Jak najít vnitřní mír v každém okamžiku\n\nPraktické cvičení\n\n- Vědomé dýchání\n- Pozorování myšlenek bez posuzování\n- Přijetí toho, co je\n- Vděčnost za přítomný okamžik\n\nTato kniha je ideální pro každého, kdo hledá vnitřní klid a chce se naučit žít v přítomnosti.",
+  "categories": ["planovani"],
   "publishedAt": "2025-01-25T14:30:00Z",
-  "featured": true
+  "featured": true,
+  "icon": "book",
+  "detail": "Eckhart Tolle nás učí, jak najít klid a moudrost v přítomném okamžiku. Autor vysvětluje, jak naše mysl často žije v minulosti nebo budoucnosti, což způsobuje úzkost a utrpení.",
+  "resource": "https://www.eckharttolle.com/the-power-of-now/",
+  "resourceTitle": "The Power of Now - Eckhart Tolle"
 }
