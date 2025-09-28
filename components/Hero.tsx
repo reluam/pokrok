@@ -29,10 +29,10 @@ export default function Hero() {
                 {/* CTA Button */}
                 <div>
                   <a
-                    href="/kontakt"
+                    href="/rezervace"
                     className="inline-flex items-center space-x-2 bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
                   >
-                    <span>Kontakt</span>
+                    <span>Rezervace</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

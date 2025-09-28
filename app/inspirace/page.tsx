@@ -17,6 +17,34 @@ function InspirationPageClient({ articles, categories }: InspirationPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<InspirationIcon | 'all'>('all')
 
+  // Function to get hover border color based on icon type
+  const getHoverBorderColor = (icon: InspirationIcon) => {
+    const colorMap = {
+      book: 'hover:border-blue-500',
+      video: 'hover:border-red-500',
+      article: 'hover:border-green-500',
+      thought: 'hover:border-yellow-500',
+      webpage: 'hover:border-purple-500',
+      application: 'hover:border-indigo-500',
+      other: 'hover:border-gray-500'
+    }
+    return colorMap[icon] || 'hover:border-primary-300'
+  }
+
+  // Function to get hover text color based on icon type
+  const getHoverTextColor = (icon: InspirationIcon) => {
+    const colorMap = {
+      book: 'group-hover:text-blue-600',
+      video: 'group-hover:text-red-600',
+      article: 'group-hover:text-green-600',
+      thought: 'group-hover:text-yellow-600',
+      webpage: 'group-hover:text-purple-600',
+      application: 'group-hover:text-indigo-600',
+      other: 'group-hover:text-gray-600'
+    }
+    return colorMap[icon] || 'group-hover:text-primary-600'
+  }
+
   const iconTypes: { value: InspirationIcon | 'all'; label: string }[] = [
     { value: 'all', label: 'Všechny typy' },
     { value: 'book', label: 'Knihy' },
@@ -111,13 +139,13 @@ function InspirationPageClient({ articles, categories }: InspirationPageProps) {
                   href={`/inspirace/${article.slug}`}
                   className="group"
                 >
-                  <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 hover:border-primary-300">
+                  <div className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 ${getHoverBorderColor(article.icon)}`}>
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
                         <InspirationIconComponent type={article.icon} size="md" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-text-primary group-hover:text-primary-600 transition-colors line-clamp-2">
+                        <h3 className={`text-sm font-semibold text-text-primary transition-colors line-clamp-2 ${getHoverTextColor(article.icon)}`}>
                           {article.title}
                         </h3>
                         <p className="text-xs text-gray-500 mt-1 line-clamp-2">

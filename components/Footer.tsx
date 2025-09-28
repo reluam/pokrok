@@ -17,60 +17,38 @@ export default function Footer() {
 
           {/* About Column */}
           <div className="md:col-span-1">
-                <h3 className="text-h4 text-white mb-4">About</h3>
+                <h3 className="text-h4 text-white mb-4">O projektu</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#o-mne" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                      About
+                    <a href="/o-mne" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                      O mně
                     </a>
                   </li>
                   <li>
-                    <a href="#blog" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                      Blog
+                    <a href="/inspirace" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                      Inpirace
                     </a>
                   </li>
                 </ul>
           </div>
 
-          {/* Services Column */}
-          <div className="md:col-span-1">
-            <h3 className="text-h4 text-white mb-4">Services</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#mindset-coaching" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  Mindset coaching
-                </a>
-              </li>
-              <li>
-                <a href="#career-coaching" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  Career coaching
-                </a>
-              </li>
-              <li>
-                <a href="#life-coaching" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  Life coaching
-                </a>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact Column */}
           <div className="md:col-span-1">
-            <h3 className="text-h4 text-white mb-4">Contact</h3>
+            <h3 className="text-h4 text-white mb-4">Kontakt</h3>
             <ul className="space-y-2">
               <li>
-                <a href="mailto:info@harmonix.com" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  info@harmonix.com
+                <a href="mailto:matej@smysluplneziti.cz" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                  matej@smysluplneziti.cz
                 </a>
               </li>
               <li>
-                <a href="tel:+390123456789" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  +39 012 345 6789
+                <a href="tel:+420725527052" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                  +420 725 527 052
                 </a>
               </li>
               <li>
-                <a href="#kontakt" className="text-asul16 text-white hover:text-gray-200 transition-colors font-medium">
-                  Get in touch
+                <a href="/kontakt" className="text-asul16 text-white hover:text-gray-200 transition-colors font-medium">
+                  Kontaktujte mě
                 </a>
               </li>
             </ul>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X, ArrowRight } from 'lucide-react'
 
 export default function Header() {
@@ -22,8 +23,14 @@ export default function Header() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="block">
-              <div className="text-h3 text-primary-500 hover:text-primary-600 transition-colors">
-                Smysluplné žití
+              <div className="relative h-16 w-64">
+                <Image
+                  src="/images/logo.png"
+                  alt="Smysluplné žití"
+                  fill
+                  className="object-contain hover:opacity-80 transition-opacity"
+                  priority
+                />
               </div>
             </Link>
           </div>
@@ -44,10 +51,10 @@ export default function Header() {
               {/* Contact Button */}
               <div className="hidden md:block">
                 <Link
-                  href="/kontakt"
+                  href="/rezervace"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
                 >
-                  <span>Kontakt</span>
+                  <span>Rezervace</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -72,6 +79,9 @@ export default function Header() {
               </Link>
               <Link href="/inspirace" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 Inspirace
+              </Link>
+              <Link href="/rezervace" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
+                Rezervace
               </Link>
               <Link href="/o-mne" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 O mně
