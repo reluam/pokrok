@@ -64,45 +64,55 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-h2 text-text-primary mb-4">
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-h2 text-text-primary mb-3">
               Moje hodnoty
             </h2>
-            <p className="text-p18 text-gray-600">
+            <p className="text-p16 text-gray-600">
               Principy, které mě vedou v práci s klienty
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-white font-bold text-xl">🤝</span>
-              </div>
-              <h3 className="text-h3 text-text-primary">Autenticita</h3>
-              <p className="text-p16 text-gray-600">
-                Věřím v sílu autentického bytí a pomáhám lidem být sami sebou.
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="text-4xl mb-2">🔍</div>
+              <h3 className="text-h4 text-text-primary">Zvídavost</h3>
+              <p className="text-p14 text-gray-600 leading-relaxed">
+                Aktivně objevuji a poznávám nové způsoby, jak žít smysluplněji.
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-white font-bold text-xl">💡</span>
-              </div>
-              <h3 className="text-h3 text-text-primary">Růst</h3>
-              <p className="text-p16 text-gray-600">
-                Podporuji kontinuální osobní rozvoj a učení se z každé zkušenosti.
+            <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="text-4xl mb-2">🌱</div>
+              <h3 className="text-h4 text-text-primary">Růst</h3>
+              <p className="text-p14 text-gray-600 leading-relaxed">
+                Aspiruji k tomu být lepší verzí sama sebe.
               </p>
             </div>
 
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-white font-bold text-xl">🎯</span>
-              </div>
-              <h3 className="text-h3 text-text-primary">Účel</h3>
-              <p className="text-p16 text-gray-600">
-                Pomáhám lidem najít jejich skutečný účel a smysl života.
+            <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="text-4xl mb-2">💭</div>
+              <h3 className="text-h4 text-text-primary">Otevřenost</h3>
+              <p className="text-p14 text-gray-600 leading-relaxed">
+                Přijímám nové nápady, myšlenky i kritiku s otevřenou myslí.
+              </p>
+            </div>
+
+            <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="text-4xl mb-2">💎</div>
+              <h3 className="text-h4 text-text-primary">Upřímnost</h3>
+              <p className="text-p14 text-gray-600 leading-relaxed">
+                Věci popisuji tak, jak jsou.
+              </p>
+            </div>
+
+            <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="text-4xl mb-2">✨</div>
+              <h3 className="text-h4 text-text-primary">Radost</h3>
+              <p className="text-p14 text-gray-600 leading-relaxed">
+                Jsem rád za příležitost být aktivním členem našeho světa.
               </p>
             </div>
           </div>
@@ -119,10 +129,10 @@ export default function AboutPage() {
             Rád bych vás poznal a diskutoval o tom, jak můžu podpořit vaši cestu.
           </p>
           <a
-            href="/kontakt"
+            href="/rezervace"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
           >
-            <span>Kontaktujte mě</span>
+            <span>Rezervujte si konzultaci</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
