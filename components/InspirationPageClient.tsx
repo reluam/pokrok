@@ -24,7 +24,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
     { value: 'video', label: 'Videa' },
     { value: 'article', label: 'Články' },
     { value: 'webpage', label: 'Webové stránky' },
-    { value: 'app', label: 'Aplikace' },
+    { value: 'application', label: 'Aplikace' },
     { value: 'thought', label: 'Myšlenky' }
   ]
 
@@ -63,7 +63,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'group-hover:text-amber-700'
       case 'webpage':
         return 'group-hover:text-blue-700'
-      case 'app':
+      case 'application':
         return 'group-hover:text-indigo-700'
       case 'thought':
         return 'group-hover:text-gray-700'
@@ -82,7 +82,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'group-hover:text-amber-600'
       case 'webpage':
         return 'group-hover:text-blue-600'
-      case 'app':
+      case 'application':
         return 'group-hover:text-indigo-700'
       case 'thought':
         return 'group-hover:text-gray-600'
@@ -101,7 +101,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'bg-[#FFFAF5] group-hover:from-amber-50 group-hover:to-amber-100/50'
       case 'webpage':
         return 'bg-[#FFFAF5] group-hover:from-blue-50 group-hover:to-blue-100/50'
-      case 'app':
+      case 'application':
         return 'bg-[#FFFAF5] group-hover:from-indigo-50 group-hover:to-indigo-100/50'
       case 'thought':
         return 'bg-[#FFFAF5] group-hover:from-gray-50 group-hover:to-gray-100/50'
@@ -120,7 +120,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'border border-transparent group-hover:border-amber-300'
       case 'webpage':
         return 'border border-transparent group-hover:border-blue-300'
-      case 'app':
+      case 'application':
         return 'border border-transparent group-hover:border-indigo-300'
       case 'thought':
         return 'border border-transparent group-hover:border-gray-300'
@@ -139,7 +139,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'from-amber-200/10 to-amber-300/10'
       case 'webpage':
         return 'from-blue-200/10 to-blue-300/10'
-      case 'app':
+      case 'application':
         return 'from-indigo-200/10 to-indigo-300/10'
       case 'thought':
         return 'from-gray-200/10 to-gray-300/10'
@@ -158,7 +158,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'bg-amber-100/50 group-hover:bg-amber-200/70 border border-amber-200 group-hover:border-amber-300'
       case 'webpage':
         return 'bg-blue-100/50 group-hover:bg-blue-200/70 border border-blue-200 group-hover:border-blue-300'
-      case 'app':
+      case 'application':
         return 'bg-indigo-100/50 group-hover:bg-indigo-200/70 border border-indigo-200 group-hover:border-indigo-300'
       case 'thought':
         return 'bg-gray-100/50 group-hover:bg-gray-200/70 border border-gray-200 group-hover:border-gray-300'
@@ -189,7 +189,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return {
           progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-blue-200 rounded-b-xl group-hover:bg-blue-300 transition-colors duration-300'
         }
-      case 'app':
+      case 'application':
         return {
           progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-indigo-200 rounded-b-xl group-hover:bg-indigo-300 transition-colors duration-300'
         }
