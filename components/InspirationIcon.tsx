@@ -24,10 +24,10 @@ const sizeMap = {
 }
 
 const colorMap = {
-  book: 'text-blue-600',
+  book: 'text-primary-500',
   video: 'text-red-600',
-  article: 'text-green-600',
-  thought: 'text-yellow-600',
+  article: 'text-amber-600',
+  thought: 'text-slate-600',
   webpage: 'text-purple-600',
   application: 'text-indigo-600',
   other: 'text-gray-600'

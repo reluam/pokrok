@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllArticles, getFeaturedArticles, saveArticle, generateSlug, generateId } from '@/lib/cms'
+import { getAllArticles, getFeaturedArticles, saveArticle, generateSlug, generateId } from '@/lib/cms-db'
+import { initializeDatabase } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
+    // Initialize database if needed
+    await initializeDatabase()
+    
     const { searchParams } = new URL(request.url)
     const featured = searchParams.get('featured')
     
     let articles
     if (featured === 'true') {
-      articles = getFeaturedArticles(parseInt(searchParams.get('limit') || '10'))
+      articles = await getFeaturedArticles(parseInt(searchParams.get('limit') || '10'))
     } else {
-      articles = getAllArticles()
+      articles = await getAllArticles()
     }
     
     return NextResponse.json(articles)
@@ -22,6 +26,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize database if needed
+    await initializeDatabase()
+    
     const body = await request.json()
     
     const article = {
@@ -40,10 +47,13 @@ export async function POST(request: NextRequest) {
       resourceTitle: body.resourceTitle || undefined
     }
     
-    saveArticle(article)
+    await saveArticle(article)
     return NextResponse.json(article, { status: 201 })
   } catch (error) {
     console.error('Error creating article:', error)
-    return NextResponse.json({ error: 'Failed to create article' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Failed to create article',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }

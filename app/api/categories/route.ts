@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getAllCategories } from '@/lib/cms'
+import { getAllCategories } from '@/lib/cms-db'
+import { initializeDatabase } from '@/lib/database'
 
 export async function GET() {
   try {
-    const categories = getAllCategories()
+    await initializeDatabase()
+    const categories = await getAllCategories()
     return NextResponse.json(categories)
   } catch (error) {
     console.error('Error fetching categories:', error)
