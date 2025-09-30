@@ -205,34 +205,34 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
   }
 
   return (
-    <main>
+    <main className="min-h-screen bg-[#FFFAF5]">
       <Header />
       
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-primary-100 py-20">
+      {/* Minimal Header */}
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+            <h1 className="text-3xl font-bold text-text-primary mb-4">
               Inspirace
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Objevte knihy, články, videa a další zdroje, které vás mohou inspirovat na cestě k lepšímu životu.
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Knihy, články, videa a další zdroje inspirace
             </p>
           </div>
         </div>
       </section>
 
       {/* Filters */}
-      <section className="py-8 bg-white border-b border-gray-200">
+      <section className="pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 justify-center">
             {/* Category Filter */}
             <div className="flex flex-col sm:flex-row gap-2">
               <label className="text-sm font-medium text-gray-700 self-center">Kategorie:</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
               >
                 <option value="all">Všechny kategorie</option>
                 {categories.map((category) => (
@@ -249,7 +249,7 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as InspirationIcon | 'all')}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
               >
                 {iconTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -262,8 +262,8 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         </div>
       </section>
 
-      {/* Inspirations Bibliothèque */}
-      <section className="pt-10 pb-20">
+      {/* Inspirations Grid */}
+      <section className="pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {filteredArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
