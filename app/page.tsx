@@ -38,6 +38,7 @@ async function getCategories(): Promise<Category[]> {
 }
 
 export default async function Home() {
+  // Fetch articles and categories from database
   const articles = await getArticles()
   const categories = await getCategories()
 
