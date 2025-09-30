@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Article, Category, InspirationIcon } from '@/lib/cms'
 import InspirationIconComponent from '@/components/InspirationIcon'
 import { useState, useEffect } from 'react'
+import { getBaseUrl } from '@/lib/utils'
 
 interface InspirationPageProps {
   articles: Article[]
@@ -313,7 +314,8 @@ function InspirationPageClient({ articles, categories }: InspirationPageProps) {
 
 async function getArticles(): Promise<Article[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/articles`, {
+    const baseUrl = getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/articles`, {
       cache: 'no-store' // Ensure fresh data
     })
     
@@ -329,7 +331,8 @@ async function getArticles(): Promise<Article[]> {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/categories`, {
+    const baseUrl = getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/categories`, {
       cache: 'no-store' // Ensure fresh data
     })
     

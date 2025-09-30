@@ -4,10 +4,12 @@ import Services from '@/components/Services'
 import Inspiration from '@/components/Inspiration'
 import Footer from '@/components/Footer'
 import { Article, Category } from '@/lib/cms'
+import { getBaseUrl } from '@/lib/utils'
 
 async function getArticles(): Promise<Article[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/articles?featured=true&limit=2`, {
+    const baseUrl = getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/articles?featured=true&limit=2`, {
       cache: 'no-store' // Ensure fresh data
     })
     
@@ -23,7 +25,8 @@ async function getArticles(): Promise<Article[]> {
 
 async function getCategories(): Promise<Category[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/categories`, {
+    const baseUrl = getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/categories`, {
       cache: 'no-store' // Ensure fresh data
     })
     
