@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
 import { Article, Category, InspirationIcon } from './cms'
 
 // Database-based CMS functions
@@ -13,7 +13,7 @@ export async function getAllArticles(): Promise<Article[]> {
       FROM articles 
       ORDER BY published_at DESC
     `
-    return result.rows as Article[]
+    return result as Article[]
   } catch (error) {
     console.error('Error fetching articles from database:', error)
     return []
@@ -30,7 +30,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
       WHERE slug = ${slug}
       LIMIT 1
     `
-    return result.rows[0] as Article || null
+    return result[0] as Article || null
   } catch (error) {
     console.error('Error getting article by slug:', error)
     return null
@@ -47,7 +47,7 @@ export async function getArticleById(id: string): Promise<Article | null> {
       WHERE id = ${id}
       LIMIT 1
     `
-    return result.rows[0] as Article || null
+    return result[0] as Article || null
   } catch (error) {
     console.error('Error getting article by id:', error)
     return null
@@ -65,7 +65,7 @@ export async function getFeaturedArticles(limit: number = 2): Promise<Article[]>
       ORDER BY published_at DESC
       LIMIT ${limit}
     `
-    return result.rows as Article[]
+    return result as Article[]
   } catch (error) {
     console.error('Error fetching featured articles:', error)
     return []
@@ -120,7 +120,7 @@ export async function getAllCategories(): Promise<Category[]> {
       FROM categories 
       ORDER BY name ASC
     `
-    return result.rows as Category[]
+    return result as Category[]
   } catch (error) {
     console.error('Error fetching categories from database:', error)
     return getDefaultCategories()
@@ -160,7 +160,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
       WHERE slug = ${slug}
       LIMIT 1
     `
-    return result.rows[0] as Category || null
+    return result[0] as Category || null
   } catch (error) {
     console.error('Error getting category by slug:', error)
     return null

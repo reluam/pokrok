@@ -4,6 +4,12 @@ import { initializeDatabase } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.log('DATABASE_URL not available, returning empty articles')
+      return NextResponse.json([])
+    }
+    
     // Initialize database if needed
     await initializeDatabase()
     
@@ -26,6 +32,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ 
+        error: 'Database not configured. Please set DATABASE_URL environment variable.' 
+      }, { status: 503 })
+    }
+    
     // Initialize database if needed
     await initializeDatabase()
     

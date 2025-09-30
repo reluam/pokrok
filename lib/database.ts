@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
+const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
 
 export async function initializeDatabase() {
   try {
@@ -37,7 +37,7 @@ export async function initializeDatabase() {
 
     // Insert default categories if they don't exist
     const existingCategories = await sql`SELECT COUNT(*) FROM categories`
-    if (existingCategories.rows[0].count === '0') {
+    if (existingCategories[0].count === '0') {
       await sql`
         INSERT INTO categories (id, name, slug, color) VALUES
         ('cile', 'Cíle', 'cile', '#3B82F6'),
