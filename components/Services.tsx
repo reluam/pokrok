@@ -7,7 +7,7 @@ const services = [
     icon: Lightbulb,
     title: 'Inspirace',
     description: 'Gain focus, overcome obstacles, and take clear steps toward a fulfilling and meaningful life.',
-    href: '#inspirace'
+    href: '/inspirace'
   },
   {
     icon: Flag,
@@ -19,7 +19,7 @@ const services = [
     icon: MessageCircle,
     title: 'Koučing',
     description: 'Develop a resilient mindset, embrace challenges, and create sustainable habits for long-term success.',
-    href: '#koucink'
+    href: '/koucink'
   }
 ]
 
