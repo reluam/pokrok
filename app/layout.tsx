@@ -10,6 +10,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Smysluplné žití - Najdi smysl v nesmyslném světě',
   description: 'Odemkni svůj účel a najdi smysl. Koučing služby pro osobní rozvoj a nalezení životního smyslu.',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
