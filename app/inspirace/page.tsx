@@ -1,8 +1,6 @@
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
-import InspirationPageClient from '@/components/InspirationPageClient'
-import { getBaseUrl } from '@/lib/utils'
 import { Article, Category } from '@/lib/cms'
+import { getBaseUrl } from '@/lib/utils'
+import InspirationPageClient from '@/components/InspirationPageClient'
 
 async function getArticles(): Promise<Article[]> {
   try {
@@ -42,11 +40,5 @@ export default async function InspirationPage() {
   const articles = await getArticles()
   const categories = await getCategories()
 
-  return (
-    <main>
-      <Header />
-      <InspirationPageClient articles={articles} categories={categories} />
-      <Footer />
-    </main>
-  )
+  return <InspirationPageClient articles={articles} categories={categories} />
 }

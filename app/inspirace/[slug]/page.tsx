@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import InspirationIconComponent from '@/components/InspirationIcon'
+import { getBaseUrl } from '@/lib/utils'
 
 async function getArticle(slug: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/articles/${slug}`, {
+    const baseUrl = getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/articles/${slug}`, {
       cache: 'no-store' // Ensure fresh data
     })
     
@@ -47,9 +49,19 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-4">
               <InspirationIconComponent type={article.icon} size="lg" />
-              <span className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full">
-                {article.category || 'Uncategorized'}
-              </span>
+              <div className="flex flex-wrap gap-2">
+                {article.categories && article.categories.length > 0 ? (
+                  article.categories.map((categoryId: string, index: number) => (
+                    <span key={index} className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full">
+                      {categoryId}
+                    </span>
+                  ))
+                ) : (
+                  <span className="inline-block bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1 rounded-full">
+                    Uncategorized
+                  </span>
+                )}
+              </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-4 font-asul">
               {article.title}

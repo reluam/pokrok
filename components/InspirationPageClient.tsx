@@ -1,170 +1,45 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { Article, Category, InspirationIcon } from '@/lib/cms'
 import InspirationIconComponent from '@/components/InspirationIcon'
+import { useState, useEffect } from 'react'
 
-interface InspirationPageClientProps {
+interface InspirationPageProps {
   articles: Article[]
   categories: Category[]
 }
 
-export default function InspirationPageClient({ articles, categories }: InspirationPageClientProps) {
+export default function InspirationPageClient({ articles, categories }: InspirationPageProps) {
   const [filteredArticles, setFilteredArticles] = useState(articles)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedType, setSelectedType] = useState<InspirationIcon | 'all'>('all')
 
-  // Function to get hover text color based on icon type
-  const getHoverTextColor = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'group-hover:text-primary-700',
-      video: 'group-hover:text-red-600',
-      article: 'group-hover:text-amber-700',
-      thought: 'group-hover:text-slate-700',
-      webpage: 'group-hover:text-purple-600',
-      application: 'group-hover:text-indigo-700',
-      other: 'group-hover:text-gray-600'
-    }
-    return colorMap[icon] || 'group-hover:text-primary-600'
-  }
-
-  // Function to get category hover color based on icon type
-  const getCategoryHoverColor = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'group-hover:text-primary-600',
-      video: 'group-hover:text-red-600',
-      article: 'group-hover:text-amber-600',
-      thought: 'group-hover:text-slate-600',
-      webpage: 'group-hover:text-purple-600',
-      application: 'group-hover:text-indigo-700',
-      other: 'group-hover:text-gray-600'
-    }
-    return colorMap[icon] || 'group-hover:text-primary-600'
-  }
-
-  // Function to get card background colors based on icon type
-  const getCardBackground = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'bg-[#FFFAF5] group-hover:from-orange-50 group-hover:to-orange-100/50',
-      video: 'bg-[#FFFAF5] group-hover:from-red-50 group-hover:to-red-100/50',
-      article: 'bg-[#FFFAF5] group-hover:from-amber-50 group-hover:to-amber-100/50',
-      thought: 'bg-[#FFFAF5] group-hover:from-slate-50 group-hover:to-slate-100/50',
-      webpage: 'bg-[#FFFAF5] group-hover:from-purple-50 group-hover:to-purple-100/50',
-      application: 'bg-[#FFFAF5] group-hover:from-indigo-50 group-hover:to-indigo-100/50',
-      other: 'bg-[#FFFAF5] group-hover:from-gray-50 group-hover:to-gray-100/50'
-    }
-    return colorMap[icon] || 'bg-[#FFFAF5] group-hover:from-primary-50 group-hover:to-primary-100/50'
-  }
-
-  // Function to get card border colors based on icon type
-  const getCardBorder = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'border border-transparent group-hover:border-orange-300',
-      video: 'border border-transparent group-hover:border-red-300',
-      article: 'border border-transparent group-hover:border-amber-300',
-      thought: 'border border-transparent group-hover:border-slate-300',
-      webpage: 'border border-transparent group-hover:border-purple-300',
-      application: 'border border-transparent group-hover:border-indigo-300',
-      other: 'border border-transparent group-hover:border-gray-300'
-    }
-    return colorMap[icon] || 'border border-transparent group-hover:border-primary-300'
-  }
-
-  // Function to get hover overlay colors based on icon type
-  const getHoverOverlay = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'from-orange-200/10 to-orange-300/10',
-      video: 'from-red-200/10 to-red-300/10',
-      article: 'from-amber-200/10 to-amber-300/10',
-      thought: 'from-slate-200/10 to-slate-300/10',
-      webpage: 'from-purple-200/10 to-purple-300/10',
-      application: 'from-indigo-200/10 to-indigo-300/10',
-      other: 'from-gray-200/10 to-gray-300/10'
-    }
-    return colorMap[icon] || 'from-primary-200/10 to-primary-300/10'
-  }
-
-  // Function to get icon container colors based on icon type
-  const getIconContainer = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'bg-orange-100/50 group-hover:bg-orange-200/70 border border-orange-200 group-hover:border-orange-300',
-      video: 'bg-red-100/50 group-hover:bg-red-200/70 border border-red-200 group-hover:border-red-300',
-      article: 'bg-amber-100/50 group-hover:bg-amber-200/70 border border-amber-200 group-hover:border-amber-300',
-      thought: 'bg-slate-100/50 group-hover:bg-slate-200/70 border border-slate-200 group-hover:border-slate-300',
-      webpage: 'bg-purple-100/50 group-hover:bg-purple-200/70 border border-purple-200 group-hover:border-purple-300',
-      application: 'bg-indigo-100/50 group-hover:bg-indigo-200/70 border border-indigo-200 group-hover:border-indigo-300',
-      other: 'bg-gray-100/50 group-hover:bg-gray-200/70 border border-gray-200 group-hover:border-gray-300'
-    }
-    return colorMap[icon] || 'bg-primary-100/50 group-hover:bg-primary-200/70 border border-primary-200 group-hover:border-primary-300'
-  }
-
-  // Function to get category colors based on icon type
-  const getCategoryColors = (icon: InspirationIcon) => {
-    const colorMap = {
-      book: 'bg-orange-100/70 group-hover:bg-orange-200/90 group-hover:text-orange-900 border border-orange-200 group-hover:border-orange-300',
-      video: 'bg-red-100/70 group-hover:bg-red-200/90 group-hover:text-red-900 border border-red-200 group-hover:border-red-300',
-      article: 'bg-amber-100/70 group-hover:bg-amber-200/90 group-hover:text-amber-900 border border-amber-200 group-hover:border-amber-300',
-      thought: 'bg-slate-100/70 group-hover:bg-slate-200/90 group-hover:text-slate-900 border border-slate-200 group-hover:border-slate-300',
-      webpage: 'bg-purple-100/70 group-hover:bg-purple-200/90 group-hover:text-purple-900 border border-purple-200 group-hover:border-purple-300',
-      application: 'bg-indigo-100/70 group-hover:bg-indigo-200/90 group-hover:text-indigo-900 border border-indigo-200 group-hover:border-indigo-300',
-      other: 'bg-gray-100/70 group-hover:bg-gray-200/90 group-hover:text-gray-900 border border-gray-200 group-hover:border-gray-300'
-    }
-    return colorMap[icon] || 'bg-primary-100/70 group-hover:bg-primary-200/90 group-hover:text-primary-900 border border-primary-200 group-hover:border-primary-300'
-  }
-
-  // Function to get card shape based on icon type
-  const getCardShape = (icon: InspirationIcon) => {
-    const shapeMap = {
-      book: 'rounded-xl',
-      video: 'rounded-xl',
-      article: 'rounded-xl',
-      thought: 'rounded-xl',
-      webpage: 'rounded-xl',
-      application: 'rounded-xl',
-      other: 'rounded-xl'
-    }
-    return shapeMap[icon] || 'rounded-xl'
-  }
-
-  // Function to get card elements based on icon type
-  const getCardElements = (icon: InspirationIcon) => {
-    const elementsMap = {
-      book: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-orange-200 rounded-b-xl group-hover:bg-orange-300 transition-colors duration-300'
-      },
-      video: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-red-200 rounded-b-xl group-hover:bg-red-300 transition-colors duration-300'
-      },
-      article: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-amber-200 rounded-b-xl group-hover:bg-amber-300 transition-colors duration-300'
-      },
-      thought: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-slate-200 rounded-b-xl group-hover:bg-slate-300 transition-colors duration-300'
-      },
-      webpage: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-purple-200 rounded-b-xl group-hover:bg-purple-300 transition-colors duration-300'
-      },
-      application: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-indigo-200 rounded-b-xl group-hover:bg-indigo-300 transition-colors duration-300'
-      },
-      other: {
-        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-xl group-hover:bg-gray-300 transition-colors duration-300'
-      }
-    }
-    return elementsMap[icon] || { progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-primary-200 rounded-b-xl group-hover:bg-primary-300 transition-colors duration-300' }
-  }
+  // Icon types for filtering
+  const iconTypes = [
+    { value: 'all', label: 'Všechny typy' },
+    { value: 'book', label: 'Knihy' },
+    { value: 'video', label: 'Videa' },
+    { value: 'article', label: 'Články' },
+    { value: 'webpage', label: 'Webové stránky' },
+    { value: 'app', label: 'Aplikace' },
+    { value: 'thought', label: 'Myšlenky' }
+  ]
 
   // Filter articles based on selected category and type
   const filterArticles = () => {
     let filtered = articles
 
+    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(article => 
-        article.categories && article.categories.includes(selectedCategory)
+        article.categories.includes(selectedCategory)
       )
     }
 
+    // Filter by type
     if (selectedType !== 'all') {
       filtered = filtered.filter(article => article.icon === selectedType)
     }
@@ -173,152 +48,286 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
   }
 
   // Update filtered articles when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     filterArticles()
   }, [selectedCategory, selectedType, articles])
 
+  // Dynamic styling functions
+  const getHoverTextColor = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'group-hover:text-orange-700'
+      case 'video':
+        return 'group-hover:text-red-700'
+      case 'article':
+        return 'group-hover:text-amber-700'
+      case 'webpage':
+        return 'group-hover:text-blue-700'
+      case 'app':
+        return 'group-hover:text-indigo-700'
+      case 'thought':
+        return 'group-hover:text-gray-700'
+      default:
+        return 'group-hover:text-gray-700'
+    }
+  }
+
+  const getCategoryHoverColor = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'group-hover:text-orange-600'
+      case 'video':
+        return 'group-hover:text-red-600'
+      case 'article':
+        return 'group-hover:text-amber-600'
+      case 'webpage':
+        return 'group-hover:text-blue-600'
+      case 'app':
+        return 'group-hover:text-indigo-700'
+      case 'thought':
+        return 'group-hover:text-gray-600'
+      default:
+        return 'group-hover:text-gray-600'
+    }
+  }
+
+  const getCardBackground = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'bg-[#FFFAF5] group-hover:from-orange-50 group-hover:to-orange-100/50'
+      case 'video':
+        return 'bg-[#FFFAF5] group-hover:from-red-50 group-hover:to-red-100/50'
+      case 'article':
+        return 'bg-[#FFFAF5] group-hover:from-amber-50 group-hover:to-amber-100/50'
+      case 'webpage':
+        return 'bg-[#FFFAF5] group-hover:from-blue-50 group-hover:to-blue-100/50'
+      case 'app':
+        return 'bg-[#FFFAF5] group-hover:from-indigo-50 group-hover:to-indigo-100/50'
+      case 'thought':
+        return 'bg-[#FFFAF5] group-hover:from-gray-50 group-hover:to-gray-100/50'
+      default:
+        return 'bg-[#FFFAF5] group-hover:from-gray-50 group-hover:to-gray-100/50'
+    }
+  }
+
+  const getCardBorder = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'border border-transparent group-hover:border-orange-300'
+      case 'video':
+        return 'border border-transparent group-hover:border-red-300'
+      case 'article':
+        return 'border border-transparent group-hover:border-amber-300'
+      case 'webpage':
+        return 'border border-transparent group-hover:border-blue-300'
+      case 'app':
+        return 'border border-transparent group-hover:border-indigo-300'
+      case 'thought':
+        return 'border border-transparent group-hover:border-gray-300'
+      default:
+        return 'border border-transparent group-hover:border-gray-300'
+    }
+  }
+
+  const getHoverOverlay = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'from-orange-200/10 to-orange-300/10'
+      case 'video':
+        return 'from-red-200/10 to-red-300/10'
+      case 'article':
+        return 'from-amber-200/10 to-amber-300/10'
+      case 'webpage':
+        return 'from-blue-200/10 to-blue-300/10'
+      case 'app':
+        return 'from-indigo-200/10 to-indigo-300/10'
+      case 'thought':
+        return 'from-gray-200/10 to-gray-300/10'
+      default:
+        return 'from-gray-200/10 to-gray-300/10'
+    }
+  }
+
+  const getIconContainer = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return 'bg-orange-100/50 group-hover:bg-orange-200/70 border border-orange-200 group-hover:border-orange-300'
+      case 'video':
+        return 'bg-red-100/50 group-hover:bg-red-200/70 border border-red-200 group-hover:border-red-300'
+      case 'article':
+        return 'bg-amber-100/50 group-hover:bg-amber-200/70 border border-amber-200 group-hover:border-amber-300'
+      case 'webpage':
+        return 'bg-blue-100/50 group-hover:bg-blue-200/70 border border-blue-200 group-hover:border-blue-300'
+      case 'app':
+        return 'bg-indigo-100/50 group-hover:bg-indigo-200/70 border border-indigo-200 group-hover:border-indigo-300'
+      case 'thought':
+        return 'bg-gray-100/50 group-hover:bg-gray-200/70 border border-gray-200 group-hover:border-gray-300'
+      default:
+        return 'bg-gray-100/50 group-hover:bg-gray-200/70 border border-gray-200 group-hover:border-gray-300'
+    }
+  }
+
+  const getCardShape = (icon: InspirationIcon) => {
+    return 'rounded-xl'
+  }
+
+  const getCardElements = (icon: InspirationIcon) => {
+    switch (icon) {
+      case 'book':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-orange-200 rounded-b-xl group-hover:bg-orange-300 transition-colors duration-300'
+        }
+      case 'video':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-red-200 rounded-b-xl group-hover:bg-red-300 transition-colors duration-300'
+        }
+      case 'article':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-amber-200 rounded-b-xl group-hover:bg-amber-300 transition-colors duration-300'
+        }
+      case 'webpage':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-blue-200 rounded-b-xl group-hover:bg-blue-300 transition-colors duration-300'
+        }
+      case 'app':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-indigo-200 rounded-b-xl group-hover:bg-indigo-300 transition-colors duration-300'
+        }
+      case 'thought':
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-xl group-hover:bg-gray-300 transition-colors duration-300'
+        }
+      default:
+        return {
+          progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-xl group-hover:bg-gray-300 transition-colors duration-300'
+        }
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Inspirace</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Objevte zdroje inspirace, které vám pomohou na cestě k lepšímu životu
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-4 justify-center">
-          {/* Category Filter */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-600 border border-gray-200'
-              }`}
-            >
-              Všechny kategorie
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-600 border border-gray-200'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Type Filter */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedType('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedType === 'all'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-600 border border-gray-200'
-              }`}
-            >
-              Všechny typy
-            </button>
-            {['book', 'video', 'article', 'thought', 'webpage', 'application'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type as InspirationIcon)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedType === type
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-600 border border-gray-200'
-                }`}
-              >
-                {type === 'book' ? 'Knihy' :
-                 type === 'video' ? 'Videa' :
-                 type === 'article' ? 'Články' :
-                 type === 'thought' ? 'Myšlenky' :
-                 type === 'webpage' ? 'Webové stránky' :
-                 type === 'application' ? 'Aplikace' : type}
-              </button>
-            ))}
+    <main>
+      <Header />
+      
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-primary-50 to-primary-100 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+              Inspirace
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Objevte knihy, články, videa a další zdroje, které vás mohou inspirovat na cestě k lepšímu životu.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Articles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredArticles.map((article) => {
-            const cardElements = getCardElements(article.icon)
-            
-            return (
-              <Link
-                key={article.id}
-                href={`/inspirace/${article.slug}`}
-                className={`group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl ${getCardShape(article.icon)} ${getCardBackground(article.icon)} ${getCardBorder(article.icon)}`}
+      {/* Filters */}
+      <section className="py-8 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+            {/* Category Filter */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className="text-sm font-medium text-gray-700 self-center">Kategorie:</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                {/* Hover Overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${getHoverOverlay(article.icon)} opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10`} />
-                
-                <div className="relative p-6 z-20">
-                  {/* Icon and Title */}
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className={`p-3 rounded-xl ${getIconContainer(article.icon)}`}>
-                      <InspirationIconComponent type={article.icon} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className={`text-lg font-semibold text-gray-900 mb-2 ${getHoverTextColor(article.icon)}`}>
-                        {article.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {article.detail}
-                      </p>
+                <option value="all">Všechny kategorie</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Type Filter */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className="text-sm font-medium text-gray-700 self-center">Typ:</label>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as InspirationIcon | 'all')}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {iconTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Inspirations Bibliothèque */}
+      <section className="pt-10 pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {filteredArticles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredArticles.map((article: Article) => (
+                <Link
+                  key={article.id}
+                  href={`/inspirace/${article.slug}`}
+                  className="group"
+                >
+                  <div className={`${getCardBackground(article.icon)} ${getCardShape(article.icon)} p-6 border-2 ${getCardBorder(article.icon)} relative overflow-hidden`}>
+                    {/* Icon-based overlay on hover */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${getHoverOverlay(article.icon)} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                    
+                    {/* Card-specific visual elements */}
+                    <div className={(getCardElements(article.icon) as any).progressBar}></div>
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 mt-1">
+                          <div className={`p-3 rounded-xl bg-gradient-to-br ${getIconContainer(article.icon)} shadow-sm group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 video-animation`}>
+                            <InspirationIconComponent type={article.icon} size="md" />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`text-h4 text-text-primary transition-colors line-clamp-2 group-hover:text-gray-900 ${getHoverTextColor(article.icon)}`}>
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-3 leading-relaxed">
+                            {article.detail}
+                          </p>
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="flex flex-wrap gap-2">
+                              <span className={`text-xs font-medium text-gray-500 ${getCategoryHoverColor(article.icon)} transition-colors duration-200`}>
+                                {article.categories.map((categoryId, index) => {
+                                  const category = categories.find(cat => cat.id === categoryId)
+                                  return (category?.name || categoryId) + (index < article.categories.length - 1 ? ', ' : '')
+                                }).join('')}
+                              </span>
+                            </div>
+                            {article.resource && (
+                              <span className="text-sm font-medium text-primary-600 group-hover:text-primary-700 flex items-center gap-1 transition-colors duration-200">
+                                <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Categories */}
-                  {article.categories && article.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {article.categories.map((categoryId) => {
-                        const category = categories.find(cat => cat.id === categoryId)
-                        return category ? (
-                          <span
-                            key={categoryId}
-                            className={`px-3 py-1 rounded-full text-xs font-medium text-gray-600 ${getCategoryColors(article.icon)}`}
-                          >
-                            {category.name}
-                          </span>
-                        ) : null
-                      })}
-                    </div>
-                  )}
-
-                  {/* Resource Link */}
-                  {article.resource && (
-                    <div className="text-sm text-gray-500 mb-2">
-                      {article.resourceTitle || 'Odkaz na zdroj'}
-                    </div>
-                  )}
-                </div>
-
-                {/* Progress Bar */}
-                {cardElements.progressBar && (
-                  <div className={cardElements.progressBar} />
-                )}
-              </Link>
-            )
-          })}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <h3 className="text-xl font-semibold text-text-primary mb-2">Žádné inspirace nenalezeny</h3>
+              <p className="text-gray-600">Zkuste změnit filtry nebo se vraťte později.</p>
+            </div>
+          )}
         </div>
+      </section>
 
-        {filteredArticles.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">Žádné inspirace nebyly nalezeny pro vybrané filtry.</p>
-          </div>
-        )}
-      </div>
-    </div>
+      <Footer />
+    </main>
   )
 }
