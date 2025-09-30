@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllArticles, getFeaturedArticles, saveArticle, generateSlug, generateId } from '@/lib/cms-db'
+import { getAllArticles, getFeaturedArticles, saveArticle, deleteArticle, generateSlug, generateId } from '@/lib/cms-db'
 import { initializeDatabase } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
@@ -66,6 +66,36 @@ export async function POST(request: NextRequest) {
     console.error('Error creating article:', error)
     return NextResponse.json({ 
       error: 'Failed to create article',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ 
+        error: 'Database not configured. Please set DATABASE_URL environment variable.' 
+      }, { status: 503 })
+    }
+    
+    // Initialize database if needed
+    await initializeDatabase()
+    
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Article ID is required' }, { status: 400 })
+    }
+    
+    await deleteArticle(id)
+    return NextResponse.json({ message: 'Article deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting article:', error)
+    return NextResponse.json({ 
+      error: 'Failed to delete article',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
