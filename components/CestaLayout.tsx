@@ -124,7 +124,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                 )}
               </button>
-              <UserButton afterSignOutUrl="https://accounts.pokrok.app/sign-in" />
+              <UserButton afterSignOutUrl="/sign-in" />
             </div>
           </div>
         </div>
