@@ -6,7 +6,7 @@ export default async function NastaveniPage() {
   const { userId } = await auth()
   
   if (!userId) {
-    redirect('/muj/sign-in')
+    redirect('/sign-in')
   }
 
   return <SettingsPage />
