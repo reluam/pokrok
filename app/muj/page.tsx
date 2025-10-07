@@ -8,7 +8,7 @@ export default async function MojePage() {
   const { userId } = await auth()
   
   if (!userId) {
-    redirect('/moje/sign-in')
+    redirect('/muj/sign-in')
   }
 
   // Check if user has completed onboarding

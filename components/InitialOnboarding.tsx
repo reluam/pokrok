@@ -143,16 +143,16 @@ export function InitialOnboarding() {
 
       if (response.ok) {
         // Redirect to main dashboard
-        router.push('/moje')
+        router.push('/muj')
       } else {
         console.error('Failed to complete onboarding')
         // Still redirect to avoid getting stuck
-        router.push('/moje')
+        router.push('/muj')
       }
     } catch (error) {
       console.error('Error completing onboarding:', error)
       // Still redirect to avoid getting stuck
-      router.push('/moje')
+      router.push('/muj')
     }
   }
 

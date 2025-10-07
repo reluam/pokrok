@@ -157,7 +157,7 @@ export default async function AppFeaturesPage() {
             Stáhněte si aplikaci Pokrok a začněte svou transformaci ještě dnes.
           </p>
           <a
-            href="/moje"
+            href="/muj"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
