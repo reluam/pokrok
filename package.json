@@ -7,10 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "node scripts/migrate-to-neon.js"
+    "migrate": "node scripts/migrate-to-neon.js",
+    "init-cesta": "node scripts/init-cesta-db.js"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.33.1",
     "@neondatabase/serverless": "^1.0.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@vercel/postgres": "^0.10.0",
+    "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.294.0",
     "next": "^14.1.0",

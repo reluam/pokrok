@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 
@@ -29,10 +30,10 @@ export default function Hero() {
                 {/* CTA Button */}
                 <div>
                   <a
-                    href="/rezervace"
+                    href="/kontakt"
                     className="inline-flex items-center space-x-2 bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
                   >
-                    <span>Rezervace</span>
+                    <span>Kontakt</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
@@ -78,6 +79,120 @@ export default function Hero() {
 
 // New About Coach Section Component
 export function AboutCoach() {
+  const [videoContent, setVideoContent] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadVideoContent()
+  }, [])
+
+  const loadVideoContent = async () => {
+    try {
+      const response = await fetch('/api/video-content/active')
+      if (response.ok) {
+        const data = await response.json()
+        setVideoContent(data)
+      }
+    } catch (error) {
+      console.error('Error loading video content:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderVideo = () => {
+    if (!videoContent) {
+      return (
+        <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden shadow-lg">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+              <p className="text-asul16 text-gray-600">Video placeholder</p>
+              <p className="text-asul10 text-gray-500 mt-2">Add your video here</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (videoContent.embedCode) {
+      return (
+        <div 
+          className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden shadow-lg"
+          dangerouslySetInnerHTML={{ __html: videoContent.embedCode }}
+        />
+      )
+    }
+
+    // Check if it's a YouTube URL
+    const youtubeMatch = videoContent.videoUrl.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([a-zA-Z0-9_-]+)/)
+    if (youtubeMatch) {
+      return (
+        <iframe
+          className="w-full aspect-video rounded-lg shadow-lg"
+          src={videoContent.videoUrl}
+          title={videoContent.title}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      )
+    }
+
+    // Check if it's a Vimeo URL
+    const vimeoMatch = videoContent.videoUrl.match(/vimeo\.com\/(\d+)/)
+    if (vimeoMatch) {
+      return (
+        <iframe
+          className="w-full aspect-video rounded-lg shadow-lg"
+          src={`https://player.vimeo.com/video/${vimeoMatch[1]}`}
+          title={videoContent.title}
+          frameBorder="0"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
+      )
+    }
+
+    // For other video URLs
+    return (
+      <video
+        className="w-full aspect-video rounded-lg shadow-lg"
+        controls
+        poster={videoContent.thumbnailUrl}
+      >
+        <source src={videoContent.videoUrl} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    )
+  }
+
+  if (loading) {
+    return (
+      <section className="pt-28 pb-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-h2 text-text-primary mb-8">
+              Poznej svého kouče
+            </h1>
+          </div>
+          
+          <div className="flex justify-center">
+            <div className="w-full max-w-[65%]">
+              <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden shadow-lg animate-pulse">
+                <div className="absolute inset-0 bg-gray-300"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="pt-28 pb-20">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,20 +204,15 @@ export function AboutCoach() {
         
         <div className="flex justify-center">
           <div className="w-full max-w-[65%]">
-            {/* Video Placeholder */}
-            <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden shadow-lg">
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </div>
-                  <p className="text-asul16 text-gray-600">Video placeholder</p>
-                  <p className="text-asul10 text-gray-500 mt-2">Add your video here</p>
-                </div>
+            {renderVideo()}
+            {videoContent && videoContent.title && (
+              <div className="text-center mt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{videoContent.title}</h3>
+                {videoContent.description && (
+                  <p className="text-gray-600">{videoContent.description}</p>
+                )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

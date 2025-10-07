@@ -1,12 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, ArrowRight } from 'lucide-react'
 
+interface NavigationSettings {
+  coaching_enabled: boolean
+  workshops_enabled: boolean
+}
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [navSettings, setNavSettings] = useState<NavigationSettings>({
+    coaching_enabled: false,
+    workshops_enabled: false
+  })
+
+  useEffect(() => {
+    loadNavigationSettings()
+  }, [])
+
+  const loadNavigationSettings = async () => {
+    try {
+      const response = await fetch('/api/navigation-settings')
+      if (response.ok) {
+        const settings = await response.json()
+        setNavSettings(settings)
+      }
+    } catch (error) {
+      console.error('Error loading navigation settings:', error)
+    }
+  }
 
   const closeMenu = () => {
     setIsMenuOpen(false)
@@ -37,12 +62,19 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8 ml-auto mr-8">
-            <Link href="/koucink" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-              Koučing
+            <Link href="/materialy" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
+              Materiály
             </Link>
-            <Link href="/inspirace" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-              Inspirace
-            </Link>
+            {navSettings.coaching_enabled && (
+              <Link href="/koucink" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
+                Koučing
+              </Link>
+            )}
+            {navSettings.workshops_enabled && (
+              <Link href="/workshopy" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
+                Workshopy
+              </Link>
+            )}
             <Link href="/o-mne" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               O mně
             </Link>
@@ -51,10 +83,10 @@ export default function Header() {
               {/* Contact Button */}
               <div className="hidden md:block">
                 <Link
-                  href="/rezervace"
+                  href="/kontakt"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
                 >
-                  <span>Rezervace</span>
+                  <span>Kontakt</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -74,15 +106,19 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t">
-              <Link href="/koucink" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                Koučing
+              <Link href="/materialy" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
+                Materiály
               </Link>
-              <Link href="/inspirace" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                Inspirace
-              </Link>
-              <Link href="/rezervace" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                Rezervace
-              </Link>
+              {navSettings.coaching_enabled && (
+                <Link href="/koucink" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
+                  Koučing
+                </Link>
+              )}
+              {navSettings.workshops_enabled && (
+                <Link href="/workshopy" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
+                  Workshopy
+                </Link>
+              )}
               <Link href="/o-mne" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 O mně
               </Link>

@@ -1,9 +1,14 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { Calendar, Clock, Users, CheckCircle, ArrowRight } from 'lucide-react'
+import { CoachingPackage } from '@/lib/admin-types'
 
-const bookingOptions = [
+// Fallback booking options in case API fails
+const fallbackBookingOptions = [
   {
     id: 'koucovy-balicek',
     title: 'Koučovací balíček',
@@ -65,6 +70,45 @@ const bookingOptions = [
 ]
 
 export default function BookingPage() {
+  const [bookingOptions, setBookingOptions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadCoachingPackages()
+  }, [])
+
+  const loadCoachingPackages = async () => {
+    try {
+      const response = await fetch('/api/coaching-packages')
+      if (response.ok) {
+        const packages: CoachingPackage[] = await response.json()
+        setBookingOptions(packages)
+      } else {
+        console.error('Failed to load coaching packages')
+        setBookingOptions(fallbackBookingOptions)
+      }
+    } catch (error) {
+      console.error('Error loading coaching packages:', error)
+      setBookingOptions(fallbackBookingOptions)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen">
+        <Header />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Načítání koučovacích balíčků...</p>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
   return (
     <main className="min-h-screen">
       <Header />
@@ -117,7 +161,7 @@ export default function BookingPage() {
 
                   {/* Features */}
                   <div className="space-y-3 mb-8 flex-grow">
-                    {option.features.map((feature, featureIndex) => (
+                    {option.features.map((feature: string, featureIndex: number) => (
                       <div key={featureIndex} className="flex items-start space-x-3">
                         <CheckCircle className={`w-5 h-5 ${option.textColor} flex-shrink-0 mt-0.5`} />
                         <span className="text-p16 text-gray-700">{feature}</span>

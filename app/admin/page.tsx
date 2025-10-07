@@ -1,6 +1,10 @@
-import { redirect } from 'next/navigation'
+import AdminLayout from '@/components/AdminLayout'
+import AdminDashboard from '@/components/AdminDashboard'
 
 export default function AdminPage() {
-  // Redirect to articles management
-  redirect('/admin/articles')
+  return (
+    <AdminLayout title="Dashboard" description="Vítejte v administračním panelu">
+      <AdminDashboard />
+    </AdminLayout>
+  )
 }

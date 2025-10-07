@@ -1,4 +1,4 @@
-import { Book, Video, FileText, Lightbulb, Globe, Smartphone, MoreHorizontal } from 'lucide-react'
+import { Book, Video, FileText, Lightbulb, Globe, Smartphone, Download, MoreHorizontal } from 'lucide-react'
 import { InspirationIcon as IconType } from '@/lib/cms'
 
 interface InspirationIconProps {
@@ -14,6 +14,7 @@ const iconMap = {
   thought: Lightbulb,
   webpage: Globe,
   application: Smartphone,
+  downloadable: Download,
   other: MoreHorizontal
 }
 
@@ -30,6 +31,7 @@ const colorMap = {
   thought: 'text-slate-600',
   webpage: 'text-purple-600',
   application: 'text-indigo-600',
+  downloadable: 'text-green-600',
   other: 'text-gray-600'
 }
 
@@ -38,9 +40,9 @@ export default function InspirationIcon({
   size = 'md', 
   className = '' 
 }: InspirationIconProps) {
-  const IconComponent = iconMap[type]
+  const IconComponent = iconMap[type] || iconMap['other']
   const sizeClass = sizeMap[size]
-  const colorClass = colorMap[type]
+  const colorClass = colorMap[type] || colorMap['other']
 
   return (
     <IconComponent 

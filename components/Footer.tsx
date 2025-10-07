@@ -25,7 +25,7 @@ export default function Footer() {
                     </a>
                   </li>
                   <li>
-                    <a href="/inspirace" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                    <a href="/materialy" className="text-asul16 text-white hover:text-gray-200 transition-colors">
                       Inpirace
                     </a>
                   </li>

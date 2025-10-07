@@ -1,42 +1,33 @@
+import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { Lightbulb, Target, Users, Clock, CheckCircle } from 'lucide-react'
+import { Lightbulb, Target, Users, Clock, CheckCircle, Calendar, ArrowRight } from 'lucide-react'
+import { getAdminSetting } from '@/lib/admin-db'
+import CoachingPackagesSection from '@/components/CoachingPackagesSection'
 
-const coachingServices = [
-  {
-    icon: Lightbulb,
-    title: 'Mindset Koučing',
-    description: 'Transformujte své myšlení a vytvořte pozitivní návyky, které vás posunou vpřed.',
-    features: [
-      'Identifikace omezujících přesvědčení',
-      'Rozvoj růstového myšlení',
-      'Techniky pro zvládání stresu',
-      'Budování sebedůvěry'
-    ]
-  },
-  {
-    icon: Target,
-    title: 'Kariérní Koučing',
-    description: 'Najděte svou ideální kariérní cestu a dosáhněte profesního úspěchu.',
-    features: [
-      'Definování kariérních cílů',
-      'Rozvoj leadership dovedností',
-      'Příprava na pohovory',
-      'Work-life balance'
-    ]
-  },
-  {
-    icon: Users,
-    title: 'Životní Koučing',
-    description: 'Objevte svůj skutečný účel a vytvořte život, který vás naplňuje.',
-    features: [
-      'Hledání životního smyslu',
-      'Stanovení osobních hodnot',
-      'Plánování životních cílů',
-      'Zlepšení vztahů'
-    ]
+export async function generateMetadata(): Promise<Metadata> {
+  const coachingEnabled = await getAdminSetting('coaching_enabled')
+  
+  if (coachingEnabled?.value !== 'true') {
+    return {
+      robots: {
+        index: false,
+        follow: false,
+        nocache: true,
+        noarchive: true,
+        nosnippet: true,
+        noimageindex: true,
+      }
+    }
   }
-]
+
+  return {
+    title: 'Koučing - Smysluplné žití',
+    description: 'Transformujte svůj život pomocí profesionálního koučingu. Najděte svůj smysl a vytvořte život, který vás skutečně naplňuje.',
+  }
+}
+
 
 const processSteps = [
   {
@@ -61,7 +52,13 @@ const processSteps = [
   }
 ]
 
-export default function CoachingPage() {
+export default async function CoachingPage() {
+  const coachingEnabled = await getAdminSetting('coaching_enabled')
+  
+  if (coachingEnabled?.value !== 'true') {
+    notFound()
+  }
+
   return (
     <main className="min-h-screen">
       <Header />
@@ -81,45 +78,8 @@ export default function CoachingPage() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-h2 text-text-primary mb-4">
-              Moje služby
-            </h2>
-            <p className="text-p18 text-gray-600">
-              Komplexní koučovací přístup pro všechny oblasti vašeho života
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {coachingServices.map((service, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm p-8 hover:shadow-md transition-shadow">
-                <div className="flex justify-center mb-6">
-                  <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">
-                    <service.icon className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-h3 text-text-primary mb-4 text-center">
-                  {service.title}
-                </h3>
-                <p className="text-p16 text-gray-600 mb-6 text-center">
-                  {service.description}
-                </p>
-                <ul className="space-y-2">
-                  {service.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                      <span className="text-p16 text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Coaching Packages Section */}
+      <CoachingPackagesSection />
 
       {/* Process Section */}
       <section className="py-20">
@@ -221,10 +181,10 @@ export default function CoachingPage() {
             Pojďme společně vytvořit plán, který vás dovede k vašim cílům a naplněnému životu.
           </p>
           <a
-            href="/rezervace"
+            href="/kontakt"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
           >
-            <span>Rezervovat sezení</span>
+            <span>Kontaktovat</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

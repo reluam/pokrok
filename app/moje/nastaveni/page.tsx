@@ -1,0 +1,13 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import { SettingsPage } from '@/components/SettingsPage'
+
+export default async function NastaveniPage() {
+  const { userId } = await auth()
+  
+  if (!userId) {
+    redirect('/moje/sign-in')
+  }
+
+  return <SettingsPage />
+}

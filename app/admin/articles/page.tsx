@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { Article, Category } from '@/lib/cms'
-import { Plus, Edit, Trash2, Eye, LogOut } from 'lucide-react'
+import { Plus, Edit, Trash2, Eye, FileText } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import InspirationIconComponent from '@/components/InspirationIcon'
+import AdminLayout from '@/components/AdminLayout'
 
-export default function ArticlesPage() {
+function ArticlesContent() {
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
     loadArticles()
@@ -67,20 +66,10 @@ export default function ArticlesPage() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/logout', {
-        method: 'POST'
-      })
-      router.push('/admin/login')
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading articles...</p>
@@ -90,152 +79,113 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Manage Inspirations</h1>
-            <p className="text-gray-600 mt-2">Create and manage your inspiration content</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/admin/articles/new"
-              className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Inspiration</span>
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-2"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <Link
+          href="/admin/articles/new"
+          className="bg-primary-500 text-white px-6 py-3 rounded-xl hover:bg-primary-600 transition-colors flex items-center space-x-2 shadow-sm font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Nová inspirace/materiál</span>
+        </Link>
+      </div>
 
         {/* Articles List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-primary-100">
           {articles.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No inspirations yet</p>
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-primary-600" />
+              </div>
+              <p className="text-gray-500 mb-4 font-asul">Zatím žádné inspirace a materiály</p>
               <Link
                 href="/admin/articles/new"
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-primary-600 hover:text-primary-700 font-medium inline-flex items-center space-x-2"
               >
-                Create your first inspiration
+                <Plus className="w-4 h-4" />
+                <span>Create your first inspiration</span>
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Title
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Published
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Featured
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {articles.map((article) => (
-                    <tr key={article.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <InspirationIconComponent type={article.icon} size="sm" />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-text-primary">
+            <div className="divide-y divide-gray-200">
+              {articles.map((article) => (
+                <div key={article.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    {/* Left side - Icon and content */}
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0 mt-1">
+                        <InspirationIconComponent type={article.icon} size="sm" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
                             {article.title}
-                          </div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">
-                            {article.detail}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            {article.categories.map(categoryId => {
-                              const category = categories.find(cat => cat.id === categoryId)
-                              return category?.name || categoryId
-                            }).join(', ')}
+                          </h3>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {article.featured && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Featured
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-500">
+                              {new Date(article.publishedAt).toLocaleDateString('cs-CZ')}
+                            </span>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-600 truncate mb-2">
+                          {article.detail}
+                        </p>
                         <div className="flex flex-wrap gap-1">
                           {article.categories.map((categoryId, index) => {
                             const category = categories.find(cat => cat.id === categoryId)
                             return (
-                              <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                              <span key={index} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                                 {category?.name || categoryId}
                               </span>
                             )
                           })}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(article.publishedAt).toLocaleDateString('cs-CZ')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {article.featured ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            No
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Link
-                            href={`/inspirace/${article.slug}`}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="View"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            href={`/admin/articles/edit/${article.id}`}
-                            className="text-primary-600 hover:text-primary-900"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(article.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Link
+                        href={`/inspirace/${article.slug}`}
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/admin/articles/edit/${article.id}`}
+                        className="text-primary-600 hover:text-primary-900 p-1"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(article.id)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </div>
     </div>
+  )
+}
+
+export default function ArticlesPage() {
+  return (
+    <AdminLayout title="Inspirace" description="Spravujte články a inspirace">
+      <ArticlesContent />
+    </AdminLayout>
   )
 }

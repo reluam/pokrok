@@ -1,22 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Protect all admin routes except login
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const authResponse = requireAuth(request)
-    if (authResponse) {
-      return authResponse
-    }
-  }
-
-  return NextResponse.next()
-}
+export default clerkMiddleware()
 
 export const config = {
   matcher: [
-    '/admin/:path*',
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 }

@@ -21,6 +21,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'group-hover:text-slate-700',
       webpage: 'group-hover:text-purple-600',
       application: 'group-hover:text-indigo-700',
+      downloadable: 'group-hover:text-green-600',
       other: 'group-hover:text-gray-600'
     }
     return colorMap[icon] || 'group-hover:text-primary-600'
@@ -35,6 +36,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'group-hover:text-slate-600',
       webpage: 'group-hover:text-purple-600',
       application: 'group-hover:text-indigo-700',
+      downloadable: 'group-hover:text-green-600',
       other: 'group-hover:text-gray-600'
     }
     return colorMap[icon] || 'group-hover:text-primary-600'
@@ -49,6 +51,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'bg-[#FFFAF5] group-hover:from-slate-100 group-hover:to-slate-200',
       webpage: 'bg-[#FFFAF5] group-hover:from-purple-50 group-hover:to-purple-100/50',
       application: 'bg-[#FFFAF5] group-hover:from-indigo-50 group-hover:to-indigo-100/50',
+      downloadable: 'bg-[#FFFAF5] group-hover:from-green-50 group-hover:to-green-100/50',
       other: 'bg-[#FFFAF5] group-hover:from-gray-50 group-hover:to-gray-100/50'
     }
     return colorMap[icon] || 'bg-[#FFFAF5] group-hover:from-orange-50 group-hover:to-amber-100/50'
@@ -63,6 +66,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'border border-transparent group-hover:border-slate-300',
       webpage: 'border border-transparent group-hover:border-purple-300',
       application: 'border border-transparent group-hover:border-indigo-300',
+      downloadable: 'border border-transparent group-hover:border-green-300',
       other: 'border border-transparent group-hover:border-gray-300'
     }
     return colorMap[icon] || 'border border-transparent group-hover:border-orange-300'
@@ -77,6 +81,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'from-slate-200/10 to-slate-300/10',
       webpage: 'from-purple-200/10 to-purple-300/10',
       application: 'from-indigo-200/10 to-indigo-300/10',
+      downloadable: 'from-green-200/10 to-green-300/10',
       other: 'from-gray-200/10 to-gray-300/10'
     }
     return colorMap[icon] || 'from-orange-200/10 to-amber-300/10'
@@ -91,6 +96,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'bg-slate-100/50 group-hover:bg-slate-200/70 border border-slate-200 group-hover:border-slate-300',
       webpage: 'bg-purple-100/50 group-hover:bg-purple-200/70 border border-purple-200 group-hover:border-purple-300',
       application: 'bg-indigo-100/50 group-hover:bg-indigo-200/70 border border-indigo-200 group-hover:border-indigo-300',
+      downloadable: 'bg-green-100/50 group-hover:bg-green-200/70 border border-green-200 group-hover:border-green-300',
       other: 'bg-gray-100/50 group-hover:bg-gray-200/70 border border-gray-200 group-hover:border-gray-300'
     }
     return colorMap[icon] || 'bg-orange-100/50 group-hover:bg-orange-200/70 border border-orange-200 group-hover:border-orange-300'
@@ -105,6 +111,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'bg-slate-100/70 group-hover:bg-slate-200/90 group-hover:text-slate-900 border border-slate-200 group-hover:border-slate-300',
       webpage: 'bg-purple-100/70 group-hover:bg-purple-200/90 group-hover:text-purple-900 border border-purple-200 group-hover:border-purple-300',
       application: 'bg-indigo-100/70 group-hover:bg-indigo-200/90 group-hover:text-indigo-900 border border-indigo-200 group-hover:border-indigo-300',
+      downloadable: 'bg-green-100/70 group-hover:bg-green-200/90 group-hover:text-green-900 border border-green-200 group-hover:border-green-300',
       other: 'bg-gray-100/70 group-hover:bg-gray-200/90 group-hover:text-gray-900 border border-gray-200 group-hover:border-gray-300'
     }
     return colorMap[icon] || 'bg-orange-100/70 group-hover:bg-orange-200/90 group-hover:text-orange-900 border border-orange-200 group-hover:border-orange-300'
@@ -119,6 +126,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       thought: 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300',
       webpage: 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300',
       application: 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300',
+      downloadable: 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300',
       other: 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300'
     }
     return shapeMap[icon] || 'rounded-xl shadow-sm hover:shadow-md transform hover:scale-102 transition-all duration-300'
@@ -145,6 +153,9 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
       application: {
         progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-indigo-200 rounded-b-xl group-hover:bg-indigo-300 transition-colors duration-300'
       },
+      downloadable: {
+        progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-green-200 rounded-b-xl group-hover:bg-green-300 transition-colors duration-300'
+      },
       other: {
         progressBar: 'absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-xl group-hover:bg-gray-300 transition-colors duration-300'
       }
@@ -167,10 +178,10 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
           
           <div>
             <Link
-              href="/inspirace"
+              href="/materialy"
               className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors"
             >
-              <span>See more</span>
+              <span>Zobrazit více</span>
               <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
@@ -181,7 +192,7 @@ export default function Inspiration({ articles, categories }: InspirationProps) 
           {articles.slice(0, 4).map((article: Article) => (
             <Link
               key={article.id}
-              href={`/inspirace/${article.slug}`}
+              href={`/materialy/${article.slug}`}
               className="group"
             >
                <div className={`${getCardBackground(article.icon)} ${getCardShape(article.icon)} p-6 ${getCardBorder(article.icon)} relative overflow-hidden group`}>

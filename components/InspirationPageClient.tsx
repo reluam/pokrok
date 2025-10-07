@@ -65,6 +65,8 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'group-hover:text-purple-700'
       case 'application':
         return 'group-hover:text-indigo-700'
+      case 'downloadable':
+        return 'group-hover:text-green-700'
       case 'thought':
         return 'group-hover:text-gray-700'
       default:
@@ -84,6 +86,8 @@ export default function InspirationPageClient({ articles, categories }: Inspirat
         return 'group-hover:text-purple-600'
       case 'application':
         return 'group-hover:text-indigo-700'
+      case 'downloadable':
+        return 'group-hover:text-green-600'
       case 'thought':
         return 'group-hover:text-gray-600'
       default:

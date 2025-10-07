@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
-import { InspirationIcon, Category } from '@/lib/cms'
+import { InspirationIcon, Category, ExperienceLevel } from '@/lib/cms'
 
 export default function NewArticlePage() {
   const router = useRouter()
@@ -19,7 +19,11 @@ export default function NewArticlePage() {
     icon: 'book' as InspirationIcon,
     detail: '',
     resource: '',
-    resourceTitle: ''
+    resourceTitle: '',
+    downloadUrl: '',
+    fileSize: '',
+    isDownloadable: false,
+    experienceLevel: 'beginner' as ExperienceLevel
   })
 
   useEffect(() => {
@@ -86,8 +90,8 @@ export default function NewArticlePage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-text-primary">New Inspiration</h1>
-            <p className="text-gray-600 mt-2">Create a new inspiration with resource and category</p>
+            <h1 className="text-3xl font-bold text-text-primary">Nová inspirace/materiál</h1>
+            <p className="text-gray-600 mt-2">Vytvořte novou inspiraci nebo materiál s možností stažení nebo externím odkazem</p>
           </div>
         </div>
 
@@ -142,13 +146,30 @@ export default function NewArticlePage() {
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                <option value="book">📚 Book</option>
+                <option value="book">📚 Kniha</option>
+                <option value="article">📄 Článek</option>
                 <option value="video">🎥 Video</option>
-                <option value="article">📄 Article</option>
-                <option value="thought">💡 Thought</option>
-                <option value="webpage">🌐 Webpage</option>
-                <option value="application">📱 Application</option>
-                <option value="other">🔗 Other</option>
+                <option value="application">📱 Aplikace</option>
+                <option value="thought">💡 Myšlenka</option>
+                <option value="downloadable">📥 Ke stažení</option>
+                <option value="other">🔗 Jiné</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700 mb-2">
+                Úroveň zkušenosti *
+              </label>
+              <select
+                id="experienceLevel"
+                name="experienceLevel"
+                required
+                value={formData.experienceLevel}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="beginner">🟢 Začátečník</option>
+                <option value="intermediate">🟡 Pokročilý</option>
               </select>
             </div>
 
@@ -211,6 +232,59 @@ export default function NewArticlePage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="https://example.com/image.jpg"
               />
+            </div>
+
+            {/* Downloadable Material Fields */}
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Materiál ke stažení</h3>
+              
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="isDownloadable"
+                  name="isDownloadable"
+                  checked={formData.isDownloadable}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isDownloadable" className="ml-2 block text-sm text-gray-700">
+                  Tento materiál je ke stažení
+                </label>
+              </div>
+
+              {formData.isDownloadable && (
+                <>
+                  <div className="mb-4">
+                    <label htmlFor="downloadUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                      URL souboru ke stažení
+                    </label>
+                    <input
+                      type="url"
+                      id="downloadUrl"
+                      name="downloadUrl"
+                      value={formData.downloadUrl}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="https://example.com/file.pdf"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="fileSize" className="block text-sm font-medium text-gray-700 mb-2">
+                      Velikost souboru
+                    </label>
+                    <input
+                      type="text"
+                      id="fileSize"
+                      name="fileSize"
+                      value={formData.fileSize}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="2.5 MB"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div>

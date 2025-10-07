@@ -1,7 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 
-export type InspirationIcon = 'book' | 'video' | 'article' | 'thought' | 'webpage' | 'application' | 'other'
+export type InspirationIcon = 'book' | 'video' | 'article' | 'thought' | 'webpage' | 'application' | 'downloadable' | 'other'
+
+export type ExperienceLevel = 'beginner' | 'intermediate'
 
 export interface Article {
   id: string
@@ -17,6 +19,12 @@ export interface Article {
   detail: string
   resource?: string // URL for external resource
   resourceTitle?: string // Display title for the resource
+  // New fields for downloadable materials
+  downloadUrl?: string // URL for downloadable file
+  fileSize?: string // Human readable file size (e.g., "2.5 MB")
+  isDownloadable?: boolean // Whether this material can be downloaded
+  // Experience level field
+  experienceLevel?: ExperienceLevel // Beginner, intermediate, or expert level
 }
 
 export interface Category {
