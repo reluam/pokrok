@@ -1,6 +1,22 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export default clerkMiddleware()
+const isProtectedRoute = createRouteMatcher(['/muj(.*)'])
+
+export default clerkMiddleware(async (auth, request) => {
+  // Handle subdomain routing
+  const hostname = request.headers.get('host') || ''
+  
+  // If accessing muj.pokrok.app, redirect to /muj
+  if (hostname === 'muj.pokrok.app' && request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/muj', request.url))
+  }
+  
+  // Protect routes
+  if (isProtectedRoute(request)) {
+    await auth.protect()
+  }
+})
 
 export const config = {
   matcher: [
