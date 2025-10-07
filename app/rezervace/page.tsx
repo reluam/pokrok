@@ -7,22 +7,22 @@ import Link from 'next/link'
 import { Calendar, Clock, Users, CheckCircle, ArrowRight } from 'lucide-react'
 import { CoachingPackage } from '@/lib/admin-types'
 
-// Fallback booking options in case API fails
-const fallbackBookingOptions = [
+// App download options
+const downloadOptions = [
   {
-    id: 'koucovy-balicek',
-    title: 'Koučovací balíček',
-    subtitle: 'Plně přizpůsobitelný',
-    description: 'Komplexní koučovací program na míru - od 6 sezení, s individuálním přístupem a cenou',
-    price: 'Cena na domluvě',
-    duration: 'Od 6 sezení',
+    id: 'web-app',
+    title: 'Webová aplikace',
+    subtitle: 'Okamžitě dostupná',
+    description: 'Používejte aplikaci Pokrok přímo ve vašem prohlížeči. Žádné stahování, žádná instalace.',
+    price: 'Zdarma',
+    duration: 'Okamžitě',
     features: [
-      'První konzultace zdarma (30 min)',
-      'Minimálně 6 sezení',
-      'Individuální frekvence a délka',
-      'Flexibilní cena podle vašich možností',
-      'E-mailová podpora mezi sezeními',
-      'Materiály a cvičení na míru'
+      'Přístup z jakéhokoli zařízení',
+      'Automatické synchronizace',
+      'Všechny funkce aplikace',
+      'Bezpečné uložení dat',
+      'Pravidelné aktualizace',
+      'Bez instalace'
     ],
     color: 'bg-primary-500',
     textColor: 'text-primary-500',
@@ -30,18 +30,19 @@ const fallbackBookingOptions = [
     headerTextColor: 'text-white'
   },
   {
-    id: 'jednorazovy-koucink',
-    title: 'Jednorázový koučing',
-    subtitle: '1 sezení',
-    description: 'Jednotlivé koučovací sezení pro řešení konkrétních výzev',
-    price: '2 500 Kč',
-    duration: '60 minut',
+    id: 'mobile-app',
+    title: 'Mobilní aplikace',
+    subtitle: 'Na cestách',
+    description: 'Mobilní verze aplikace pro iOS a Android. Váš osobní rozvoj vždy po ruce.',
+    price: 'Zdarma',
+    duration: 'Stažení',
     features: [
-      'Fokus na konkrétní téma',
-      'Okamžité praktické řešení',
-      'Individuální přístup',
-      'Materiály k sezení',
-      'E-mailová podpora 7 dní'
+      'Offline přístup',
+      'Push notifikace',
+      'Mobilní optimalizace',
+      'Rychlý přístup',
+      'Synchronizace s webem',
+      'Intuitivní ovládání'
     ],
     color: 'bg-primary-100',
     textColor: 'text-primary-600',
@@ -49,19 +50,19 @@ const fallbackBookingOptions = [
     headerTextColor: 'text-primary-500'
   },
   {
-    id: 'vstupni-konzultace',
-    title: 'Zkušební hodina zdarma',
-    subtitle: '1 hodina',
-    description: 'Vyzkoušejte si koučing zdarma a uvidíte, zda vám vyhovuje. Plnohodnotné sezení bez závazků.',
+    id: 'desktop-app',
+    title: 'Desktop aplikace',
+    subtitle: 'Pro počítač',
+    description: 'Desktop verze pro Windows, macOS a Linux. Plná funkčnost na vašem počítači.',
     price: 'Zdarma',
-    duration: '60 minut',
+    duration: 'Instalace',
     features: [
-      'Plnohodnotné koučovací sezení',
-      'Praktické ukázky technik',
-      'Seznámení s koučovacím procesem',
-      'Definování vašich cílů',
-      'Doporučení dalšího postupu',
-      'Bez závazků'
+      'Plná funkcionalita',
+      'Rychlý výkon',
+      'Offline režim',
+      'Systémové notifikace',
+      'Automatické aktualizace',
+      'Lepší soustředění'
     ],
     color: 'bg-[#3E603B]',
     textColor: 'text-[#3E603B]',
@@ -69,31 +70,14 @@ const fallbackBookingOptions = [
   }
 ]
 
-export default function BookingPage() {
-  const [bookingOptions, setBookingOptions] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export default function DownloadPage() {
+  const [downloadOptions, setDownloadOptions] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    loadCoachingPackages()
+    setDownloadOptions(downloadOptions)
+    setLoading(false)
   }, [])
-
-  const loadCoachingPackages = async () => {
-    try {
-      const response = await fetch('/api/coaching-packages')
-      if (response.ok) {
-        const packages: CoachingPackage[] = await response.json()
-        setBookingOptions(packages)
-      } else {
-        console.error('Failed to load coaching packages')
-        setBookingOptions(fallbackBookingOptions)
-      }
-    } catch (error) {
-      console.error('Error loading coaching packages:', error)
-      setBookingOptions(fallbackBookingOptions)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -102,7 +86,7 @@ export default function BookingPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Načítání koučovacích balíčků...</p>
+            <p className="mt-4 text-gray-600">Načítání...</p>
           </div>
         </div>
         <Footer />
@@ -118,21 +102,21 @@ export default function BookingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-h1 text-text-primary mb-4">
-              Rezervace
+              Stáhnout aplikaci
             </h1>
             <p className="text-p18 text-gray-600 max-w-3xl mx-auto">
-              Vyberte si koučovací službu, která nejlépe odpovídá vašim potřebám. 
-              Začněte se zkušební hodinou zdarma a uvidíte, zda vám můj styl koučingu vyhovuje.
+              Vyberte si způsob, jak chcete používat aplikaci Pokrok. 
+              Všechny verze jsou zdarma a obsahují stejné funkce.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Booking Options */}
+      {/* Download Options */}
       <section className="py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {bookingOptions.map((option, index) => (
+            {downloadOptions.map((option, index) => (
               <div 
                 key={option.id}
                 className={`bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${option.borderColor} border-opacity-20 flex flex-col`}
@@ -142,7 +126,7 @@ export default function BookingPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-6 h-6" />
-                      <span className="text-asul18 font-medium">Koučing</span>
+                      <span className="text-asul18 font-medium">Aplikace</span>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">{option.price}</div>
@@ -170,13 +154,15 @@ export default function BookingPage() {
                   </div>
 
                   {/* CTA Button */}
-                  <Link
-                    href={`/rezervace/${option.id}`}
+                  <a
+                    href="/moje"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`w-full ${option.color} ${option.headerTextColor || 'text-white'} px-6 py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center space-x-2 text-asul18 font-medium`}
                   >
-                    <span>Rezervovat</span>
+                    <span>Otevřít aplikaci</span>
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  </a>
                 </div>
               </div>
             ))}
@@ -184,15 +170,15 @@ export default function BookingPage() {
         </div>
       </section>
 
-      {/* Process Info */}
+      {/* How to Start */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-h2 text-text-primary mb-4">
-              Jak rezervace probíhá
+              Jak začít
             </h2>
             <p className="text-p18 text-gray-600">
-              Jednoduchý proces k rezervaci vašeho koučovacího sezení. Začněte se zkušební hodinou zdarma!
+              Jednoduchý proces k začátku vaší cesty k lepšímu životu. Začněte ještě dnes!
             </p>
           </div>
 
@@ -201,9 +187,9 @@ export default function BookingPage() {
               <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">1</span>
               </div>
-              <h3 className="text-h4 text-text-primary mb-2">Vyberte službu</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Otevřete aplikaci</h3>
               <p className="text-p16 text-gray-600">
-                Klikněte na "Rezervovat" u služby, která vás zajímá
+                Klikněte na "Otevřít aplikaci" a přejděte do aplikace Pokrok
               </p>
             </div>
 
@@ -211,9 +197,9 @@ export default function BookingPage() {
               <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">2</span>
               </div>
-              <h3 className="text-h4 text-text-primary mb-2">Vyberte termín</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Vytvořte účet</h3>
               <p className="text-p16 text-gray-600">
-                V kalendáři si vyberte vhodný termín pro vaše sezení
+                Zaregistrujte se nebo se přihlaste do aplikace
               </p>
             </div>
 
@@ -221,9 +207,9 @@ export default function BookingPage() {
               <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-white font-bold text-xl">3</span>
               </div>
-              <h3 className="text-h4 text-text-primary mb-2">Potvrďte rezervaci</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Začněte svou cestu</h3>
               <p className="text-p16 text-gray-600">
-                Vyplňte kontaktní údaje a potvrďte rezervaci
+                Stanovte si první cíle a začněte svou transformaci
               </p>
             </div>
           </div>
@@ -241,27 +227,27 @@ export default function BookingPage() {
 
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-h4 text-text-primary mb-2">Jak probíhá koučovací sezení?</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Je aplikace zdarma?</h3>
               <p className="text-p16 text-gray-600">
-                Koučovací sezení probíhají online přes videohovor. Každé sezení je strukturované 
-                a zaměřené na vaše konkrétní cíle. Používám různé koučovací techniky a nástroje 
-                pro maximální efektivitu.
+                Ano, aplikace Pokrok je zcela zdarma. Všechny funkce jsou dostupné bez omezení 
+                a bez skrytých poplatků. Můžete ji používat tak dlouho, jak potřebujete.
               </p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-h4 text-text-primary mb-2">Mohu změnit nebo zrušit rezervaci?</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Jak funguje aplikace?</h3>
               <p className="text-p16 text-gray-600">
-                Ano, rezervaci můžete změnit nebo zrušit nejpozději 24 hodin před plánovaným 
-                termínem. V případě pozdějšího zrušení se účtuje 50% z ceny sezení.
+                Aplikace vám pomáhá stanovit si cíle, sledovat pokrok a rozvíjet se systematicky. 
+                Obsahuje nástroje pro plánování, sledování pokroku a motivaci. Vše je navrženo 
+                tak, aby vám pomohlo dosáhnout vašich cílů.
               </p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-h4 text-text-primary mb-2">Jak probíhá platba?</h3>
+              <h3 className="text-h4 text-text-primary mb-2">Mohu používat aplikaci na více zařízeních?</h3>
               <p className="text-p16 text-gray-600">
-                Platba probíhá online přes zabezpečený platební systém. Můžete platit kartou 
-                nebo bankovním převodem. Faktura vám bude zaslána e-mailem.
+                Ano, aplikace synchronizuje vaše data mezi všemi zařízeními. Můžete začít na 
+                počítači a pokračovat na mobilu nebo naopak. Všechna vaše data jsou vždy aktuální.
               </p>
             </div>
           </div>

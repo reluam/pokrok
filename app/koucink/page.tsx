@@ -7,58 +7,37 @@ import { getAdminSetting } from '@/lib/admin-db'
 import CoachingPackagesSection from '@/components/CoachingPackagesSection'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const coachingEnabled = await getAdminSetting('coaching_enabled')
-  
-  if (coachingEnabled?.value !== 'true') {
-    return {
-      robots: {
-        index: false,
-        follow: false,
-        nocache: true,
-        noarchive: true,
-        nosnippet: true,
-        noimageindex: true,
-      }
-    }
-  }
-
   return {
-    title: 'Koučing - Smysluplné žití',
-    description: 'Transformujte svůj život pomocí profesionálního koučingu. Najděte svůj smysl a vytvořte život, který vás skutečně naplňuje.',
+    title: 'Funkce aplikace - Pokrok',
+    description: 'Objevte všechny funkce aplikace Pokrok pro osobní rozvoj a smysluplné žití.',
   }
 }
 
 
-const processSteps = [
+const appFeatures = [
   {
     step: '1',
-    title: 'Úvodní konzultace',
-    description: 'Společně probereme vaše cíle a očekávání, abychom vytvořili plán na míru.'
+    title: 'Stanovování cílů',
+    description: 'Vytvářejte si jasné a dosažitelné cíle s pomocí inteligentních nástrojů aplikace.'
   },
   {
     step: '2',
-    title: 'Analýza situace',
-    description: 'Prozkoumáme vaši současnou situaci a identifikujeme oblasti pro růst.'
+    title: 'Sledování pokroku',
+    description: 'Měřte svůj pokrok a oslavujte úspěchy na cestě k lepšímu životu.'
   },
   {
     step: '3',
-    title: 'Vytvoření plánu',
-    description: 'Společně vytvoříme konkrétní kroky a strategie pro dosažení vašich cílů.'
+    title: 'Osobní rozvoj',
+    description: 'Rozvíjejte se systematicky pomocí personalizovaných cvičení a materiálů.'
   },
   {
     step: '4',
-    title: 'Implementace a podpora',
-    description: 'Budu vás podporovat při realizaci plánu a pomohu překonat překážky.'
+    title: 'Motivace a inspirace',
+    description: 'Získejte denní dávku motivace a inspirace pro váš osobní růst.'
   }
 ]
 
-export default async function CoachingPage() {
-  const coachingEnabled = await getAdminSetting('coaching_enabled')
-  
-  if (coachingEnabled?.value !== 'true') {
-    notFound()
-  }
-
+export default async function AppFeaturesPage() {
   return (
     <main className="min-h-screen">
       <Header />
@@ -68,45 +47,42 @@ export default async function CoachingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-h1 text-text-primary mb-4">
-              Koučing
+              Funkce aplikace
             </h1>
             <p className="text-p18 text-gray-600 max-w-3xl mx-auto">
-              Transformujte svůj život pomocí profesionálního koučingu. Najděte svůj smysl a 
-              vytvořte život, který vás skutečně naplňuje.
+              Objevte všechny funkce aplikace Pokrok, které vám pomohou najít smysl života 
+              a dosáhnout osobního růstu.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Coaching Packages Section */}
-      <CoachingPackagesSection />
-
-      {/* Process Section */}
+      {/* Features Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-h2 text-text-primary mb-4">
-              Jak koučing probíhá
+              Klíčové funkce aplikace
             </h2>
             <p className="text-p18 text-gray-600">
-              Strukturovaný proces, který vás dovede k vašim cílům
+              Vše, co potřebujete pro svůj osobní rozvoj na jednom místě
             </p>
           </div>
 
           <div className="space-y-8">
-            {processSteps.map((step, index) => (
+            {appFeatures.map((feature, index) => (
               <div key={index} className="flex items-start space-x-6">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">{step.step}</span>
+                    <span className="text-white font-bold text-lg">{feature.step}</span>
                   </div>
                 </div>
                 <div className="flex-1">
                   <h3 className="text-h3 text-text-primary mb-2">
-                    {step.title}
+                    {feature.title}
                   </h3>
                   <p className="text-p16 text-gray-600">
-                    {step.description}
+                    {feature.description}
                   </p>
                 </div>
               </div>
@@ -120,10 +96,10 @@ export default async function CoachingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-h2 text-text-primary mb-4">
-              Co získáte
+              Výhody aplikace
             </h2>
             <p className="text-p18 text-gray-600">
-              Konkrétní výsledky, které můžete očekávat
+              Proč si vybrat právě aplikaci Pokrok
             </p>
           </div>
 
@@ -131,40 +107,40 @@ export default async function CoachingPage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Clock className="w-6 h-6 text-primary-500" />
-                <h3 className="text-h4 text-text-primary">Jasnost a směr</h3>
+                <h3 className="text-h4 text-text-primary">Dostupnost 24/7</h3>
               </div>
               <p className="text-p16 text-gray-600">
-                Získáte jasnou představu o tom, kam chcete směřovat a jak toho dosáhnout.
+                Aplikace je k dispozici kdykoli a kdekoli. Pracujte na svém rozvoji ve svém vlastním tempu.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Target className="w-6 h-6 text-primary-500" />
-                <h3 className="text-h4 text-text-primary">Konkrétní kroky</h3>
+                <h3 className="text-h4 text-text-primary">Personalizace</h3>
               </div>
               <p className="text-p16 text-gray-600">
-                Dostanete praktický plán s konkrétními kroky, které můžete okamžitě začít realizovat.
+                Aplikace se přizpůsobuje vašim potřebám a cílům pro maximální efektivitu.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Users className="w-6 h-6 text-primary-500" />
-                <h3 className="text-h4 text-text-primary">Podpora a motivace</h3>
+                <h3 className="text-h4 text-text-primary">Sledování pokroku</h3>
               </div>
               <p className="text-p16 text-gray-600">
-                Budu vás podporovat po celou dobu procesu a pomohu překonat překážky.
+                Měřte svůj pokrok a oslavujte úspěchy s detailními statistikami a grafy.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <Lightbulb className="w-6 h-6 text-primary-500" />
-                <h3 className="text-h4 text-text-primary">Nové dovednosti</h3>
+                <h3 className="text-h4 text-text-primary">Vědecky podložené</h3>
               </div>
               <p className="text-p16 text-gray-600">
-                Naučíte se techniky a nástroje, které můžete používat i po skončení koučingu.
+                Všechny metody jsou založeny na vědecky podložených přístupech k osobnímu rozvoji.
               </p>
             </div>
           </div>
@@ -175,16 +151,18 @@ export default async function CoachingPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-h2 text-text-primary mb-4">
-            Začněte svou transformaci
+            Začněte svou cestu k lepšímu životu
           </h2>
           <p className="text-p18 text-gray-600 mb-8">
-            Pojďme společně vytvořit plán, který vás dovede k vašim cílům a naplněnému životu.
+            Stáhněte si aplikaci Pokrok a začněte svou transformaci ještě dnes.
           </p>
           <a
-            href="/kontakt"
+            href="/moje"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
           >
-            <span>Kontaktovat</span>
+            <span>Otevřít aplikaci</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

@@ -51,7 +51,7 @@ export default function Header() {
               <div className="relative h-16 w-64">
                 <Image
                   src="/images/logo.png"
-                  alt="Smysluplné žití"
+                  alt="Pokrok - Aplikace pro osobní rozvoj"
                   fill
                   className="object-contain hover:opacity-80 transition-opacity"
                   priority
@@ -65,30 +65,22 @@ export default function Header() {
             <Link href="/materialy" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
               Materiály
             </Link>
-            {navSettings.coaching_enabled && (
-              <Link href="/koucink" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-                Koučing
-              </Link>
-            )}
-            {navSettings.workshops_enabled && (
-              <Link href="/workshopy" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-                Workshopy
-              </Link>
-            )}
             <Link href="/o-mne" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-              O mně
+              O aplikaci
             </Link>
           </nav>
 
-              {/* Contact Button */}
+              {/* App Button */}
               <div className="hidden md:block">
-                <Link
-                  href="/kontakt"
+                <a
+                  href="/moje"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
                 >
-                  <span>Kontakt</span>
+                  <span>Otevřít aplikaci</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </a>
               </div>
 
           {/* Mobile menu button */}
@@ -109,27 +101,19 @@ export default function Header() {
               <Link href="/materialy" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
                 Materiály
               </Link>
-              {navSettings.coaching_enabled && (
-                <Link href="/koucink" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                  Koučing
-                </Link>
-              )}
-              {navSettings.workshops_enabled && (
-                <Link href="/workshopy" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                  Workshopy
-                </Link>
-              )}
               <Link href="/o-mne" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                O mně
+                O aplikaci
               </Link>
-                  <Link
-                    href="/kontakt"
-                    onClick={closeMenu}
-                    className="block px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center space-x-2 text-asul18"
-                  >
-                    <span>Kontakt</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+              <a
+                href="/moje"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={closeMenu}
+                className="block px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center space-x-2 text-asul18"
+              >
+                <span>Otevřít aplikaci</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
           </div>
         )}

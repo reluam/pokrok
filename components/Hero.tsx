@@ -14,26 +14,28 @@ export default function Hero() {
             {/* Tagline */}
             <div className="flex items-center space-x-3 text-primary-500">
               <Sparkles className="w-5 h-5" />
-              <span className="text-asul18">Smysluplné žití</span>
+              <span className="text-asul18">Pokrok</span>
             </div>
 
             {/* Main heading */}
             <h1 className="text-h1 text-text-primary">
-              Najdi smysl v nesmyslném světě.
+              Aplikace pro smysluplné žití a osobní rozvoj.
             </h1>
 
             {/* Subtitle */}
             <p className="text-asul18 text-gray-600">
-              Odemkni svůj účel a najdi smysl.
+              Najděte svůj smysl, stanovte si cíle a dosáhněte pokroku v každé oblasti života.
             </p>
 
                 {/* CTA Button */}
                 <div>
                   <a
-                    href="/kontakt"
+                    href="/moje"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center space-x-2 bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
                   >
-                    <span>Kontakt</span>
+                    <span>Otevřít aplikaci</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
@@ -198,7 +200,7 @@ export function AboutCoach() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-h2 text-text-primary mb-8">
-            Poznej svého kouče
+            O aplikaci Pokrok
           </h1>
         </div>
         

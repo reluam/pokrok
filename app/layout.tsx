@@ -9,8 +9,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Smysluplné žití - Najdi smysl v nesmyslném světě',
-  description: 'Odemkni svůj účel a najdi smysl. Koučing služby pro osobní rozvoj a nalezení životního smyslu.',
+  title: 'Pokrok - Aplikace pro osobní rozvoj a smysluplné žití',
+  description: 'Objevte Pokrok - aplikaci, která vám pomůže najít smysl života, stanovit cíle a dosáhnout osobního růstu. Začněte svou cestu k lepšímu životu.',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',

@@ -27,10 +27,10 @@ export default function Services() {
   const defaultSections: OfferSection[] = [
     {
       id: '1',
-      title: 'Inspirace',
-      description: 'Gain focus, overcome obstacles, and take clear steps toward a fulfilling and meaningful life.',
-      icon: 'Lightbulb' as const,
-      href: '/inspirace',
+      title: 'Stanovování cílů',
+      description: 'Vytvářejte si jasné a dosažitelné cíle s pomocí inteligentních nástrojů aplikace.',
+      icon: 'Target' as const,
+      href: '/moje',
       enabled: true,
       order: 1,
       createdAt: '',
@@ -38,10 +38,10 @@ export default function Services() {
     },
     {
       id: '2',
-      title: 'Zdroje',
-      description: 'Discover your strengths, refine your skills, and confidently pursue the career you\'ve always wanted.',
+      title: 'Sledování pokroku',
+      description: 'Měřte svůj pokrok a oslavujte úspěchy na cestě k lepšímu životu.',
       icon: 'Flag' as const,
-      href: '#zdroje',
+      href: '/moje',
       enabled: true,
       order: 2,
       createdAt: '',
@@ -49,10 +49,10 @@ export default function Services() {
     },
     {
       id: '3',
-      title: 'Koučing',
-      description: 'Develop a resilient mindset, embrace challenges, and create sustainable habits for long-term success.',
-      icon: 'MessageCircle' as const,
-      href: '/koucink',
+      title: 'Osobní rozvoj',
+      description: 'Rozvíjejte se systematicky pomocí personalizovaných cvičení a materiálů.',
+      icon: 'Lightbulb' as const,
+      href: '/moje',
       enabled: true,
       order: 3,
       createdAt: '',
@@ -158,6 +158,8 @@ export default function Services() {
                 <a
                   key={section.id}
                   href={section.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-center space-y-4 p-8 hover:bg-gray-50 rounded-lg transition-colors group"
                 >
                   <div className="flex justify-center">

@@ -11,22 +11,27 @@ export default function Footer() {
               <span className="text-white font-bold text-xl">H</span>
             </div>
                 <p className="text-white text-sm">
-                  © 2025 Smysluplné žití
+                  © 2025 Pokrok
                 </p>
           </div>
 
           {/* About Column */}
           <div className="md:col-span-1">
-                <h3 className="text-h4 text-white mb-4">O projektu</h3>
+                <h3 className="text-h4 text-white mb-4">O aplikaci</h3>
                 <ul className="space-y-2">
                   <li>
                     <a href="/o-mne" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                      O mně
+                      O aplikaci
                     </a>
                   </li>
                   <li>
                     <a href="/materialy" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                      Inpirace
+                      Materiály
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/moje" target="_blank" rel="noopener noreferrer" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                      Otevřít aplikaci
                     </a>
                   </li>
                 </ul>
@@ -37,18 +42,13 @@ export default function Footer() {
             <h3 className="text-h4 text-white mb-4">Kontakt</h3>
             <ul className="space-y-2">
               <li>
-                <a href="mailto:matej@smysluplneziti.cz" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  matej@smysluplneziti.cz
-                </a>
-              </li>
-              <li>
-                <a href="tel:+420725527052" className="text-asul16 text-white hover:text-gray-200 transition-colors">
-                  +420 725 527 052
+                <a href="mailto:info@pokrok.app" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                  info@pokrok.app
                 </a>
               </li>
               <li>
                 <a href="/kontakt" className="text-asul16 text-white hover:text-gray-200 transition-colors font-medium">
-                  Kontaktujte mě
+                  Kontaktujte nás
                 </a>
               </li>
             </ul>
