@@ -1,7 +1,9 @@
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 import { CoachingPackage, OfferSection, VideoContent, AdminSettings, Workshop } from './admin-types'
 import Database from 'better-sqlite3'
 import path from 'path'
+
+const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
 
 // Local SQLite database for development
 let db: Database.Database | null = null
@@ -210,7 +212,7 @@ export async function deleteCoachingPackage(id: string): Promise<boolean> {
 // Offer Sections
 export async function getOfferSections(): Promise<OfferSection[]> {
   try {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT * FROM offer_sections 
       ORDER BY "order" ASC, created_at ASC
     `
@@ -223,7 +225,7 @@ export async function getOfferSections(): Promise<OfferSection[]> {
 
 export async function getOfferSection(id: string): Promise<OfferSection | null> {
   try {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT * FROM offer_sections WHERE id = ${id}
     `
     return rows[0] as OfferSection || null
@@ -237,7 +239,7 @@ export async function createOfferSection(sectionData: Omit<OfferSection, 'id' | 
   const id = Date.now().toString()
   const now = new Date().toISOString()
   
-  const { rows } = await sql`
+  const rows = await sql`
     INSERT INTO offer_sections (
       id, title, description, icon, href, enabled, "order", created_at, updated_at
     ) VALUES (
@@ -252,7 +254,7 @@ export async function createOfferSection(sectionData: Omit<OfferSection, 'id' | 
 export async function updateOfferSection(id: string, sectionData: Partial<OfferSection>): Promise<OfferSection> {
   const now = new Date().toISOString()
   
-  const { rows } = await sql`
+  const rows = await sql`
     UPDATE offer_sections SET
       title = COALESCE(${sectionData.title}, title),
       description = COALESCE(${sectionData.description}, description),
@@ -281,7 +283,7 @@ export async function deleteOfferSection(id: string): Promise<boolean> {
 // Video Content
 export async function getVideoContent(): Promise<VideoContent[]> {
   try {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT * FROM video_content 
       ORDER BY created_at DESC
     `
@@ -294,7 +296,7 @@ export async function getVideoContent(): Promise<VideoContent[]> {
 
 export async function getActiveVideoContent(): Promise<VideoContent | null> {
   try {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT * FROM video_content 
       WHERE enabled = true
       ORDER BY created_at DESC
@@ -309,7 +311,7 @@ export async function getActiveVideoContent(): Promise<VideoContent | null> {
 
 export async function getVideoContentById(id: string): Promise<VideoContent | null> {
   try {
-    const { rows } = await sql`
+    const rows = await sql`
       SELECT * FROM video_content WHERE id = ${id}
     `
     return rows[0] as VideoContent || null
@@ -323,7 +325,7 @@ export async function createVideoContent(videoData: Omit<VideoContent, 'id' | 'c
   const id = Date.now().toString()
   const now = new Date().toISOString()
   
-  const { rows } = await sql`
+  const rows = await sql`
     INSERT INTO video_content (
       id, title, description, video_url, thumbnail_url, embed_code, enabled, created_at, updated_at
     ) VALUES (
@@ -338,7 +340,7 @@ export async function createVideoContent(videoData: Omit<VideoContent, 'id' | 'c
 export async function updateVideoContent(id: string, videoData: Partial<VideoContent>): Promise<VideoContent> {
   const now = new Date().toISOString()
   
-  const { rows } = await sql`
+  const rows = await sql`
     UPDATE video_content SET
       title = COALESCE(${videoData.title}, title),
       description = COALESCE(${videoData.description}, description),

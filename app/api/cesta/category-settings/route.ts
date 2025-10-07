@@ -7,6 +7,9 @@ import {
   getUserByClerkId 
 } from '@/lib/cesta-db'
 
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const { userId } = await auth()

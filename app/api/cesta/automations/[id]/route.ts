@@ -5,6 +5,9 @@ import { getUserByClerkId } from '@/lib/cesta-db'
 
 const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
 
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

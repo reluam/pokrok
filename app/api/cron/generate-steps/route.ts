@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateAutomatedSteps, getAllUsers } from '@/lib/cesta-db'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // Check for authorization (optional - you can add API key validation)
