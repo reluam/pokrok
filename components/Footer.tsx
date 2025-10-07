@@ -30,7 +30,7 @@ export default function Footer() {
                     </a>
                   </li>
                   <li>
-                    <a href="/muj" target="_blank" rel="noopener noreferrer" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                    <a href="https://muj.pokrok.app" target="_blank" rel="noopener noreferrer" className="text-asul16 text-white hover:text-gray-200 transition-colors">
                       Otevřít aplikaci
                     </a>
                   </li>

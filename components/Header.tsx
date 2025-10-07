@@ -73,7 +73,7 @@ export default function Header() {
               {/* App Button */}
               <div className="hidden md:block">
                 <a
-                  href="/muj"
+                  href="https://muj.pokrok.app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
@@ -105,7 +105,7 @@ export default function Header() {
                 O aplikaci
               </Link>
               <a
-                href="/muj"
+                href="https://muj.pokrok.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={closeMenu}

@@ -155,7 +155,7 @@ export default function DownloadPage() {
 
                   {/* CTA Button */}
                   <a
-                    href="/muj"
+                    href="https://muj.pokrok.app"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`w-full ${option.color} ${option.headerTextColor || 'text-white'} px-6 py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center space-x-2 text-asul18 font-medium`}

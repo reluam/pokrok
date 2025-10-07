@@ -65,7 +65,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Aplikace</p>
-                    <a href="/muj" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
+                    <a href="https://muj.pokrok.app" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
                       Otevřít aplikaci Pokrok
                     </a>
                   </div>
