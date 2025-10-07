@@ -8,7 +8,7 @@ export default async function MojePage() {
   const { userId } = await auth()
   
   if (!userId) {
-    redirect('/sign-in')
+    redirect('https://accounts.pokrok.app/sign-in')
   }
 
   // Check if user has completed onboarding

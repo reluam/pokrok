@@ -6,7 +6,7 @@ export default async function NastaveniPage() {
   const { userId } = await auth()
   
   if (!userId) {
-    redirect('/sign-in')
+    redirect('https://accounts.pokrok.app/sign-in')
   }
 
   return <SettingsPage />
