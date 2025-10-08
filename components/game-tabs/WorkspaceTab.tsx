@@ -31,7 +31,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
   onGoalUpdate, 
   onStepUpdate, 
   onEventComplete, 
-  onEventPostpone 
+  onEventPostpone
 }: WorkspaceTabProps) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [showMaterials, setShowMaterials] = useState(false)
@@ -350,6 +350,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
       alert('Chyba při odložení kroku')
     }
   }
+
 
   return (
     <div className="p-6">

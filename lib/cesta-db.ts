@@ -132,6 +132,17 @@ export interface CategorySettings {
   updated_at: Date
 }
 
+export interface NeededStepsSettings {
+  id: string
+  user_id: string
+  enabled: boolean
+  days_of_week: number[]
+  time_hour: number
+  time_minute: number
+  created_at: Date
+  updated_at: Date
+}
+
 export async function initializeCestaDatabase() {
   try {
     // Create users table
@@ -275,6 +286,21 @@ export async function initializeCestaDatabase() {
       )
     `
 
+    // Create needed_steps_settings table
+    await sql`
+      CREATE TABLE IF NOT EXISTS needed_steps_settings (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        enabled BOOLEAN DEFAULT FALSE,
+        days_of_week INTEGER[] DEFAULT ARRAY[1,2,3,4,5], -- 1=Monday, 7=Sunday
+        time_hour INTEGER DEFAULT 9,
+        time_minute INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id)
+      )
+    `
+
     // Add metric_id column to daily_steps table
     await sql`
       ALTER TABLE daily_steps 
@@ -349,6 +375,80 @@ export async function getAllUsers(): Promise<User[]> {
   } catch (error) {
     console.error('Error fetching all users:', error)
     return []
+  }
+}
+
+// Needed Steps Settings functions
+export async function getNeededStepsSettings(userId: string): Promise<NeededStepsSettings | null> {
+  try {
+    const result = await sql`
+      SELECT * FROM needed_steps_settings 
+      WHERE user_id = ${userId}
+    `
+    return result.length > 0 ? result[0] as NeededStepsSettings : null
+  } catch (error) {
+    console.error('Error fetching needed steps settings:', error)
+    return null
+  }
+}
+
+export async function createNeededStepsSettings(userId: string, settings: Partial<NeededStepsSettings>): Promise<NeededStepsSettings> {
+  try {
+    const id = crypto.randomUUID()
+    const result = await sql`
+      INSERT INTO needed_steps_settings (
+        id, user_id, enabled, days_of_week, time_hour, time_minute
+      ) VALUES (
+        ${id}, ${userId}, ${settings.enabled || false}, 
+        ${settings.days_of_week || [1,2,3,4,5]}, 
+        ${settings.time_hour || 9}, 
+        ${settings.time_minute || 0}
+      ) RETURNING *
+    `
+    return result[0] as NeededStepsSettings
+  } catch (error) {
+    console.error('Error creating needed steps settings:', error)
+    throw error
+  }
+}
+
+export async function updateNeededStepsSettings(userId: string, settings: Partial<NeededStepsSettings>): Promise<NeededStepsSettings> {
+  try {
+    const result = await sql`
+      UPDATE needed_steps_settings 
+      SET 
+        enabled = ${settings.enabled},
+        days_of_week = ${settings.days_of_week},
+        time_hour = ${settings.time_hour},
+        time_minute = ${settings.time_minute},
+        updated_at = NOW()
+      WHERE user_id = ${userId}
+      RETURNING *
+    `
+    
+    if (result.length === 0) {
+      throw new Error('Settings not found')
+    }
+    
+    return result[0] as NeededStepsSettings
+  } catch (error) {
+    console.error('Error updating needed steps settings:', error)
+    throw error
+  }
+}
+
+export async function upsertNeededStepsSettings(userId: string, settings: Partial<NeededStepsSettings>): Promise<NeededStepsSettings> {
+  try {
+    const existing = await getNeededStepsSettings(userId)
+    
+    if (existing) {
+      return await updateNeededStepsSettings(userId, settings)
+    } else {
+      return await createNeededStepsSettings(userId, settings)
+    }
+  } catch (error) {
+    console.error('Error upserting needed steps settings:', error)
+    throw error
   }
 }
 

@@ -529,55 +529,42 @@ export const DailyCheckIn = memo(function DailyCheckIn({
             const isSelected = selectedStep && selectedStep.id === step.id
             
             return (
-              <div
-                key={step.id}
+              <div 
+                key={step.id} 
                 onClick={() => onStepSelect && onStepSelect(step)}
-                className={`${status.bgColor} rounded-lg p-3 border-l-4 ${status.borderColor} shadow-sm relative cursor-pointer transition-all duration-200 hover:shadow-md ${
+                className={`bg-background border border-primary-200 rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 hover:shadow-md relative ${
                   isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
                 }`}
               >
                 {/* Footprints icon for user-created steps */}
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-gray-500 opacity-90">
+                <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-primary-500 opacity-90">
                   <Footprints className="w-4 h-4 fill-current" />
                 </div>
                 
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <h4 className="font-medium text-gray-900 text-sm">{step.title}</h4>
-                      {getPriorityIndicators() && (
-                        <span className="text-xs">{getPriorityIndicators()}</span>
-                      )}
-                    </div>
-                    
-                    {/* Step Type and Frequency Info */}
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        step.step_type === 'update' ? 'bg-blue-100 text-blue-800' :
-                        step.step_type === 'revision' ? 'bg-green-100 text-green-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {step.step_type === 'update' ? 'Update' :
-                         step.step_type === 'revision' ? 'Revize' :
-                         step.custom_type_name || 'Vlastní'}
-                      </span>
-                      
-                    </div>
-                    
-                    {step.description && (
-                      <p className="text-xs text-gray-600 mt-1">{step.description}</p>
-                    )}
-                    <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
-                      {goal && (
-                        <span className="flex items-center">
-                          <span className="mr-1">🎯</span>
-                          {goal.title}
+                      <h4 className="text-sm font-medium text-gray-600">{step.title}</h4>
+                      {step.is_important && (
+                        <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                          Důležité
                         </span>
                       )}
-                      <span className={`font-medium ${status.color}`}>
-                        {status.text}
-                      </span>
+                      {step.is_urgent && (
+                        <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
+                          Urgentní
+                        </span>
+                      )}
                     </div>
+                    {step.description && (
+                      <p className="text-xs text-gray-500 mb-2">{step.description}</p>
+                    )}
+                    {goal && (
+                      <p className="text-xs text-gray-400">Cíl: {goal.title}</p>
+                    )}
+                    <p className={`text-xs font-medium mt-1 ${status.color}`}>
+                      {status.text}
+                    </p>
                   </div>
                   <div className="flex space-x-1 ml-3">
                     <button
@@ -763,7 +750,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                       isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
                     }`}
                   >
-                    {/* Footprints icon for future steps (gray design) */}
+                    {/* Footprints icon for future steps */}
                     <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-gray-400 opacity-70">
                       <Footprints className="w-4 h-4 fill-current" />
                     </div>

@@ -17,9 +17,9 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-primary-100">
+      <header className="bg-white shadow-sm border-b border-primary-100 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -131,7 +131,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0">
         {children}
       </main>
     </div>

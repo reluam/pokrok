@@ -11,6 +11,7 @@ import { GoalDetailModal } from './GoalDetailModal'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePageContext } from './PageContext'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
+import { useNeededStepsTimer } from '@/hooks/useNeededStepsTimer'
 
 export const MainDashboard = memo(function MainDashboard() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export const MainDashboard = memo(function MainDashboard() {
   const [events, setEvents] = useState<Event[]>([])
   const [metrics, setMetrics] = useState<Metric[]>([])
   const [automations, setAutomations] = useState<Automation[]>([])
+  const [neededStepsSettings, setNeededStepsSettings] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showGoalOnboarding, setShowGoalOnboarding] = useState(false)
   const [showGoalDetails, setShowGoalDetails] = useState(false)
@@ -36,6 +38,13 @@ export const MainDashboard = memo(function MainDashboard() {
   const [selectedStep, setSelectedStep] = useState<DailyStep | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [expandedColumn, setExpandedColumn] = useState<'goals' | 'steps' | null>(null)
+
+  // Needed Steps Timer
+  const { shouldShowModal, hideModal, markAsCompleted } = useNeededStepsTimer(neededStepsSettings)
+  
+  // Test: Force show needed steps for testing
+  const testShowNeededSteps = false // Change to false to disable test
+  console.log('MainDashboard render:', { testShowNeededSteps, shouldShowModal, neededStepsSettings })
 
   useEffect(() => {
     fetchData()
@@ -55,22 +64,24 @@ export const MainDashboard = memo(function MainDashboard() {
 
   const fetchData = async () => {
     try {
-      const [goalsRes, valuesRes, stepsRes, eventsRes, metricsRes, automationsRes] = await Promise.all([
+      const [goalsRes, valuesRes, stepsRes, eventsRes, metricsRes, automationsRes, neededStepsRes] = await Promise.all([
         fetch('/api/cesta/goals'),
         fetch('/api/cesta/values'),
         fetch('/api/cesta/daily-steps'), // Načteme všechny kroky, ne jen dnešní
         fetch('/api/cesta/smart-events'), // Načteme smart events
         fetch('/api/cesta/metrics'),
-        fetch('/api/cesta/automations')
+        fetch('/api/cesta/automations'),
+        fetch('/api/cesta/needed-steps-settings')
       ])
 
-      const [goalsData, valuesData, stepsData, eventsData, metricsData, automationsData] = await Promise.all([
+      const [goalsData, valuesData, stepsData, eventsData, metricsData, automationsData, neededStepsData] = await Promise.all([
         goalsRes.json(),
         valuesRes.json(),
         stepsRes.json(),
         eventsRes.json(),
         metricsRes.json(),
-        automationsRes.json()
+        automationsRes.json(),
+        neededStepsRes.json()
       ])
 
       setGoals(goalsData.goals)
@@ -79,6 +90,19 @@ export const MainDashboard = memo(function MainDashboard() {
       setEvents(eventsData.events || [])
       setMetrics(metricsData.metrics || [])
       setAutomations(automationsData?.automations || [])
+      setNeededStepsSettings(neededStepsData)
+      console.log('Needed steps settings loaded:', neededStepsData)
+      
+      // Test: Force enable needed steps for testing
+      if (neededStepsData && !neededStepsData.enabled) {
+        console.log('Forcing enabled for testing')
+        setNeededStepsSettings({
+          ...neededStepsData,
+          enabled: true,
+          time_hour: new Date().getHours(),
+          time_minute: new Date().getMinutes()
+        })
+      }
       
       // Update page title and subtitle
       setTitle('Hlavní panel')
@@ -137,6 +161,36 @@ export const MainDashboard = memo(function MainDashboard() {
       )
     } catch (error) {
       console.error('Error completing step:', error)
+    }
+  }
+
+  const handleNeededStepsSave = async (steps: any[]) => {
+    try {
+      const response = await fetch('/api/cesta/needed-steps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ steps })
+      })
+
+      if (response.ok) {
+        // Refresh daily steps to show the new ones
+        const stepsRes = await fetch('/api/cesta/daily-steps')
+        const stepsData = await stepsRes.json()
+        setDailySteps(stepsData.steps || [])
+        
+        // Mark as completed so modal won't show again today
+        markAsCompleted()
+        
+        alert(`Úspěšně uloženo ${steps.length} kroků!`)
+      } else {
+        const error = await response.json()
+        alert(`Chyba při ukládání kroků: ${error.error || 'Neznámá chyba'}`)
+      }
+    } catch (error) {
+      console.error('Error saving needed steps:', error)
+      alert('Chyba při ukládání kroků')
     }
   }
 
@@ -701,43 +755,44 @@ export const MainDashboard = memo(function MainDashboard() {
   const totalSteps = dailySteps.length + overdueSteps
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-
-
-          {/* Main Content - 3 Column Layout */}
-          <main className="flex-1 flex min-h-0">
+    <div className="h-full bg-background flex flex-col">
+      {/* Main Content - 3 Column Layout */}
+      <main className="flex-1 flex min-h-0">
                     {/* Left Column - Goals */}
-                    <div className={`${expandedColumn === 'goals' ? 'w-full' : 'w-80'} bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300`}>
-                     <div className="p-6 border-b border-gray-200">
+                    <div className={`${expandedColumn === 'goals' ? 'w-full' : 'w-16 lg:w-80'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
+                     <div className="p-2 lg:p-6 border-b border-gray-200 flex-shrink-0">
                      <div className="flex items-center justify-between mb-2">
                        <div className="flex items-center space-x-3">
-                         <h2 className="text-xl font-bold text-gray-900">Moje cíle</h2>
-                         <button
-                           onClick={() => setExpandedColumn(expandedColumn === 'goals' ? null : 'goals')}
-                           className="p-1 hover:bg-gray-100 rounded transition-colors"
-                           title={expandedColumn === 'goals' ? 'Zavřít' : 'Rozbalit'}
-                         >
-                           {expandedColumn === 'goals' ? (
-                             <ChevronLeft className="w-4 h-4 text-gray-600" />
-                           ) : (
-                             <ChevronRight className="w-4 h-4 text-gray-600" />
-                           )}
-                         </button>
+                         <div className="flex items-center space-x-2">
+                           <h2 className="text-xl font-bold text-gray-900 hidden lg:block">Moje cíle</h2>
+                           <h2 className="text-lg font-bold text-gray-900 lg:hidden">🎯</h2>
+                           <button
+                             onClick={() => setExpandedColumn(expandedColumn === 'goals' ? null : 'goals')}
+                             className="p-1 hover:bg-gray-100 rounded transition-colors"
+                             title={expandedColumn === 'goals' ? 'Zavřít' : 'Rozbalit'}
+                           >
+                             {expandedColumn === 'goals' ? (
+                               <ChevronLeft className="w-4 h-4 text-gray-600" />
+                             ) : (
+                               <ChevronRight className="w-4 h-4 text-gray-600" />
+                             )}
+                           </button>
+                         </div>
                        </div>
                        <button
                          onClick={() => setShowGoalOnboarding(true)}
-                         className="flex items-center space-x-1 bg-primary-500 text-white px-3 py-1.5 rounded-lg hover:bg-primary-600 transition-colors text-sm"
+                         className="flex items-center space-x-1 bg-primary-500 text-white px-2 lg:px-3 py-1.5 rounded-lg hover:bg-primary-600 transition-colors text-sm"
                        >
                          <Plus className="w-4 h-4" />
-                         <span>Přidat</span>
+                         <span className="hidden lg:inline">Přidat</span>
                        </button>
                      </div>
-                     <p className="text-sm text-gray-600">Sledujte svůj pokrok</p>
+                     <p className="text-sm text-gray-600 hidden lg:block">Sledujte svůj pokrok</p>
                    </div>
-                  <div className="flex-1 overflow-y-auto p-6">
+                  <div className="flex-1 overflow-y-auto p-2 lg:p-6">
                     {expandedColumn === 'goals' ? (
                       // EXPANDOVANÉ ZOBRAZENÍ - Rozdělení cílů podle dlouhodobosti do 3 sloupců
-                      <div className="grid grid-cols-3 gap-6 h-full">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full p-2 lg:p-6">
                         
                         {/* KRÁTKODOBÉ CÍLE */}
                         <div className="space-y-4">
@@ -990,7 +1045,7 @@ export const MainDashboard = memo(function MainDashboard() {
                       </div>
                     ) : (
                       // NORMÁLNÍ ZOBRAZENÍ - Seznam cílů ve sloupci
-                      <div className="space-y-4">
+                      <div className="space-y-2 lg:space-y-4">
                         {activeGoals
                           .sort((a, b) => {
                             if (a.target_date && b.target_date) {
@@ -1005,54 +1060,80 @@ export const MainDashboard = memo(function MainDashboard() {
                           .map((goal, index) => (
                           <div
                             key={goal.id}
-                            className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-primary-300 transition-colors cursor-pointer"
+                            className="bg-gray-50 rounded-xl p-2 lg:p-4 border border-gray-200 hover:border-primary-300 transition-colors cursor-pointer"
                             onClick={() => handleGoalClick(goal)}
                           >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center space-x-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                                  goal.status === 'completed' 
-                                    ? 'bg-green-500' 
-                                    : goal.status === 'active'
-                                    ? 'bg-primary-500'
-                                    : 'bg-gray-400'
-                                }`}>
-                                  {goal.status === 'completed' ? '✓' : index + 1}
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
-                                    <span>{goal.title}</span>
-                                    {goal.icon && (
-                                      <span className="text-sm">{getIconEmoji(goal.icon)}</span>
+                            {/* Desktop view */}
+                            <div className="hidden lg:block">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                                    goal.status === 'completed' 
+                                      ? 'bg-green-500' 
+                                      : goal.status === 'active'
+                                      ? 'bg-primary-500'
+                                      : 'bg-gray-400'
+                                  }`}>
+                                    {goal.status === 'completed' ? '✓' : index + 1}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold text-gray-900 text-sm flex items-center space-x-2">
+                                      <span>{goal.title}</span>
+                                      {goal.icon && (
+                                        <span className="text-sm">{getIconEmoji(goal.icon)}</span>
+                                      )}
+                                    </h3>
+                                    {goal.target_date && (
+                                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <span>📅</span>
+                                        <span>
+                                          Do: {typeof goal.target_date === 'string' 
+                                            ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
+                                            : goal.target_date.toLocaleDateString('cs-CZ')
+                                          }
+                                        </span>
+                                      </p>
                                     )}
-                                  </h3>
-                                  {goal.target_date && (
-                                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                                      <span>📅</span>
-                                      <span>
-                                        Do: {typeof goal.target_date === 'string' 
-                                          ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
-                                          : goal.target_date.toLocaleDateString('cs-CZ')
-                                        }
-                                      </span>
-                                    </p>
-                                  )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {goal.description && (
+                                <p className="text-xs text-gray-600 mb-3">{goal.description}</p>
+                              )}
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span>Pokrok</span>
+                                  <span>{getProgressDisplay(goal)}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                      goal.status === 'completed' 
+                                        ? 'bg-green-500' 
+                                        : 'bg-primary-500'
+                                    }`}
+                                    style={{ width: `${goal.progress_percentage || 0}%` }}
+                                  />
                                 </div>
                               </div>
                             </div>
-                            
-                            {goal.description && (
-                              <p className="text-xs text-gray-600 mb-3">{goal.description}</p>
-                            )}
-                            
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span>Pokrok</span>
-                                <span>{getProgressDisplay(goal)}</span>
+
+                            {/* Mobile/Tablet view - Icon only */}
+                            <div className="lg:hidden flex flex-col items-center space-y-2">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg ${
+                                goal.status === 'completed' 
+                                  ? 'bg-green-500' 
+                                  : goal.status === 'active'
+                                  ? 'bg-primary-500'
+                                  : 'bg-gray-400'
+                              }`}>
+                                {goal.status === 'completed' ? '✓' : (goal.icon ? getIconEmoji(goal.icon) : index + 1)}
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 
-                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                  className={`h-1.5 rounded-full transition-all duration-500 ${
                                     goal.status === 'completed' 
                                       ? 'bg-green-500' 
                                       : 'bg-primary-500'
@@ -1079,7 +1160,7 @@ export const MainDashboard = memo(function MainDashboard() {
                 </div>
 
                     {/* Center Column - Game Center */}
-                    <div className={`${expandedColumn ? 'hidden' : 'flex-1'} bg-background overflow-y-auto transition-all duration-300`}>
+                    <div className={`${expandedColumn ? 'hidden' : 'flex-1'} bg-background transition-all duration-300`}>
                       <GameCenter 
                         values={values}
                         dailySteps={dailySteps}
@@ -1093,12 +1174,15 @@ export const MainDashboard = memo(function MainDashboard() {
                         onStepUpdate={handleStepUpdate}
                         onEventComplete={handleEventComplete}
                         onEventPostpone={handleEventPostpone}
+                        showNeededSteps={shouldShowModal}
+                        neededStepsSettings={neededStepsSettings}
+                        onNeededStepsSave={handleNeededStepsSave}
                       />
                     </div>
 
                 {/* Right Column - Daily Steps */}
-                <div className={`${expandedColumn === 'steps' ? 'w-full' : 'w-80'} bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300`}>
-                 <div className="p-6 border-b border-gray-200">
+                <div className={`${expandedColumn === 'steps' ? 'w-full' : 'w-80'} bg-white border-l border-gray-200 flex flex-col transition-all duration-300`}>
+                 <div className="p-6 border-b border-gray-200 flex-shrink-0">
                    <div className="flex items-center justify-between mb-2">
                      <div className="flex items-center space-x-3">
                        <button
@@ -1401,6 +1485,7 @@ export const MainDashboard = memo(function MainDashboard() {
             onCancel={() => setShowGoalOnboarding(false)}
           />
         )}
+
       </div>
   )
 })
