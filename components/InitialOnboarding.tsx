@@ -134,6 +134,9 @@ export function InitialOnboarding() {
 
   const completeOnboarding = async () => {
     try {
+      console.log('Starting onboarding completion...')
+      console.log('Selected values:', selectedValues)
+      
       // Save selected values to database
       const response = await fetch('/api/cesta/complete-onboarding', {
         method: 'POST',
@@ -141,18 +144,40 @@ export function InitialOnboarding() {
         body: JSON.stringify({ values: selectedValues })
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response ok:', response.ok)
+
       if (response.ok) {
+        const data = await response.json()
+        console.log('Onboarding response:', data)
+        
         // Redirect to main dashboard
+        console.log('Redirecting to /muj...')
         router.push('/muj')
+        
+        // Fallback redirect after 2 seconds
+        setTimeout(() => {
+          console.log('Fallback redirect to /muj...')
+          window.location.href = '/muj'
+        }, 2000)
       } else {
-        console.error('Failed to complete onboarding')
+        const errorData = await response.json()
+        console.error('Failed to complete onboarding:', errorData)
         // Still redirect to avoid getting stuck
+        console.log('Redirecting despite error...')
         router.push('/muj')
+        setTimeout(() => {
+          window.location.href = '/muj'
+        }, 1000)
       }
     } catch (error) {
       console.error('Error completing onboarding:', error)
       // Still redirect to avoid getting stuck
+      console.log('Redirecting after error...')
       router.push('/muj')
+      setTimeout(() => {
+        window.location.href = '/muj'
+      }, 1000)
     }
   }
 

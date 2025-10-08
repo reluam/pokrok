@@ -58,16 +58,27 @@ export async function POST(request: NextRequest) {
 
     // Mark user as having completed onboarding
     console.log('Marking onboarding as complete...')
-    await sql`
+    const updateResult = await sql`
       UPDATE users 
       SET has_completed_onboarding = true, updated_at = NOW()
       WHERE id = ${dbUser.id}
     `
+    console.log('Update result:', updateResult)
+
+    // Verify the update
+    const verifyUser = await sql`
+      SELECT has_completed_onboarding FROM users WHERE id = ${dbUser.id}
+    `
+    console.log('User onboarding status after update:', verifyUser[0])
 
     console.log('Onboarding completed successfully')
     return NextResponse.json({ 
       success: true, 
-      values: createdValues 
+      values: createdValues,
+      user: {
+        id: dbUser.id,
+        has_completed_onboarding: true
+      }
     })
   } catch (error) {
     console.error('Error completing onboarding:', error)
