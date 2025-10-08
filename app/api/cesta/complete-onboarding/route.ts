@@ -46,11 +46,10 @@ export async function POST(request: NextRequest) {
       
       const value = await sql`
         INSERT INTO values (
-          id, user_id, name, description, level, experience, 
-          created_at, updated_at
+          id, user_id, name, description, color, icon, is_custom, created_at
         ) VALUES (
-          ${valueId}, ${dbUser.id}, ${valueName}, ${valueName}, 1, 0,
-          NOW(), NOW()
+          ${valueId}, ${dbUser.id}, ${valueName}, ${valueName}, '#3B82F6', 'star', true,
+          NOW()
         ) RETURNING *
       `
       createdValues.push(value[0])
