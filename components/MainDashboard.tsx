@@ -1417,6 +1417,15 @@ export const MainDashboard = memo(function MainDashboard() {
             // TODO: Implement step click functionality
             console.log('Step clicked:', step)
           }}
+          onStepComplete={handleStepComplete}
+          onStepEdit={(step) => {
+            // TODO: Implement step edit functionality
+            console.log('Step edit:', step)
+          }}
+          onStepAdd={(goalId) => {
+            // TODO: Implement step add functionality
+            console.log('Step add for goal:', goalId)
+          }}
           onEdit={handleEditGoal}
           onDelete={handleGoalDelete}
         />

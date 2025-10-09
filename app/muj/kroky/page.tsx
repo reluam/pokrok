@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DailyStep, Goal } from '@/lib/cesta-db'
-import { CheckCircle, Circle, Clock, AlertTriangle, Plus, X } from 'lucide-react'
+import { CheckCircle, Circle, Clock, AlertTriangle, Plus, X, Edit } from 'lucide-react'
 import { usePageContext } from '@/components/PageContext'
 
 export default function StepsPage() {
@@ -15,11 +15,7 @@ export default function StepsPage() {
   const [newStep, setNewStep] = useState({
     goalId: '',
     title: '',
-    description: '',
-    stepType: 'update' as 'update' | 'revision' | 'custom',
-    customTypeName: '',
-    frequency: 'daily' as 'daily' | 'weekly' | 'monthly',
-    frequencyTime: ''
+    description: ''
   })
 
   useEffect(() => {
@@ -51,22 +47,9 @@ export default function StepsPage() {
     }
   }
 
-  const handleStepComplete = async (stepId: string) => {
-    try {
-      const response = await fetch(`/api/cesta/daily-steps/${stepId}/complete`, {
-        method: 'POST'
-      })
-
-      if (response.ok) {
-        setSteps(prev => prev.map(step => 
-          step.id === stepId 
-            ? { ...step, completed: true, completed_at: new Date() }
-            : step
-        ))
-      }
-    } catch (error) {
-      console.error('Error completing step:', error)
-    }
+  const handleStepEdit = (step: DailyStep) => {
+    // TODO: Implement step edit functionality
+    console.log('Edit step:', step)
   }
 
   const getGoalTitle = (goalId: string) => {
@@ -120,12 +103,7 @@ export default function StepsPage() {
           title: newStep.title.trim(),
           description: newStep.description.trim(),
           date: getTodayString(),
-          isImportant: false, // Always false for automated steps
-          isUrgent: false, // Always false for automated steps
-          stepType: newStep.stepType,
-          customTypeName: newStep.stepType === 'custom' ? newStep.customTypeName : undefined,
-          frequency: newStep.frequency,
-          frequencyTime: newStep.frequencyTime
+          stepType: 'custom'
         })
       })
 
@@ -135,11 +113,7 @@ export default function StepsPage() {
         setNewStep({
           goalId: '',
           title: '',
-          description: '',
-          stepType: 'update',
-          customTypeName: '',
-          frequency: 'daily',
-          frequencyTime: ''
+          description: ''
         })
         setShowAddForm(false)
       } else {
@@ -261,67 +235,6 @@ export default function StepsPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Typ kroku
-                  </label>
-                  <select
-                    value={newStep.stepType}
-                    onChange={(e) => setNewStep(prev => ({ ...prev, stepType: e.target.value as 'update' | 'revision' | 'custom' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="update">Update</option>
-                    <option value="revision">Revize</option>
-                    <option value="custom">Vlastní</option>
-                  </select>
-                </div>
-
-                {newStep.stepType === 'custom' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Název vlastního typu
-                    </label>
-                    <input
-                      type="text"
-                      value={newStep.customTypeName}
-                      onChange={(e) => setNewStep(prev => ({ ...prev, customTypeName: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Např. Meditace, Cvičení"
-                      required
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Frekvence
-                  </label>
-                  <select
-                    value={newStep.frequency}
-                    onChange={(e) => setNewStep(prev => ({ ...prev, frequency: e.target.value as 'daily' | 'weekly' | 'monthly' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="daily">Jednou denně</option>
-                    <option value="weekly">Jednou týdně</option>
-                    <option value="monthly">Jednou měsíčně</option>
-                  </select>
-                </div>
-
-                {(newStep.frequency === 'weekly' || newStep.frequency === 'monthly') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Čas frekvence (volitelné)
-                    </label>
-                    <input
-                      type="text"
-                      value={newStep.frequencyTime}
-                      onChange={(e) => setNewStep(prev => ({ ...prev, frequencyTime: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder={newStep.frequency === 'weekly' ? 'Např. Pondělí 10:00' : 'Např. 1. den v měsíci 09:00'}
-                    />
-                  </div>
-                )}
-
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
@@ -407,9 +320,20 @@ export default function StepsPage() {
                             </span>
                           </div>
                         </div>
-                        <button className="ml-4 p-2 hover:bg-white/50 rounded-full transition-colors">
-                          <Circle className="w-5 h-5 text-red-400" />
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStepEdit(step)
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 hover:bg-white/50 rounded-full transition-colors">
+                            <Circle className="w-5 h-5 text-red-400" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )
@@ -471,9 +395,20 @@ export default function StepsPage() {
                           <span>{new Date(step.date).toLocaleDateString('cs-CZ')}</span>
                         </div>
                       </div>
-                      <button className="ml-4 p-2 hover:bg-white/50 rounded-full transition-colors">
-                        <Circle className="w-5 h-5 text-gray-400" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleStepEdit(step)
+                          }}
+                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button className="p-2 hover:bg-white/50 rounded-full transition-colors">
+                          <Circle className="w-5 h-5 text-gray-400" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

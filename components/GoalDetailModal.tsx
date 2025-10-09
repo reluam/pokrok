@@ -2,7 +2,7 @@
 
 import { useState, memo } from 'react'
 import { Goal, DailyStep, Automation } from '@/lib/cesta-db'
-import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info } from 'lucide-react'
+import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2 } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 
@@ -12,12 +12,39 @@ interface GoalDetailModalProps {
   automations: Automation[]
   onClose: () => void
   onStepClick?: (step: DailyStep) => void
-  onEdit?: (goal: Goal) => void
-  onDelete?: (goalId: string) => void
+  onStepComplete?: (stepId: string) => void
+  onStepAdd?: (goalId: string) => void
 }
 
-export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, automations, onClose, onStepClick, onEdit, onDelete }: GoalDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'automations' | 'settings'>('overview')
+export const GoalDetailModal = memo(function GoalDetailModal({ 
+  goal, 
+  steps, 
+  automations, 
+  onClose, 
+  onStepClick, 
+  onStepComplete,
+  onStepEdit,
+  onStepAdd,
+  onEdit, 
+  onDelete 
+}: GoalDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'metrics' | 'automations' | 'settings'>('overview')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedGoal, setEditedGoal] = useState<Goal>(goal)
+
+  const handleSave = () => {
+    onEdit?.(editedGoal)
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setEditedGoal(goal)
+    setIsEditing(false)
+  }
+
+  const handleFieldChange = (field: keyof Goal, value: any) => {
+    setEditedGoal(prev => ({ ...prev, [field]: value }))
+  }
 
   const getGoalTypeInfo = (goalType: string) => {
     switch (goalType) {
@@ -125,6 +152,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, auto
   const tabs = [
     { id: 'overview', label: 'Přehled', icon: Info },
     { id: 'steps', label: 'Kroky', icon: CheckCircle },
+    { id: 'metrics', label: 'Metriky', icon: Gauge },
     { id: 'automations', label: 'Automatizace', icon: Clock },
     { id: 'settings', label: 'Nastavení', icon: Settings }
   ]
@@ -137,26 +165,70 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, auto
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-2">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                  <span>{goal.title}</span>
-                  {goal.icon && (
-                    <span className="text-2xl">{getIconEmoji(goal.icon)}</span>
-                  )}
-                </h2>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedGoal.title}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    className="text-2xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none"
+                  />
+                ) : (
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+                    <span>{goal.title}</span>
+                    {goal.icon && (
+                      <span className="text-2xl">{getIconEmoji(goal.icon)}</span>
+                    )}
+                  </h2>
+                )}
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${categoryInfo.color}`}>
                   {categoryInfo.icon} {categoryInfo.label}
                 </span>
               </div>
-              {goal.description && (
-                <p className="text-gray-600">{goal.description}</p>
+              {isEditing ? (
+                <textarea
+                  value={editedGoal.description || ''}
+                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  className="w-full text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1 focus:border-primary-500 focus:outline-none"
+                  rows={2}
+                  placeholder="Popis cíle..."
+                />
+              ) : (
+                goal.description && (
+                  <p className="text-gray-600">{goal.description}</p>
+                )
               )}
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center space-x-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Uložit
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Zrušit
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Edit className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -517,6 +589,13 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, auto
                 <h3 className="text-lg font-semibold text-gray-900">
                   Kroky ({completedSteps}/{totalSteps})
                 </h3>
+                <button 
+                  onClick={() => onStepAdd?.(goal.id)}
+                  className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Přidat krok</span>
+                </button>
               </div>
 
               {totalSteps === 0 ? (
@@ -530,19 +609,26 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, auto
                   {userSteps.map((step) => (
                     <div
                       key={step.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                      className={`p-4 rounded-lg border transition-colors ${
                         step.completed
-                          ? 'bg-green-50 border-green-200 hover:bg-green-100'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-white border-gray-200'
                       }`}
-                      onClick={() => onStepClick?.(step)}
                     >
                       <div className="flex items-center space-x-3">
-                        {step.completed ? (
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-gray-300" />
-                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onStepComplete?.(step.id)
+                          }}
+                          className="flex-shrink-0"
+                        >
+                          {step.completed ? (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-gray-300 hover:text-green-500 transition-colors" />
+                          )}
+                        </button>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
                             <h4 className="font-medium text-gray-900">{step.title}</h4>
@@ -563,11 +649,42 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, auto
                             )}
                           </div>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onStepEdit?.(step)
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'metrics' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Metriky cíle
+                </h3>
+                <button className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors">
+                  <Plus className="w-4 h-4" />
+                  <span>Přidat metriku</span>
+                </button>
+              </div>
+
+              <div className="text-center py-8 text-gray-500">
+                <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-lg font-medium">Žádné metriky</p>
+                <p className="text-sm">Pro tento cíl nejsou nastaveny žádné metriky.</p>
+              </div>
             </div>
           )}
 

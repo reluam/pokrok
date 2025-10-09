@@ -5,7 +5,7 @@ import { completeDailyStep, getUserByClerkId, getDailyStepsByUserId } from '@/li
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
-export async function PATCH(
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -42,4 +42,12 @@ export async function PATCH(
     console.error('Error completing daily step:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  // Delegate to POST method
+  return POST(request, { params })
 }
