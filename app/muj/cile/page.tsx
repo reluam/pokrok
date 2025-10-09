@@ -393,7 +393,6 @@ export default function CilePage() {
           <GoalDetailModal
             goal={selectedGoal}
             steps={getGoalSteps(selectedGoal.id)}
-            metrics={[]}
             automations={[]}
             onClose={() => {
               setShowGoalDetail(false)
