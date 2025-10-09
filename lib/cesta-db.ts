@@ -76,6 +76,20 @@ export interface Metric {
   updated_at: Date
 }
 
+export interface GoalMetric {
+  id: string
+  user_id: string
+  goal_id: string
+  name: string
+  description?: string
+  type: 'number' | 'currency' | 'percentage' | 'distance' | 'time' | 'custom'
+  unit: string
+  target_value: number
+  current_value: number
+  created_at: Date
+  updated_at: Date
+}
+
 export interface Event {
   id: string
   user_id: string
@@ -215,7 +229,7 @@ export async function initializeCestaDatabase() {
       )
     `
 
-    // Create metrics table
+    // Create metrics table (legacy - for step metrics)
     await sql`
       CREATE TABLE IF NOT EXISTS metrics (
         id VARCHAR(255) PRIMARY KEY,
@@ -226,6 +240,23 @@ export async function initializeCestaDatabase() {
         target_value DECIMAL(10,2) NOT NULL,
         current_value DECIMAL(10,2) DEFAULT 0,
         unit VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `
+
+    // Create goal_metrics table (new - for goal-level metrics)
+    await sql`
+      CREATE TABLE IF NOT EXISTS goal_metrics (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        goal_id VARCHAR(255) NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        type VARCHAR(20) NOT NULL CHECK (type IN ('number', 'currency', 'percentage', 'distance', 'time', 'custom')),
+        unit VARCHAR(50) NOT NULL,
+        target_value DECIMAL(10,2) NOT NULL,
+        current_value DECIMAL(10,2) DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
@@ -1203,6 +1234,106 @@ export async function updateUserOnboardingStatus(userId: string, hasCompletedOnb
     }
   } catch (error) {
     console.error('Error updating user onboarding status:', error)
+    throw error
+  }
+}
+
+// Goal Metrics functions
+export async function createGoalMetric(metricData: Omit<GoalMetric, 'id' | 'created_at' | 'updated_at'>): Promise<GoalMetric> {
+  try {
+    const id = crypto.randomUUID()
+    const metric = await sql`
+      INSERT INTO goal_metrics (
+        id, user_id, goal_id, name, description, type, unit, target_value, current_value
+      ) VALUES (
+        ${id}, ${metricData.user_id}, ${metricData.goal_id}, ${metricData.name}, 
+        ${metricData.description || null}, ${metricData.type}, ${metricData.unit}, 
+        ${metricData.target_value}, ${metricData.current_value}
+      ) RETURNING *
+    `
+    return metric[0] as GoalMetric
+  } catch (error) {
+    console.error('Error creating goal metric:', error)
+    throw error
+  }
+}
+
+export async function getGoalMetricsByGoalId(goalId: string): Promise<GoalMetric[]> {
+  try {
+    const metrics = await sql`
+      SELECT * FROM goal_metrics 
+      WHERE goal_id = ${goalId}
+      ORDER BY created_at ASC
+    `
+    return metrics as GoalMetric[]
+  } catch (error) {
+    console.error('Error fetching goal metrics:', error)
+    return []
+  }
+}
+
+export async function updateGoalMetric(metricId: string, updates: Partial<Omit<GoalMetric, 'id' | 'user_id' | 'goal_id' | 'created_at'>>): Promise<GoalMetric> {
+  try {
+    const metric = await sql`
+      UPDATE goal_metrics 
+      SET 
+        name = COALESCE(${updates.name}, name),
+        description = COALESCE(${updates.description}, description),
+        type = COALESCE(${updates.type}, type),
+        unit = COALESCE(${updates.unit}, unit),
+        target_value = COALESCE(${updates.target_value}, target_value),
+        current_value = COALESCE(${updates.current_value}, current_value),
+        updated_at = NOW()
+      WHERE id = ${metricId}
+      RETURNING *
+    `
+    return metric[0] as GoalMetric
+  } catch (error) {
+    console.error('Error updating goal metric:', error)
+    throw error
+  }
+}
+
+export async function deleteGoalMetric(metricId: string): Promise<void> {
+  try {
+    await sql`
+      DELETE FROM goal_metrics 
+      WHERE id = ${metricId}
+    `
+  } catch (error) {
+    console.error('Error deleting goal metric:', error)
+    throw error
+  }
+}
+
+export async function updateGoalProgressFromGoalMetrics(goalId: string) {
+  try {
+    // Calculate progress based on goal metrics
+    const result = await sql`
+      WITH metric_progress AS (
+        SELECT 
+          CASE 
+            WHEN target_value > 0 AND current_value IS NOT NULL THEN
+              LEAST((current_value / target_value) * 100, 100)
+            ELSE 0
+          END as progress
+        FROM goal_metrics
+        WHERE goal_id = ${goalId}
+      )
+      UPDATE goals 
+      SET 
+        progress_percentage = COALESCE(
+          (SELECT ROUND(AVG(progress)) FROM metric_progress), 
+          0
+        ),
+        updated_at = NOW()
+      WHERE id = ${goalId}
+    `
+
+    console.log(`Updated goal ${goalId} progress using goal metrics`)
+    return result
+  } catch (error) {
+    console.error('Error updating goal progress from goal metrics:', error)
     throw error
   }
 }

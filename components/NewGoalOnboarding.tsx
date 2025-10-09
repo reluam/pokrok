@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, memo } from 'react'
-import { Goal, Metric, Automation } from '@/lib/cesta-db'
-import { ArrowLeft, ArrowRight, Check, Target, Clock, Calendar, Settings, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Target, Calendar, BarChart3, Plus, Trash2, X } from 'lucide-react'
 import { IconPicker } from './IconPicker'
 import { getIconEmoji, getDefaultGoalIcon } from '@/lib/icon-utils'
 
@@ -11,26 +10,19 @@ interface NewGoalOnboardingProps {
   onCancel: () => void
 }
 
+interface MetricData {
+  id: string
+  name: string
+  type: 'number' | 'currency' | 'percentage' | 'distance' | 'time' | 'custom'
+  unit: string
+  targetValue: number
+  currentValue: number
+}
+
 interface StepData {
   id: string
   title: string
   description?: string
-  deadline: string
-  useGoalDeadline: boolean
-  hasMetric: boolean
-  metric?: {
-    name: string
-    targetValue: number
-    currentValue: number
-    unit: string
-  }
-  hasAutomation: boolean
-  automation?: {
-    name: string
-    frequencyType: 'one-time' | 'recurring'
-    frequencyTime?: string
-    scheduledDate?: string
-  }
 }
 
 interface GoalOnboardingData {
@@ -38,8 +30,18 @@ interface GoalOnboardingData {
   description?: string
   targetDate: string
   icon?: string
+  metrics: MetricData[]
   steps: StepData[]
 }
+
+const METRIC_TYPES = [
+  { id: 'number', label: 'Počet', unit: 'ks', icon: '🔢' },
+  { id: 'currency', label: 'Měna', unit: 'Kč', icon: '💰' },
+  { id: 'percentage', label: 'Procento', unit: '%', icon: '📊' },
+  { id: 'distance', label: 'Vzdálenost', unit: 'km', icon: '📏' },
+  { id: 'time', label: 'Čas', unit: 'hod', icon: '⏰' },
+  { id: 'custom', label: 'Vlastní', unit: '', icon: '⚙️' }
+]
 
 export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, onCancel }: NewGoalOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(0)
@@ -49,26 +51,53 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
     description: '',
     targetDate: '',
     icon: getDefaultGoalIcon(),
+    metrics: [],
     steps: []
   })
 
   const steps = [
-    { id: 'definition', title: 'Definice cíle', icon: Target },
-    { id: 'icon', title: 'Ikona', icon: Target },
-    { id: 'deadline', title: 'Deadline', icon: Calendar },
-    { id: 'steps', title: 'Kroky', icon: Settings },
+    { id: 'basic', title: 'Základní informace', icon: Target },
+    { id: 'metrics', title: 'Metriky', icon: BarChart3 },
+    { id: 'steps', title: 'Kroky', icon: Calendar },
     { id: 'complete', title: 'Dokončení', icon: Check }
   ]
+
+  const addMetric = () => {
+    const newMetric: MetricData = {
+      id: crypto.randomUUID(),
+      name: '',
+      type: 'number',
+      unit: 'ks',
+      targetValue: 0,
+      currentValue: 0
+    }
+    setData(prev => ({
+      ...prev,
+      metrics: [...prev.metrics, newMetric]
+    }))
+  }
+
+  const updateMetric = (metricId: string, updates: Partial<MetricData>) => {
+    setData(prev => ({
+      ...prev,
+      metrics: prev.metrics.map(metric => 
+        metric.id === metricId ? { ...metric, ...updates } : metric
+      )
+    }))
+  }
+
+  const removeMetric = (metricId: string) => {
+    setData(prev => ({
+      ...prev,
+      metrics: prev.metrics.filter(metric => metric.id !== metricId)
+    }))
+  }
 
   const addStep = () => {
     const newStep: StepData = {
       id: crypto.randomUUID(),
       title: '',
-      description: '',
-      deadline: data.targetDate || '',
-      useGoalDeadline: true,
-      hasMetric: false,
-      hasAutomation: false
+      description: ''
     }
     setData(prev => ({
       ...prev,
@@ -110,12 +139,17 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
 
   const renderStepContent = () => {
     switch (steps[currentStep].id) {
-      case 'definition':
+      case 'basic':
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Definujte svůj cíl</h3>
-              <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Základní informace o cíli</h3>
+              <p className="text-gray-600 mb-6">
+                Začněte definováním názvu, ikony a data dokončení vašeho cíle.
+              </p>
+              
+              <div className="space-y-6">
+                {/* Název cíle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Název cíle *
@@ -124,10 +158,12 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
                     type="text"
                     value={data.title}
                     onChange={(e) => setData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
                     placeholder="Např. Ušetřit na nový dům"
                   />
                 </div>
+
+                {/* Popis cíle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Popis (volitelné)
@@ -135,72 +171,188 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
                   <textarea
                     value={data.description}
                     onChange={(e) => setData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     rows={3}
                     placeholder="Popište svůj cíl podrobněji..."
                   />
                 </div>
-              </div>
-            </div>
-          </div>
-        )
 
-      case 'icon':
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Vyberte ikonu pro váš cíl</h3>
-              <p className="text-gray-600 mb-6">
-                Ikona vám pomůže rychle identifikovat váš cíl a všechny s ním související kroky.
-              </p>
-              
-              {/* Minimalistický výběr ikony */}
-              <div className="flex items-center space-x-4">
-                <div className="text-4xl">
-                  {getIconEmoji(data.icon)}
+                {/* Ikona cíle */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ikona cíle
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-5xl">
+                      {getIconEmoji(data.icon)}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowIconPicker(!showIconPicker)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
+                    >
+                      {showIconPicker ? 'Skrýt ikony' : 'Změnit ikonu'}
+                    </button>
+                  </div>
+                  
+                  {showIconPicker && (
+                    <div className="mt-4">
+                      <IconPicker
+                        selectedIcon={data.icon}
+                        onIconSelect={(icon) => {
+                          setData(prev => ({ ...prev, icon }))
+                          setShowIconPicker(false)
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowIconPicker(!showIconPicker)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors"
-                >
-                  {showIconPicker ? 'Skrýt ikony' : 'Změnit ikonu'}
-                </button>
-              </div>
-              
-              {/* Ikony se zobrazí pouze po kliknutí */}
-              {showIconPicker && (
-                <div className="mt-4">
-                  <IconPicker
-                    selectedIcon={data.icon}
-                    onIconSelect={(icon) => {
-                      setData(prev => ({ ...prev, icon }))
-                      setShowIconPicker(false)
-                    }}
+
+                {/* Datum dokončení */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Datum dokončení *
+                  </label>
+                  <input
+                    type="date"
+                    value={data.targetDate}
+                    onChange={(e) => setData(prev => ({ ...prev, targetDate: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )
 
-      case 'deadline':
+      case 'metrics':
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Nastavte deadline</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cílové datum *
-                </label>
-                <input
-                  type="date"
-                  value={data.targetDate}
-                  onChange={(e) => setData(prev => ({ ...prev, targetDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  min={new Date().toISOString().split('T')[0]}
-                />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Metriky pro měření pokroku</h3>
+              <p className="text-gray-600 mb-6">
+                Definujte, jak budete měřit pokrok v dosahování svého cíle. Můžete přidat více metrik různých typů.
+              </p>
+              
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-600">
+                  {data.metrics.length === 0 ? 'Žádné metriky' : `${data.metrics.length} metrik`}
+                </span>
+                <button
+                  onClick={addMetric}
+                  className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Přidat metriku</span>
+                </button>
               </div>
+
+              {data.metrics.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
+                  <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">Žádné metriky</p>
+                  <p className="text-sm mt-2">Přidejte metriky pro sledování pokroku</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.metrics.map((metric, index) => (
+                    <div key={metric.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-gray-900">Metrika {index + 1}</h4>
+                        <button
+                          onClick={() => removeMetric(metric.id)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Název metriky */}
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Název metriky *
+                          </label>
+                          <input
+                            type="text"
+                            value={metric.name}
+                            onChange={(e) => updateMetric(metric.id, { name: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Např. Ušetřená částka"
+                          />
+                        </div>
+
+                        {/* Typ metriky */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Typ metriky
+                          </label>
+                          <select
+                            value={metric.type}
+                            onChange={(e) => {
+                              const selectedType = METRIC_TYPES.find(t => t.id === e.target.value)
+                              updateMetric(metric.id, { 
+                                type: e.target.value as any,
+                                unit: selectedType?.unit || ''
+                              })
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          >
+                            {METRIC_TYPES.map(type => (
+                              <option key={type.id} value={type.id}>
+                                {type.icon} {type.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Jednotka */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Jednotka
+                          </label>
+                          <input
+                            type="text"
+                            value={metric.unit}
+                            onChange={(e) => updateMetric(metric.id, { unit: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="ks, Kč, %, km..."
+                          />
+                        </div>
+
+                        {/* Cílová hodnota */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Cílová hodnota *
+                          </label>
+                          <input
+                            type="number"
+                            value={metric.targetValue}
+                            onChange={(e) => updateMetric(metric.id, { targetValue: Number(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1000000"
+                          />
+                        </div>
+
+                        {/* Aktuální hodnota */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Aktuální stav
+                          </label>
+                          <input
+                            type="number"
+                            value={metric.currentValue}
+                            onChange={(e) => updateMetric(metric.id, { currentValue: Number(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -208,277 +360,79 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
       case 'steps':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Definujte kroky</h3>
-              <button
-                onClick={addStep}
-                className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Přidat krok</span>
-              </button>
-            </div>
-            
-            {data.steps.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Settings className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-md">Žádné kroky</p>
-                <p className="text-sm mt-1">Přidejte alespoň jeden krok pro dosažení cíle</p>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Kroky k dosažení cíle</h3>
+              <p className="text-gray-600 mb-6">
+                Definujte konkrétní kroky, které vás dovedou k vašemu cíli. Inspirujte se systémem "Co je potřeba".
+              </p>
+              
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-600">
+                  {data.steps.length === 0 ? 'Žádné kroky' : `${data.steps.length} kroků`}
+                </span>
+                <button
+                  onClick={addStep}
+                  className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Přidat krok</span>
+                </button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {data.steps.map((step, index) => (
-                  <div key={step.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-medium text-gray-900">Krok {index + 1}</h4>
-                      <button
-                        onClick={() => removeStep(step.id)}
-                        className="text-red-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Název kroku *
-                        </label>
-                        <input
-                          type="text"
-                          value={step.title}
-                          onChange={(e) => updateStep(step.id, { title: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          placeholder="Např. Pravidelně šetřit"
-                        />
+
+              {data.steps.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
+                  <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium">Žádné kroky</p>
+                  <p className="text-sm mt-2">Přidejte kroky pro dosažení cíle</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.steps.map((step, index) => (
+                    <div key={step.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-gray-900">Krok {index + 1}</h4>
+                        <button
+                          onClick={() => removeStep(step.id)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Popis (volitelné)
-                        </label>
-                        <textarea
-                          value={step.description || ''}
-                          onChange={(e) => updateStep(step.id, { description: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          rows={2}
-                          placeholder="Popište krok podrobněji..."
-                        />
-                      </div>
-
-                      {/* Deadline Section */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Deadline kroku
-                        </label>
-                        <div className="space-y-2">
-                          <label className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={step.useGoalDeadline}
-                              onChange={(e) => updateStep(step.id, { 
-                                useGoalDeadline: e.target.checked,
-                                deadline: e.target.checked ? data.targetDate : step.deadline
-                              })}
-                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span className="text-sm text-gray-700">Datum shodné s cílem ({data.targetDate})</span>
+                      <div className="space-y-4">
+                        {/* Název kroku */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Název kroku *
                           </label>
-                          {!step.useGoalDeadline && (
-                            <input
-                              type="date"
-                              value={step.deadline}
-                              onChange={(e) => updateStep(step.id, { deadline: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Metric Section */}
-                      <div className="border-t pt-4">
-                        <div className="flex items-center space-x-2 mb-3">
                           <input
-                            type="checkbox"
-                            id={`metric_${step.id}`}
-                            checked={step.hasMetric}
-                            onChange={(e) => updateStep(step.id, { hasMetric: e.target.checked })}
-                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                            type="text"
+                            value={step.title}
+                            onChange={(e) => updateStep(step.id, { title: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Např. Pravidelně šetřit"
                           />
-                          <label htmlFor={`metric_${step.id}`} className="text-sm font-medium text-gray-700">
-                            Přidat metriku
-                          </label>
                         </div>
                         
-                        {step.hasMetric && (
-                          <div className="ml-6 space-y-3 bg-white p-3 rounded border">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Název metriky
-                              </label>
-                              <input
-                                type="text"
-                                value={step.metric?.name || ''}
-                                onChange={(e) => updateStep(step.id, { 
-                                  metric: { ...step.metric, name: e.target.value } as any
-                                })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                placeholder="Např. Ušetřená částka"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Cílová hodnota
-                                </label>
-                                <input
-                                  type="number"
-                                  value={step.metric?.targetValue || ''}
-                                  onChange={(e) => updateStep(step.id, { 
-                                    metric: { ...step.metric, targetValue: Number(e.target.value) } as any
-                                  })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                  placeholder="1000000"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Jednotka
-                                </label>
-                                <input
-                                  type="text"
-                                  value={step.metric?.unit || ''}
-                                  onChange={(e) => updateStep(step.id, { 
-                                    metric: { ...step.metric, unit: e.target.value } as any
-                                  })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                  placeholder="Kč"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Aktuální stav (volitelné)
-                              </label>
-                              <input
-                                type="number"
-                                value={step.metric?.currentValue || ''}
-                                onChange={(e) => updateStep(step.id, { 
-                                  metric: { ...step.metric, currentValue: Number(e.target.value) } as any
-                                })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                placeholder="0"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Automation Section */}
-                      <div className="border-t pt-4">
-                        <div className="flex items-center space-x-2 mb-3">
-                          <input
-                            type="checkbox"
-                            id={`automation_${step.id}`}
-                            checked={step.hasAutomation}
-                            onChange={(e) => updateStep(step.id, { hasAutomation: e.target.checked })}
-                            className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                          />
-                          <label htmlFor={`automation_${step.id}`} className="text-sm font-medium text-gray-700">
-                            Přidat automatizaci
+                        {/* Popis kroku */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Popis (volitelné)
                           </label>
+                          <textarea
+                            value={step.description || ''}
+                            onChange={(e) => updateStep(step.id, { description: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            rows={2}
+                            placeholder="Popište krok podrobněji..."
+                          />
                         </div>
-                        
-                        {step.hasAutomation && (
-                          <div className="ml-6 space-y-3 bg-white p-3 rounded border">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Název automatizace
-                              </label>
-                              <input
-                                type="text"
-                                value={step.automation?.name || ''}
-                                onChange={(e) => updateStep(step.id, { 
-                                  automation: { ...step.automation, name: e.target.value } as any
-                                })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                placeholder="Např. Připomínka k šetření"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Typ automatizace
-                              </label>
-                              <div className="space-y-2">
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name={`automation_type_${step.id}`}
-                                    value="reminder"
-                                    checked={step.automation?.frequencyType === 'one-time'}
-                                    onChange={(e) => updateStep(step.id, { 
-                                      automation: { ...step.automation, frequencyType: 'one-time' } as any
-                                    })}
-                                    className="text-primary-600 focus:ring-primary-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Pouze připomínka</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    name={`automation_type_${step.id}`}
-                                    value="metric-update"
-                                    checked={step.automation?.frequencyType === 'recurring'}
-                                    onChange={(e) => updateStep(step.id, { 
-                                      automation: { ...step.automation, frequencyType: 'recurring' } as any
-                                    })}
-                                    className="text-primary-600 focus:ring-primary-500"
-                                  />
-                                  <span className="text-sm text-gray-700">Pro úpravu metriky</span>
-                                </label>
-                              </div>
-                            </div>
-                            
-                            {step.automation?.frequencyType === 'one-time' && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Datum a čas
-                                </label>
-                                <input
-                                  type="datetime-local"
-                                  value={step.automation?.scheduledDate || ''}
-                                  onChange={(e) => updateStep(step.id, { 
-                                    automation: { ...step.automation, scheduledDate: e.target.value } as any
-                                  })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                              </div>
-                            )}
-                            
-                            {step.automation?.frequencyType === 'recurring' && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Frekvence
-                                </label>
-                                <input
-                                  type="text"
-                                  value={step.automation?.frequencyTime || ''}
-                                  onChange={(e) => updateStep(step.id, { 
-                                    automation: { ...step.automation, frequencyTime: e.target.value } as any
-                                  })}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                  placeholder="Např. Každý den v 18:00"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )
 
@@ -486,24 +440,40 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cíl je připraven!</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Cíl je připraven!</h3>
+              <p className="text-gray-600 mb-8">
                 Zkontrolujte si nastavení a dokončete vytvoření cíle.
               </p>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">Shrnutí cíle</h4>
-              <div className="space-y-2 text-sm text-gray-700">
-                <p><strong>Název:</strong> {data.title}</p>
-                {data.description && <p><strong>Popis:</strong> {data.description}</p>}
-                <p><strong>Deadline:</strong> {new Date(data.targetDate).toLocaleDateString('cs-CZ')}</p>
-                <p><strong>Počet kroků:</strong> {data.steps.length}</p>
-                <p><strong>Kroky s metrikami:</strong> {data.steps.filter(s => s.hasMetric).length}</p>
-                <p><strong>Kroky s automatizacemi:</strong> {data.steps.filter(s => s.hasAutomation).length}</p>
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 text-lg">Shrnutí cíle</h4>
+              <div className="space-y-3 text-gray-700">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">{getIconEmoji(data.icon)}</span>
+                  <div>
+                    <p className="font-medium">{data.title}</p>
+                    {data.description && <p className="text-sm text-gray-600">{data.description}</p>}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <p className="text-sm text-gray-600">Deadline</p>
+                    <p className="font-medium">{new Date(data.targetDate).toLocaleDateString('cs-CZ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Metriky</p>
+                    <p className="font-medium">{data.metrics.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Kroky</p>
+                    <p className="font-medium">{data.steps.length}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -516,14 +486,12 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
 
   const canProceed = () => {
     switch (steps[currentStep].id) {
-      case 'definition':
-        return data.title.trim().length > 0
-      case 'icon':
-        return true // Icon is optional, always can proceed
-      case 'deadline':
-        return data.targetDate.length > 0
+      case 'basic':
+        return data.title.trim().length > 0 && data.targetDate.length > 0
+      case 'metrics':
+        return true // Metriky jsou volitelné
       case 'steps':
-        return data.steps.length > 0 && data.steps.every(step => step.title.trim().length > 0)
+        return true // Kroky jsou volitelné
       case 'complete':
         return true
       default:
@@ -533,49 +501,46 @@ export const NewGoalOnboarding = memo(function NewGoalOnboarding({ onComplete, o
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">Nový cíl</h2>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
             >
-              ✕
+              <X className="w-5 h-5" />
             </button>
           </div>
           
-          {/* Progress Steps */}
+          {/* Progress Steps - Simplified */}
           <div className="mt-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center space-x-8">
               {steps.map((step, index) => {
                 const Icon = step.icon
                 const isActive = index === currentStep
                 const isCompleted = index < currentStep
                 
                 return (
-                  <div key={step.id} className="flex items-center">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                  <div key={step.id} className="flex flex-col items-center">
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${
                       isActive 
                         ? 'border-primary-500 bg-primary-500 text-white' 
                         : isCompleted 
                         ? 'border-green-500 bg-green-500 text-white'
                         : 'border-gray-300 bg-white text-gray-400'
                     }`}>
-                      <Icon className="w-5 h-5" />
+                      <Icon className="w-6 h-6" />
                     </div>
-                    {index < steps.length - 1 && (
-                      <div className={`w-16 h-0.5 mx-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-300'
-                      }`} />
-                    )}
+                    <span className={`text-xs mt-2 font-medium ${
+                      isActive ? 'text-primary-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      {step.title}
+                    </span>
                   </div>
                 )
               })}
-            </div>
-            <div className="mt-2 text-center">
-              <p className="text-sm text-gray-600">{steps[currentStep].title}</p>
             </div>
           </div>
         </div>

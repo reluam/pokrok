@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { auth } from '@clerk/nextjs/server'
-import { getUserByClerkId, createUser, updateGoalProgressFromMetrics } from '@/lib/cesta-db'
+import { getUserByClerkId, createUser, createGoalMetric, updateGoalProgressFromGoalMetrics } from '@/lib/cesta-db'
 import { randomUUID } from 'crypto'
 
 const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
@@ -11,7 +11,7 @@ const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dum
 export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Starting goal creation...')
+    console.log('🚀 Starting goal creation with new structure...')
     
     const { userId } = await auth()
     if (!userId) {
@@ -24,10 +24,17 @@ export async function POST(request: NextRequest) {
       description,
       targetDate,
       icon,
+      metrics,
       steps
     } = await request.json()
     
-    console.log('📝 Goal data:', { title, description, targetDate, stepsCount: steps?.length })
+    console.log('📝 Goal data:', { 
+      title, 
+      description, 
+      targetDate, 
+      metricsCount: metrics?.length || 0,
+      stepsCount: steps?.length || 0 
+    })
 
     // Get or create user
     let dbUser = await getUserByClerkId(userId)
@@ -65,109 +72,65 @@ export async function POST(request: NextRequest) {
     const createdGoal = goal[0]
     console.log('✅ Goal created:', createdGoal.id)
 
-    // Create steps and their metrics/automations
-    const createdSteps = []
+    // Create goal metrics
     const createdMetrics = []
-    const createdAutomations = []
-
-    console.log(`👣 Creating ${steps.length} steps...`)
-    
-    for (const stepData of steps) {
-      console.log('👣 Creating step:', stepData.title)
-      
-      // Create step
-      const stepId = randomUUID()
-      
-      // Determine step date based on deadline
-      let stepDate = stepData.deadline ? new Date(stepData.deadline) : targetDateObj
-      if (stepData.useGoalDeadline) {
-        stepDate = targetDateObj
+    if (metrics && metrics.length > 0) {
+      console.log('📊 Creating goal metrics...')
+      for (const metricData of metrics) {
+        if (metricData.name && metricData.name.trim()) {
+          const metric = await createGoalMetric({
+            user_id: dbUser.id,
+            goal_id: goalId,
+            name: metricData.name,
+            description: metricData.description,
+            type: metricData.type,
+            unit: metricData.unit,
+            target_value: metricData.targetValue,
+            current_value: metricData.currentValue
+          })
+          createdMetrics.push(metric)
+          console.log('✅ Goal metric created:', metric.id)
+        }
       }
+    }
 
-      const step = await sql`
-        INSERT INTO daily_steps (
-          id, user_id, goal_id, title, description, completed, 
-          date, is_important, is_urgent, step_type, is_automated
-        ) VALUES (
-          ${stepId}, ${dbUser.id}, ${goalId}, ${stepData.title}, ${stepData.description || null},
-          false, ${stepDate}, false, false, 'custom', ${stepData.hasAutomation || false}
-        ) RETURNING *
-      `
-
-      createdSteps.push(step[0])
-      console.log('✅ Step created:', step[0].id)
-
-      // Create metric if specified and has valid name
-      if (stepData.hasMetric && stepData.metric && stepData.metric.name && stepData.metric.name.trim() !== '') {
-        console.log('📊 Creating metric:', stepData.metric.name)
-        const metricId = randomUUID()
-        
-        const metric = await sql`
-          INSERT INTO metrics (
-            id, user_id, step_id, name, description, target_value, 
-            current_value, unit
-          ) VALUES (
-            ${metricId}, ${dbUser.id}, ${stepId}, ${stepData.metric.name}, 
-            ${stepData.metric.description || stepData.metric.name}, ${stepData.metric.targetValue}, 
-            ${stepData.metric.currentValue || 0}, ${stepData.metric.unit}
-          ) RETURNING *
-        `
-
-        // Update step to reference metric
-        await sql`
-          UPDATE daily_steps 
-          SET metric_id = ${metricId}
-          WHERE id = ${stepId}
-        `
-
-        createdMetrics.push(metric[0])
-        console.log('✅ Metric created:', metric[0].id)
-      }
-
-      // Create automation if specified and has valid name
-      if (stepData.hasAutomation && stepData.automation && stepData.automation.name && stepData.automation.name.trim() !== '') {
-        console.log('🤖 Creating automation:', stepData.automation.name)
-        const automationId = randomUUID()
-        
-        const automation = await sql`
-          INSERT INTO automations (
-            id, user_id, name, description, type, target_id, 
-            frequency_type, frequency_time, scheduled_date, is_active
-          ) VALUES (
-            ${automationId}, ${dbUser.id}, ${stepData.automation.name}, 
-            ${stepData.automation.name}, 'step', ${stepId},
-            ${stepData.automation.frequencyType}, 
-            ${stepData.automation.frequencyTime || null},
-            ${stepData.automation.scheduledDate || null}, true
-          ) RETURNING *
-        `
-
-        // Mark step as automated
-        await sql`
-          UPDATE daily_steps 
-          SET is_automated = true
-          WHERE id = ${stepId}
-        `
-
-        createdAutomations.push(automation[0])
-        console.log('✅ Automation created:', automation[0].id)
+    // Create steps (simplified - no metrics or automations)
+    const createdSteps = []
+    if (steps && steps.length > 0) {
+      console.log('📝 Creating steps...')
+      for (const stepData of steps) {
+        if (stepData.title && stepData.title.trim()) {
+          const stepId = randomUUID()
+          const step = await sql`
+            INSERT INTO daily_steps (
+              id, user_id, goal_id, title, description, completed, 
+              date, is_important, is_urgent, step_type, custom_type_name
+            ) VALUES (
+              ${stepId}, ${dbUser.id}, ${goalId}, ${stepData.title}, 
+              ${stepData.description || null}, false, ${targetDateObj || new Date()}, 
+              false, false, 'custom', 'goal_step'
+            ) RETURNING *
+          `
+          createdSteps.push(step[0])
+          console.log('✅ Step created:', step[0].id)
+        }
       }
     }
 
     // Update goal progress based on metrics
-    console.log('📊 Updating goal progress...')
-    await updateGoalProgressFromMetrics(goalId)
+    if (createdMetrics.length > 0) {
+      await updateGoalProgressFromGoalMetrics(goalId)
+    }
 
-    console.log('🎉 Goal creation completed successfully!')
+    console.log('🎉 Goal creation completed successfully')
     return NextResponse.json({ 
-      success: true, 
-      goal: createdGoal,
-      steps: createdSteps,
+      success: true,
+      goal: createdGoal, 
       metrics: createdMetrics,
-      automations: createdAutomations
+      steps: createdSteps 
     })
   } catch (error) {
-    console.error('❌ Error creating goal with steps:', error)
+    console.error('❌ Error creating goal:', error)
     console.error('❌ Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
