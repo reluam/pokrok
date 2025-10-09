@@ -3,7 +3,7 @@
 import { useState, useEffect, memo } from 'react'
 import { UserButton } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
-import { Goal, Value, DailyStep, Metric, Event, Automation } from '@/lib/cesta-db'
+import { Goal, Value, DailyStep, Event, Automation } from '@/lib/cesta-db'
 import { GameCenter } from './GameCenter'
 import { DailyCheckIn } from './DailyCheckIn'
 import { NewGoalOnboarding } from './NewGoalOnboarding'
@@ -20,7 +20,6 @@ export const MainDashboard = memo(function MainDashboard() {
   const [values, setValues] = useState<Value[]>([])
   const [dailySteps, setDailySteps] = useState<DailyStep[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [metrics, setMetrics] = useState<Metric[]>([])
   const [automations, setAutomations] = useState<Automation[]>([])
   const [neededStepsSettings, setNeededStepsSettings] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -64,22 +63,20 @@ export const MainDashboard = memo(function MainDashboard() {
 
   const fetchData = async () => {
     try {
-      const [goalsRes, valuesRes, stepsRes, eventsRes, metricsRes, automationsRes, neededStepsRes] = await Promise.all([
+      const [goalsRes, valuesRes, stepsRes, eventsRes, automationsRes, neededStepsRes] = await Promise.all([
         fetch('/api/cesta/goals'),
         fetch('/api/cesta/values'),
         fetch('/api/cesta/daily-steps'), // Načteme všechny kroky, ne jen dnešní
         fetch('/api/cesta/smart-events'), // Načteme smart events
-        fetch('/api/cesta/metrics'),
         fetch('/api/cesta/automations'),
         fetch('/api/cesta/needed-steps-settings')
       ])
 
-      const [goalsData, valuesData, stepsData, eventsData, metricsData, automationsData, neededStepsData] = await Promise.all([
+      const [goalsData, valuesData, stepsData, eventsData, automationsData, neededStepsData] = await Promise.all([
         goalsRes.json(),
         valuesRes.json(),
         stepsRes.json(),
         eventsRes.json(),
-        metricsRes.json(),
         automationsRes.json(),
         neededStepsRes.json()
       ])
@@ -88,7 +85,6 @@ export const MainDashboard = memo(function MainDashboard() {
       setValues(valuesData.values)
       setDailySteps(stepsData.steps || [])
       setEvents(eventsData.events || [])
-      setMetrics(metricsData.metrics || [])
       setAutomations(automationsData?.automations || [])
       setNeededStepsSettings(neededStepsData)
       console.log('Needed steps settings loaded:', neededStepsData)
@@ -380,7 +376,6 @@ export const MainDashboard = memo(function MainDashboard() {
         console.log('Frontend: Goal created successfully:', data)
         setGoals(prev => [...prev, data.goal])
         setDailySteps(prev => [...prev, ...data.steps])
-        setMetrics(prev => [...prev, ...data.metrics])
         setShowGoalOnboarding(false)
         
         // Refresh data to ensure all changes are reflected
@@ -1166,7 +1161,6 @@ export const MainDashboard = memo(function MainDashboard() {
                         dailySteps={dailySteps}
                         events={events}
                         goals={goals}
-                        metrics={metrics}
                         selectedStep={selectedStep}
                         selectedEvent={selectedEvent}
                         onValueUpdate={handleValueUpdate}
@@ -1414,7 +1408,6 @@ export const MainDashboard = memo(function MainDashboard() {
         <GoalDetailModal
           goal={selectedGoal}
           steps={dailySteps.filter(step => step.goal_id === selectedGoal.id)}
-          metrics={metrics}
           automations={automations}
           onClose={() => {
             setShowGoalDetails(false)

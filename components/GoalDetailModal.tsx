@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, memo } from 'react'
-import { Goal, DailyStep, Metric, Automation } from '@/lib/cesta-db'
+import { Goal, DailyStep, Automation } from '@/lib/cesta-db'
 import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
@@ -9,7 +9,6 @@ import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 interface GoalDetailModalProps {
   goal: Goal
   steps: DailyStep[]
-  metrics: Metric[]
   automations: Automation[]
   onClose: () => void
   onStepClick?: (step: DailyStep) => void
@@ -17,8 +16,8 @@ interface GoalDetailModalProps {
   onDelete?: (goalId: string) => void
 }
 
-export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, metrics, automations, onClose, onStepClick, onEdit, onDelete }: GoalDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'automations' | 'metrics' | 'settings'>('overview')
+export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, automations, onClose, onStepClick, onEdit, onDelete }: GoalDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'automations' | 'settings'>('overview')
 
   const getGoalTypeInfo = (goalType: string) => {
     switch (goalType) {
@@ -127,7 +126,6 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, metr
     { id: 'overview', label: 'Přehled', icon: Info },
     { id: 'steps', label: 'Kroky', icon: CheckCircle },
     { id: 'automations', label: 'Automatizace', icon: Clock },
-    { id: 'metrics', label: 'Metriky', icon: Target },
     { id: 'settings', label: 'Nastavení', icon: Settings }
   ]
 
@@ -625,70 +623,6 @@ export const GoalDetailModal = memo(function GoalDetailModal({ goal, steps, metr
             </div>
           )}
 
-          {activeTab === 'metrics' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Metriky
-                </h3>
-                <button className="px-3 py-1 bg-primary-500 text-white rounded-lg text-sm hover:bg-primary-600 transition-colors">
-                  + Přidat metriku
-                </button>
-              </div>
-
-              {(() => {
-                const goalSteps = steps.map(step => step.id)
-                const goalMetrics = metrics.filter(metric => 
-                  goalSteps.includes(metric.step_id)
-                )
-                
-                return goalMetrics.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p className="text-lg font-medium">Žádné metriky</p>
-                    <p className="text-sm">Pro tento cíl nejsou nastaveny žádné metriky.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {goalMetrics.map((metric) => {
-                      const progressPercentage = metric.target_value > 0 
-                        ? Math.min(100, Math.round((metric.current_value / metric.target_value) * 100))
-                        : 0
-                      
-                      return (
-                        <div key={metric.id} className="p-4 bg-white border border-gray-200 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-gray-900">{metric.name}</h4>
-                            <span className="text-sm font-semibold text-primary-600">
-                              {progressPercentage}%
-                            </span>
-                          </div>
-                          
-                          {metric.description && (
-                            <p className="text-sm text-gray-600 mb-3">{metric.description}</p>
-                          )}
-                          
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm text-gray-600">
-                              <span>Aktuální: {metric.current_value} {metric.unit}</span>
-                              <span>Cíl: {metric.target_value} {metric.unit}</span>
-                            </div>
-                            
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${progressPercentage}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
 
           {activeTab === 'settings' && (
             <div className="space-y-6">

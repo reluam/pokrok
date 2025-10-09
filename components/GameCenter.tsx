@@ -1,6 +1,6 @@
 'use client'
 
-import { Goal, Value, DailyStep, Metric, Event } from '@/lib/cesta-db'
+import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { WorkspaceTab } from './game-tabs/WorkspaceTab'
 import { NeededStepsWorkspace } from './NeededStepsWorkspace'
 import { memo } from 'react'
@@ -10,7 +10,6 @@ interface GameCenterProps {
   values: Value[]
   dailySteps: DailyStep[]
   events: Event[]
-  metrics: Metric[]
   selectedStep?: DailyStep | null
   selectedEvent?: Event | null
   onValueUpdate?: (value: Value) => void
@@ -29,7 +28,6 @@ export const GameCenter = memo(function GameCenter({
   values, 
   dailySteps, 
   events, 
-  metrics, 
   selectedStep, 
   selectedEvent, 
   onValueUpdate, 
@@ -65,7 +63,6 @@ export const GameCenter = memo(function GameCenter({
         values={values}
         dailySteps={dailySteps}
         events={events}
-        metrics={metrics}
         selectedStep={selectedStep}
         selectedEvent={selectedEvent}
         onValueUpdate={onValueUpdate || (() => {})}
