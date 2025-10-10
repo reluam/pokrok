@@ -233,7 +233,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
   const totalSteps = todaySteps.length + overdueSteps.length
 
   // Determine if any steps or events are currently being displayed
-  const hasAnyStepsToDisplay = sortedTodaySteps.length > 0 || sortedTodayEvents.length > 0 || sortedFutureSteps.length > 0
+  const hasAnyStepsToDisplay = sortedFutureSteps.length > 0
 
 
   return (
@@ -459,11 +459,11 @@ export const DailyCheckIn = memo(function DailyCheckIn({
       {/* Infinite Feed - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-3">
-          {/* Today's steps */}
-          {sortedTodaySteps.length > 0 && (
+          {/* Future steps only - today's steps are now handled in WorkspaceTab */}
+          {sortedFutureSteps.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Dnešní kroky</h3>
-              {sortedTodaySteps.map((step) => {
+              <h3 className="text-sm font-semibold text-gray-500 mb-2">Budoucí kroky</h3>
+              {sortedFutureSteps.map((step) => {
             const goal = goals.find(g => g.id === step.goal_id)
             const stepDate = new Date(step.date)
             stepDate.setHours(0, 0, 0, 0)
@@ -590,146 +590,6 @@ export const DailyCheckIn = memo(function DailyCheckIn({
             </div>
           )}
 
-          {/* Today's events */}
-          {sortedTodayEvents.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Dnešní eventy</h3>
-              {sortedTodayEvents.map((event) => {
-                const goal = goals.find(g => g.id === event.goal_id)
-                const eventDate = new Date(event.date)
-                eventDate.setHours(0, 0, 0, 0)
-                const eventDateStr = eventDate.toLocaleDateString()
-                const todayStr = getToday().toLocaleDateString()
-                const eventDateObj = new Date(eventDateStr)
-                const todayObj = new Date(todayStr)
-                
-                // Determine event status and styling
-                const isOverdue = eventDateObj < todayObj
-                const isToday = eventDateStr === todayStr
-                const isFuture = eventDateObj > todayObj
-                
-                const getEventStatus = () => {
-                  if (isOverdue) {
-                    const daysOverdue = Math.floor((getToday().getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24))
-                    return { 
-                      text: daysOverdue === 0 ? 'Dnes' : `${daysOverdue} dní zpožděno`,
-                      color: 'text-red-600',
-                      bgColor: 'bg-red-50',
-                      borderColor: 'border-red-200',
-                      buttonColor: 'bg-red-600 hover:bg-red-700'
-                    }
-                  }
-                  if (isToday) {
-                    return { 
-                      text: 'Dnes',
-                      color: 'text-orange-600',
-                      bgColor: 'bg-orange-50',
-                      borderColor: 'border-orange-200',
-                      buttonColor: 'bg-orange-600 hover:bg-orange-700'
-                    }
-                  }
-                  if (isFuture) {
-                    const daysUntil = Math.ceil((eventDate.getTime() - getToday().getTime()) / (1000 * 60 * 60 * 24))
-                    return { 
-                      text: daysUntil === 1 ? 'Zítra' : `Za ${daysUntil} dní`,
-                      color: 'text-blue-600',
-                      bgColor: 'bg-blue-50',
-                      borderColor: 'border-blue-200',
-                      buttonColor: 'bg-blue-600 hover:bg-blue-700'
-                    }
-                  }
-                  return { 
-                    text: '',
-                    color: 'text-gray-600',
-                    bgColor: 'bg-gray-50',
-                    borderColor: 'border-gray-200',
-                    buttonColor: 'bg-gray-600 hover:bg-gray-700'
-                  }
-                }
-                
-                const status = getEventStatus()
-                
-                // Priority indicators
-                const getPriorityIndicators = () => {
-                  const indicators = []
-                  if (event.is_important) indicators.push('⭐')
-                  if (event.is_urgent) indicators.push('🚨')
-                  return indicators.join(' ')
-                }
-                
-                const isSelected = selectedEvent && selectedEvent.id === event.id
-                
-                return (
-                  <div
-                    key={event.id}
-                    onClick={() => onEventSelect && onEventSelect(event)}
-                    className={`${status.bgColor} rounded-lg p-3 border-l-4 ${status.borderColor} shadow-sm relative cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
-                    }`}
-                  >
-                    {/* Lightning bolt icon for events */}
-                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-primary-500 opacity-90">
-                      <Zap className="w-4 h-4 fill-current" />
-                    </div>
-                    
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className="font-medium text-gray-900 text-sm">{event.title}</h4>
-                          {getPriorityIndicators() && (
-                            <span className="text-xs">{getPriorityIndicators()}</span>
-                          )}
-                        </div>
-                        
-                        {/* Event Type Info */}
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            event.event_type === 'metric_update' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {event.event_type === 'metric_update' ? 'Metrika' : 'Připomínka'}
-                          </span>
-                        </div>
-                        
-                        {event.description && (
-                          <p className="text-xs text-gray-600 mb-2">{event.description}</p>
-                        )}
-                        
-                        <div className="flex items-center space-x-2 text-xs text-gray-500">
-                          {goal && (
-                            <span className="flex items-center">
-                              <span className="mr-1">🎯</span>
-                              {goal.title}
-                            </span>
-                          )}
-                          <span className={`font-medium ${status.color}`}>
-                            {status.text}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-1 ml-3">
-                        <button
-                          onClick={() => onEventComplete(event.id)}
-                          className={`px-3 py-1 text-white rounded-lg transition-colors text-xs font-medium ${status.buttonColor}`}
-                        >
-                          ✓
-                        </button>
-                        {onEventPostpone && (
-                          <button
-                            onClick={() => onEventPostpone(event.id)}
-                            className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs font-medium"
-                            title="Odložit na zítra"
-                          >
-                            ⏰
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
 
           {/* Future steps */}
           {sortedFutureSteps.length > 0 && (

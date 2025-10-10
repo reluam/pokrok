@@ -5,7 +5,7 @@ import {
   createGoalMetric, 
   updateGoalMetric, 
   deleteGoalMetric,
-  updateGoalProgressFromGoalMetrics 
+  updateGoalProgressCombined 
 } from '@/lib/cesta-db'
 
 // Force dynamic rendering
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Update goal progress
-    await updateGoalProgressFromGoalMetrics(goalId)
+        await updateGoalProgressCombined(goalId)
 
     return NextResponse.json({ metric })
   } catch (error) {
@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
 
     // Update goal progress if goalId is provided
     if (goalId) {
-      await updateGoalProgressFromGoalMetrics(goalId)
+        await updateGoalProgressCombined(goalId)
     }
 
     return NextResponse.json({ metric })
@@ -117,7 +117,7 @@ export async function DELETE(request: NextRequest) {
 
     // Update goal progress if goalId is provided
     if (goalId) {
-      await updateGoalProgressFromGoalMetrics(goalId)
+        await updateGoalProgressCombined(goalId)
     }
 
     return NextResponse.json({ success: true })

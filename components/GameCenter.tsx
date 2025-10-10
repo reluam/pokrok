@@ -2,7 +2,6 @@
 
 import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { WorkspaceTab } from './game-tabs/WorkspaceTab'
-import { NeededStepsWorkspace } from './NeededStepsWorkspace'
 import { memo } from 'react'
 
 interface GameCenterProps {
@@ -17,10 +16,6 @@ interface GameCenterProps {
   onStepUpdate?: (step: DailyStep) => void
   onEventComplete?: (eventId: string) => void
   onEventPostpone?: (eventId: string) => void
-  // Needed Steps props
-  showNeededSteps?: boolean
-  neededStepsSettings?: any
-  onNeededStepsSave?: (steps: any[]) => void
 }
 
 export const GameCenter = memo(function GameCenter({ 
@@ -34,28 +29,8 @@ export const GameCenter = memo(function GameCenter({
   onGoalUpdate, 
   onStepUpdate, 
   onEventComplete, 
-  onEventPostpone,
-  showNeededSteps = false,
-  neededStepsSettings,
-  onNeededStepsSave
+  onEventPostpone
 }: GameCenterProps) {
-  console.log('GameCenter render:', { showNeededSteps, neededStepsSettings })
-  
-  // Show Needed Steps Workspace if active
-  if (showNeededSteps) {
-    console.log('Rendering NeededStepsWorkspace directly in GameCenter')
-    return (
-      <div className="h-full overflow-y-auto">
-        <NeededStepsWorkspace
-          isActive={true}
-          onSave={onNeededStepsSave || (() => {})}
-          goals={goals.filter(goal => goal.status === 'active')}
-          settings={neededStepsSettings}
-        />
-      </div>
-    )
-  }
-  
   return (
     <div className="h-full overflow-y-auto">
       <WorkspaceTab 

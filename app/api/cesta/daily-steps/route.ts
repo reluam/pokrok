@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { getDailyStepsByUserId, getUserByClerkId, createDailyStep } from '@/lib/cesta-db'
+import { getDailyStepsByUserId, getUserByClerkId, createDailyStep, updateGoalProgressCombined } from '@/lib/cesta-db'
 
 
 // Force dynamic rendering
@@ -48,22 +48,10 @@ export async function POST(request: NextRequest) {
     const { 
       goalId, 
       title, 
-      description, 
-      date, 
-      isImportant, 
-      isUrgent,
-      stepType,
-      customTypeName,
-      frequency,
-      frequencyTime,
-      isAutomated,
-      automationTemplateId,
-      updateProgressType,
-      updateValue,
-      updateUnit
+      description
     } = await request.json()
 
-    if (!goalId || !title || !date) {
+    if (!goalId || !title) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -72,12 +60,17 @@ export async function POST(request: NextRequest) {
       goal_id: goalId,
       title,
       description: description || '',
-      date: new Date(date),
-      is_important: isImportant || false,
-      is_urgent: isUrgent || false,
-      step_type: stepType || 'update',
-      custom_type_name: customTypeName
+      date: new Date(), // Use current date
+      is_important: false,
+      is_urgent: false,
+      step_type: 'custom',
+      custom_type_name: undefined
     })
+    
+    // Update goal progress using combined formula
+    if (goalId) {
+      await updateGoalProgressCombined(goalId)
+    }
     
     return NextResponse.json({ step })
   } catch (error) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { auth } from '@clerk/nextjs/server'
-import { getUserByClerkId, createUser, createGoalMetric, updateGoalProgressFromGoalMetrics } from '@/lib/cesta-db'
+import { getUserByClerkId, createUser, createGoalMetric, updateGoalProgressCombined } from '@/lib/cesta-db'
 import { randomUUID } from 'crypto'
 
 const sql = neon(process.env.DATABASE_URL || 'postgresql://dummy:dummy@dummy/dummy')
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     // Update goal progress based on metrics
     if (createdMetrics.length > 0) {
-      await updateGoalProgressFromGoalMetrics(goalId)
+        await updateGoalProgressCombined(goalId)
     }
 
     console.log('🎉 Goal creation completed successfully')

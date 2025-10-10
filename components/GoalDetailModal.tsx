@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, memo } from 'react'
-import { Goal, DailyStep, Automation } from '@/lib/cesta-db'
-import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2 } from 'lucide-react'
+import { useState, memo, useEffect } from 'react'
+import { Goal, DailyStep, Automation, GoalMetric } from '@/lib/cesta-db'
+import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 
@@ -13,7 +13,10 @@ interface GoalDetailModalProps {
   onClose: () => void
   onStepClick?: (step: DailyStep) => void
   onStepComplete?: (stepId: string) => void
+  onStepEdit?: (step: DailyStep) => void
   onStepAdd?: (goalId: string) => void
+  onEdit?: (goal: Goal) => void
+  onDelete?: (goalId: string) => void
 }
 
 export const GoalDetailModal = memo(function GoalDetailModal({ 
@@ -31,6 +34,39 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'metrics' | 'automations' | 'settings'>('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [editedGoal, setEditedGoal] = useState<Goal>(goal)
+  const [metrics, setMetrics] = useState<GoalMetric[]>([])
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false)
+  const [showAddMetricModal, setShowAddMetricModal] = useState(false)
+  const [showAddStepModal, setShowAddStepModal] = useState(false)
+
+  // Load metrics when metrics tab is opened
+  useEffect(() => {
+    if (activeTab === 'metrics') {
+      loadMetrics()
+    }
+  }, [activeTab, goal.id])
+
+  const loadMetrics = async () => {
+    setIsLoadingMetrics(true)
+    try {
+      const response = await fetch(`/api/cesta/goal-metrics?goalId=${goal.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('GoalDetailModal: API response:', data)
+        const metricsData = data.metrics || data
+        console.log('GoalDetailModal: Extracted metrics:', metricsData)
+        setMetrics(Array.isArray(metricsData) ? metricsData : [])
+      } else {
+        console.log('GoalDetailModal: API error:', response.status)
+        setMetrics([])
+      }
+    } catch (error) {
+      console.error('Error loading metrics:', error)
+      setMetrics([])
+    } finally {
+      setIsLoadingMetrics(false)
+    }
+  }
 
   const handleSave = () => {
     onEdit?.(editedGoal)
@@ -44,6 +80,60 @@ export const GoalDetailModal = memo(function GoalDetailModal({
 
   const handleFieldChange = (field: keyof Goal, value: any) => {
     setEditedGoal(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleAddMetric = async (metricData: any) => {
+    try {
+      const response = await fetch('/api/cesta/goal-metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: goal.id,
+          ...metricData
+        })
+      })
+      
+      if (response.ok) {
+        await loadMetrics() // Reload metrics
+        setShowAddMetricModal(false)
+      }
+    } catch (error) {
+      console.error('Error adding metric:', error)
+    }
+  }
+
+  const handleUpdateMetric = async (metricId: string, updates: any) => {
+    try {
+      const response = await fetch('/api/cesta/goal-metrics', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metricId: metricId,
+          goalId: goal.id,
+          ...updates
+        })
+      })
+      
+      if (response.ok) {
+        await loadMetrics() // Reload metrics
+      }
+    } catch (error) {
+      console.error('Error updating metric:', error)
+    }
+  }
+
+  const handleDeleteMetric = async (metricId: string) => {
+    try {
+      const response = await fetch(`/api/cesta/goal-metrics?metricId=${metricId}&goalId=${goal.id}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        await loadMetrics() // Reload metrics
+      }
+    } catch (error) {
+      console.error('Error deleting metric:', error)
+    }
   }
 
   const getGoalTypeInfo = (goalType: string) => {
@@ -674,17 +764,99 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                 <h3 className="text-lg font-semibold text-gray-900">
                   Metriky cíle
                 </h3>
-                <button className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors">
+                <button 
+                  onClick={() => setShowAddMetricModal(true)}
+                  className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                >
                   <Plus className="w-4 h-4" />
                   <span>Přidat metriku</span>
                 </button>
               </div>
 
-              <div className="text-center py-8 text-gray-500">
-                <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium">Žádné metriky</p>
-                <p className="text-sm">Pro tento cíl nejsou nastaveny žádné metriky.</p>
-              </div>
+              {isLoadingMetrics ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Načítání metrik...</p>
+                </div>
+              ) : !Array.isArray(metrics) || metrics.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-lg font-medium">Žádné metriky</p>
+                  <p className="text-sm">Pro tento cíl nejsou nastaveny žádné metriky.</p>
+                </div>
+              ) : Array.isArray(metrics) && metrics.length > 0 ? (
+                <div className="space-y-3">
+                  {metrics.map((metric) => (
+                    <div key={metric.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1">
+                            {metric.type === 'currency' && <DollarSign className="w-4 h-4 text-green-600" />}
+                            {metric.type === 'percentage' && <Percent className="w-4 h-4 text-blue-600" />}
+                            {metric.type === 'distance' && <Ruler className="w-4 h-4 text-purple-600" />}
+                            {metric.type === 'time' && <ClockIcon className="w-4 h-4 text-orange-600" />}
+                            {(metric.type === 'number' || metric.type === 'custom') && <Type className="w-4 h-4 text-gray-600" />}
+                          </div>
+                          <h4 className="font-medium text-gray-900">{metric.name}</h4>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleDeleteMetric(metric.id)}
+                            className="text-red-400 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {metric.description && (
+                          <p className="text-sm text-gray-600">{metric.description}</p>
+                        )}
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-500">Pokrok:</span>
+                            <span className="text-sm font-medium">
+                              {metric.current_value} {metric.unit} / {metric.target_value} {metric.unit}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+                                style={{ 
+                                  width: `${Math.min((metric.current_value / metric.target_value) * 100, 100)}%` 
+                                }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {Math.round((metric.current_value / metric.target_value) * 100)}%
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            value={metric.current_value}
+                            onChange={(e) => handleUpdateMetric(metric.id, { currentValue: Number(e.target.value) })}
+                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Aktuální hodnota"
+                          />
+                          <span className="text-sm text-gray-500">{metric.unit}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-lg font-medium">Chyba při načítání metrik</p>
+                  <p className="text-sm">Nepodařilo se načíst metriky pro tento cíl.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -814,6 +986,184 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               Smazat
             </button>
           )}
+        </div>
+      </div>
+      
+      {/* Add Metric Modal */}
+      {showAddMetricModal && (
+        <AddMetricModal
+          goalId={goal.id}
+          onClose={() => setShowAddMetricModal(false)}
+          onSave={handleAddMetric}
+        />
+      )}
+    </div>
+  )
+})
+
+// Add Metric Modal Component
+interface AddMetricModalProps {
+  goalId: string
+  onClose: () => void
+  onSave: (metricData: any) => void
+}
+
+const AddMetricModal = memo(function AddMetricModal({ goalId, onClose, onSave }: AddMetricModalProps) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    type: 'number' as const,
+    unit: 'ks',
+    targetValue: 0,
+    currentValue: 0
+  })
+
+  const metricTypes = [
+    { id: 'number', name: 'Počet', icon: Type, defaultUnit: 'ks' },
+    { id: 'currency', name: 'Měna', icon: DollarSign, defaultUnit: 'Kč' },
+    { id: 'percentage', name: 'Procento', icon: Percent, defaultUnit: '%' },
+    { id: 'distance', name: 'Vzdálenost', icon: Ruler, defaultUnit: 'km' },
+    { id: 'time', name: 'Čas', icon: ClockIcon, defaultUnit: 'hod' },
+    { id: 'custom', name: 'Vlastní', icon: Type, defaultUnit: '' },
+  ]
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (formData.name.trim() && formData.unit.trim() && formData.targetValue > 0) {
+      onSave(formData)
+    }
+  }
+
+  const handleTypeChange = (type: string) => {
+    const selectedType = metricTypes.find(t => t.id === type)
+    setFormData(prev => ({
+      ...prev,
+      type: type as any,
+      unit: selectedType?.defaultUnit || ''
+    }))
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Přidat metriku</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Název metriky *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Např. Ušetřená částka"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Popis (volitelné)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                rows={2}
+                placeholder="Popište metriku podrobněji..."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Typ metriky *
+                </label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => handleTypeChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  {metricTypes.map(type => (
+                    <option key={type.id} value={type.id}>{type.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Jednotka *
+                </label>
+                <input
+                  type="text"
+                  value={formData.unit}
+                  onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Kč, km, %"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cílová hodnota *
+                </label>
+                <input
+                  type="number"
+                  value={formData.targetValue}
+                  onChange={(e) => setFormData(prev => ({ ...prev, targetValue: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="1000000"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Aktuální stav
+                </label>
+                <input
+                  type="number"
+                  value={formData.currentValue}
+                  onChange={(e) => setFormData(prev => ({ ...prev, currentValue: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Zrušit
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              >
+                Přidat metriku
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

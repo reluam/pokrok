@@ -23,16 +23,6 @@ interface CategorySettings {
   updated_at: Date
 }
 
-interface NeededStepsSettings {
-  id: string
-  user_id: string
-  enabled: boolean
-  days_of_week: number[]
-  time_hour: number
-  time_minute: number
-  created_at: Date
-  updated_at: Date
-}
 
 interface SettingsPageProps {
   onValuesChange?: (values: Value[]) => void
@@ -42,7 +32,7 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
   const { setTitle, setSubtitle } = usePageContext()
   const [values, setValues] = useState<Value[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'values' | 'categories' | 'needed-steps'>('values')
+  const [activeTab, setActiveTab] = useState<'values' | 'categories'>('values')
   
   // Values editing state
   const [editingValue, setEditingValue] = useState<Value | null>(null)
@@ -53,16 +43,6 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
   const [editingCategorySettings, setEditingCategorySettings] = useState(false)
   const [newCategorySettings, setNewCategorySettings] = useState({ shortTermDays: 90, longTermDays: 365 })
   const [isUpdatingGoals, setIsUpdatingGoals] = useState(false)
-
-  // Needed steps settings state
-  const [neededStepsSettings, setNeededStepsSettings] = useState<NeededStepsSettings | null>(null)
-  const [editingNeededStepsSettings, setEditingNeededStepsSettings] = useState(false)
-  const [newNeededStepsSettings, setNewNeededStepsSettings] = useState({
-    enabled: false,
-    days_of_week: [1, 2, 3, 4, 5], // Monday to Friday
-    time_hour: 9,
-    time_minute: 0
-  })
 
   const iconOptions = [
     'heart', 'star', 'compass', 'trending-up', 'palette', 'briefcase', 
@@ -81,10 +61,9 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
   const loadData = async () => {
     try {
       setLoading(true)
-      const [valuesRes, categorySettingsRes, neededStepsRes] = await Promise.all([
+      const [valuesRes, categorySettingsRes] = await Promise.all([
         fetch('/api/cesta/values'),
-        fetch('/api/cesta/category-settings'),
-        fetch('/api/cesta/needed-steps-settings')
+        fetch('/api/cesta/category-settings')
       ])
       
       if (valuesRes.ok) {
@@ -102,17 +81,6 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
         setNewCategorySettings({
           shortTermDays: categoryData.settings?.short_term_days || 90,
           longTermDays: categoryData.settings?.long_term_days || 365
-        })
-      }
-
-      if (neededStepsRes.ok) {
-        const neededStepsData = await neededStepsRes.json()
-        setNeededStepsSettings(neededStepsData)
-        setNewNeededStepsSettings({
-          enabled: neededStepsData.enabled || false,
-          days_of_week: neededStepsData.days_of_week || [1, 2, 3, 4, 5],
-          time_hour: neededStepsData.time_hour || 9,
-          time_minute: neededStepsData.time_minute || 0
         })
       }
     } catch (error) {
@@ -233,31 +201,6 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
     }
   }
 
-  const handleSaveNeededStepsSettings = async () => {
-    try {
-      const response = await fetch('/api/cesta/needed-steps-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newNeededStepsSettings)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        alert(`Chyba při ukládání nastavení: ${error.error || 'Neznámá chyba'}`)
-        return
-      }
-
-      const result = await response.json()
-      setNeededStepsSettings(result)
-      setEditingNeededStepsSettings(false)
-      alert('Nastavení Potřebných kroků bylo uloženo!')
-    } catch (error) {
-      console.error('Error saving needed steps settings:', error)
-      alert('Chyba při ukládání nastavení')
-    }
-  }
 
 
 
@@ -298,16 +241,6 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
                   }`}
                 >
                   Kategorie cílů
-                </button>
-                <button
-                  onClick={() => setActiveTab('needed-steps')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'needed-steps'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Potřebné kroky
                 </button>
               </nav>
             </div>
@@ -424,336 +357,9 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
                 </>
               )}
 
-              {activeTab === 'needed-steps' && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Nastavení Potřebných kroků</h2>
-                    <button
-                      onClick={() => setEditingNeededStepsSettings(true)}
-                      className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      <span>Upravit nastavení</span>
-                    </button>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <span className="text-blue-500 text-xl">ℹ️</span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-blue-900">Automatické připomínky</h3>
-                        <p className="text-sm text-blue-700 mt-1">
-                          V nastavený čas a dny se zobrazí modální okno pro zadání kroků, které je třeba dnes udělat.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Stav</h3>
-                          <p className="text-sm text-gray-600">
-                            {neededStepsSettings?.enabled ? 'Aktivní' : 'Neaktivní'}
-                          </p>
-                        </div>
-                        <span className={`text-2xl font-bold ${neededStepsSettings?.enabled ? 'text-green-500' : 'text-gray-400'}`}>
-                          {neededStepsSettings?.enabled ? '✓' : '✗'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Dny v týdnu</h3>
-                          <p className="text-sm text-gray-600">
-                            {neededStepsSettings?.days_of_week?.map(day => {
-                              const days = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne']
-                              return days[day - 1]
-                            }).join(', ') || 'Po - Pá'}
-                          </p>
-                        </div>
-                        <span className="text-2xl font-bold text-primary-500">
-                          {neededStepsSettings?.days_of_week?.length || 5}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Čas</h3>
-                          <p className="text-sm text-gray-600">
-                            {String(neededStepsSettings?.time_hour || 9).padStart(2, '0')}:
-                            {String(neededStepsSettings?.time_minute || 0).padStart(2, '0')}
-                          </p>
-                        </div>
-                        <span className="text-2xl font-bold text-primary-500">⏰</span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>
-
-        {/* Value Edit Modal */}
-        {editingValue && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingValue?.id ? 'Upravit hodnotu' : 'Nová hodnota'}
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Název</label>
-                <input
-                  type="text"
-                  value={editingValue?.id ? editingValue.name : newValue.name}
-                  onChange={(e) => {
-                    if (editingValue?.id) {
-                      setEditingValue({...editingValue, name: e.target.value})
-                    } else {
-                      setNewValue({...newValue, name: e.target.value})
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Popis</label>
-                <textarea
-                  value={editingValue?.id ? (editingValue.description || '') : newValue.description}
-                  onChange={(e) => {
-                    if (editingValue?.id) {
-                      setEditingValue({...editingValue, description: e.target.value})
-                    } else {
-                      setNewValue({...newValue, description: e.target.value})
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Barva</label>
-                <div className="flex space-x-2">
-                  {colorOptions.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => {
-                        if (editingValue?.id) {
-                          setEditingValue({...editingValue, color})
-                        } else {
-                          setNewValue({...newValue, color})
-                        }
-                      }}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        (editingValue?.id ? editingValue.color : newValue.color) === color ? 'border-gray-800' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => editingValue?.id ? handleUpdateValue(editingValue) : handleCreateValue()}
-                className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors"
-              >
-                <Save className="w-4 h-4 inline mr-2" />
-                Uložit
-              </button>
-              <button
-                onClick={() => setEditingValue(null)}
-                className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <X className="w-4 h-4 inline mr-2" />
-                Zrušit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Settings Edit Modal */}
-      {editingCategorySettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Upravit nastavení kategorií</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Krátkodobé cíle (dny)
-                </label>
-                <input
-                  type="number"
-                  value={newCategorySettings.shortTermDays}
-                  onChange={(e) => setNewCategorySettings(prev => ({ 
-                    ...prev, 
-                    shortTermDays: parseInt(e.target.value) || 0 
-                  }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  min="1"
-                  max="365"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Cíle s datem dokončení do tohoto počtu dnů budou považovány za krátkodobé
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dlouhodobé cíle (dny)
-                </label>
-                <input
-                  type="number"
-                  value={newCategorySettings.longTermDays}
-                  onChange={(e) => setNewCategorySettings(prev => ({ 
-                    ...prev, 
-                    longTermDays: parseInt(e.target.value) || 0 
-                  }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  min="1"
-                  max="3650"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Cíle s datem dokončení nad tento počet dnů budou považovány za dlouhodobé
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handleSaveCategorySettings}
-                disabled={isUpdatingGoals}
-                className="flex-1 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                {isUpdatingGoals ? 'Ukládám a aktualizuji...' : 'Uložit'}
-              </button>
-              <button
-                onClick={() => setEditingCategorySettings(false)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                Zrušit
-              </button>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* Needed Steps Settings Edit Modal */}
-        {editingNeededStepsSettings && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">Upravit nastavení Potřebných kroků</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      checked={newNeededStepsSettings.enabled}
-                      onChange={(e) => setNewNeededStepsSettings(prev => ({ 
-                        ...prev, 
-                        enabled: e.target.checked 
-                      }))}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Aktivovat Potřebné kroky
-                    </span>
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dny v týdnu
-                  </label>
-                  <div className="grid grid-cols-7 gap-2">
-                    {['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'].map((day, index) => (
-                      <label key={day} className="flex flex-col items-center space-y-1">
-                        <input
-                          type="checkbox"
-                          checked={newNeededStepsSettings.days_of_week.includes(index + 1)}
-                          onChange={(e) => {
-                            const dayNumber = index + 1
-                            setNewNeededStepsSettings(prev => ({
-                              ...prev,
-                              days_of_week: e.target.checked
-                                ? [...prev.days_of_week, dayNumber]
-                                : prev.days_of_week.filter(d => d !== dayNumber)
-                            }))
-                          }}
-                          className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                        />
-                        <span className="text-xs text-gray-600">{day}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hodina
-                    </label>
-                    <input
-                      type="number"
-                      value={newNeededStepsSettings.time_hour}
-                      onChange={(e) => setNewNeededStepsSettings(prev => ({ 
-                        ...prev, 
-                        time_hour: Math.max(0, Math.min(23, parseInt(e.target.value) || 0))
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      min="0"
-                      max="23"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Minuta
-                    </label>
-                    <input
-                      type="number"
-                      value={newNeededStepsSettings.time_minute}
-                      onChange={(e) => setNewNeededStepsSettings(prev => ({ 
-                        ...prev, 
-                        time_minute: Math.max(0, Math.min(59, parseInt(e.target.value) || 0))
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      min="0"
-                      max="59"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-3 mt-6">
-                <button
-                  onClick={handleSaveNeededStepsSettings}
-                  className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                >
-                  Uložit
-                </button>
-                <button
-                  onClick={() => setEditingNeededStepsSettings(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
-                >
-                  Zrušit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     )
   })

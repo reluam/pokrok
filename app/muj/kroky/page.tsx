@@ -47,6 +47,29 @@ export default function StepsPage() {
     }
   }
 
+  const handleStepComplete = async (stepId: string) => {
+    try {
+      const response = await fetch(`/api/cesta/daily-steps/${stepId}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        alert(`Chyba při dokončování kroku: ${error.error || 'Neznámá chyba'}`)
+        return
+      }
+
+      // Refresh data
+      await fetchData()
+    } catch (error) {
+      console.error('Error completing step:', error)
+      alert('Chyba při dokončování kroku')
+    }
+  }
+
   const handleStepEdit = (step: DailyStep) => {
     // TODO: Implement step edit functionality
     console.log('Edit step:', step)

@@ -11,7 +11,6 @@ import { GoalDetailModal } from './GoalDetailModal'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePageContext } from './PageContext'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
-import { useNeededStepsTimer } from '@/hooks/useNeededStepsTimer'
 
 export const MainDashboard = memo(function MainDashboard() {
   const router = useRouter()
@@ -21,7 +20,6 @@ export const MainDashboard = memo(function MainDashboard() {
   const [dailySteps, setDailySteps] = useState<DailyStep[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [automations, setAutomations] = useState<Automation[]>([])
-  const [neededStepsSettings, setNeededStepsSettings] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showGoalOnboarding, setShowGoalOnboarding] = useState(false)
   const [showGoalDetails, setShowGoalDetails] = useState(false)
@@ -37,13 +35,8 @@ export const MainDashboard = memo(function MainDashboard() {
   const [selectedStep, setSelectedStep] = useState<DailyStep | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [expandedColumn, setExpandedColumn] = useState<'goals' | 'steps' | null>(null)
-
-  // Needed Steps Timer
-  const { shouldShowModal, hideModal, markAsCompleted } = useNeededStepsTimer(neededStepsSettings)
-  
-  // Test: Force show needed steps for testing
-  const testShowNeededSteps = false // Change to false to disable test
-  console.log('MainDashboard render:', { testShowNeededSteps, shouldShowModal, neededStepsSettings })
+  const [showAddStepModal, setShowAddStepModal] = useState(false)
+  const [selectedGoalForStep, setSelectedGoalForStep] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -63,22 +56,20 @@ export const MainDashboard = memo(function MainDashboard() {
 
   const fetchData = async () => {
     try {
-      const [goalsRes, valuesRes, stepsRes, eventsRes, automationsRes, neededStepsRes] = await Promise.all([
+      const [goalsRes, valuesRes, stepsRes, eventsRes, automationsRes] = await Promise.all([
         fetch('/api/cesta/goals'),
         fetch('/api/cesta/values'),
         fetch('/api/cesta/daily-steps'), // Načteme všechny kroky, ne jen dnešní
         fetch('/api/cesta/smart-events'), // Načteme smart events
-        fetch('/api/cesta/automations'),
-        fetch('/api/cesta/needed-steps-settings')
+        fetch('/api/cesta/automations')
       ])
 
-      const [goalsData, valuesData, stepsData, eventsData, automationsData, neededStepsData] = await Promise.all([
+      const [goalsData, valuesData, stepsData, eventsData, automationsData] = await Promise.all([
         goalsRes.json(),
         valuesRes.json(),
         stepsRes.json(),
         eventsRes.json(),
-        automationsRes.json(),
-        neededStepsRes.json()
+        automationsRes.json()
       ])
 
       setGoals(goalsData.goals)
@@ -86,19 +77,8 @@ export const MainDashboard = memo(function MainDashboard() {
       setDailySteps(stepsData.steps || [])
       setEvents(eventsData.events || [])
       setAutomations(automationsData?.automations || [])
-      setNeededStepsSettings(neededStepsData)
-      console.log('Needed steps settings loaded:', neededStepsData)
       
-      // Test: Force enable needed steps for testing
-      if (neededStepsData && !neededStepsData.enabled) {
-        console.log('Forcing enabled for testing')
-        setNeededStepsSettings({
-          ...neededStepsData,
-          enabled: true,
-          time_hour: new Date().getHours(),
-          time_minute: new Date().getMinutes()
-        })
-      }
+      console.log('Data loaded successfully')
       
       // Update page title and subtitle
       setTitle('Hlavní panel')
@@ -160,33 +140,29 @@ export const MainDashboard = memo(function MainDashboard() {
     }
   }
 
-  const handleNeededStepsSave = async (steps: any[]) => {
-    try {
-      const response = await fetch('/api/cesta/needed-steps', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ steps })
-      })
+  const handleAddStep = (goalId: string) => {
+    setSelectedGoalForStep(goalId)
+    setShowAddStepModal(true)
+  }
 
+  const handleSaveStep = async (stepData: any) => {
+    try {
+      const response = await fetch('/api/cesta/daily-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: selectedGoalForStep,
+          ...stepData
+        })
+      })
+      
       if (response.ok) {
-        // Refresh daily steps to show the new ones
-        const stepsRes = await fetch('/api/cesta/daily-steps')
-        const stepsData = await stepsRes.json()
-        setDailySteps(stepsData.steps || [])
-        
-        // Mark as completed so modal won't show again today
-        markAsCompleted()
-        
-        alert(`Úspěšně uloženo ${steps.length} kroků!`)
-      } else {
-        const error = await response.json()
-        alert(`Chyba při ukládání kroků: ${error.error || 'Neznámá chyba'}`)
+        await fetchData() // Refresh data
+        setShowAddStepModal(false)
+        setSelectedGoalForStep(null)
       }
     } catch (error) {
-      console.error('Error saving needed steps:', error)
-      alert('Chyba při ukládání kroků')
+      console.error('Error adding step:', error)
     }
   }
 
@@ -420,33 +396,12 @@ export const MainDashboard = memo(function MainDashboard() {
       })
       
       if (response.ok) {
-        // Then update progress if needed
-        const progressType = updatedGoal.progress_type || 'percentage'
-        if (progressType === 'count' || progressType === 'amount') {
-          await fetch(`/api/cesta/goals/${updatedGoal.id}/progress`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              progressType: progressType,
-              current: updatedGoal.progress_current || 0
-            })
-          })
-        } else if (progressType === 'percentage') {
-          await fetch(`/api/cesta/goals/${updatedGoal.id}/progress`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              progressType: 'percentage',
-              progress: updatedGoal.progress_percentage || 0
-            })
-          })
-        }
+        // Update progress using combined formula (50% metrics + 50% steps)
+        await fetch(`/api/cesta/goals/${updatedGoal.id}/progress-combined`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
 
-        setGoals(prev => prev.map(goal => 
-          goal.id === updatedGoal.id ? updatedGoal : goal
-        ))
-        setSelectedGoal(updatedGoal)
-        
         // Refresh data to ensure all changes are reflected
         await fetchData()
       }
@@ -512,79 +467,6 @@ export const MainDashboard = memo(function MainDashboard() {
     setValues(prev => prev.filter(value => value.id !== valueId))
   }
 
-  const handleAddStep = async () => {
-    if (!newStepTitle.trim() || !selectedGoal || isAddingStep) {
-      return
-    }
-
-    setIsAddingStep(true)
-    
-    try {
-      const today = new Date()
-      // Convert to local date string (YYYY-MM-DD)
-      const year = today.getFullYear()
-      const month = String(today.getMonth() + 1).padStart(2, '0')
-      const day = String(today.getDate()).padStart(2, '0')
-      const localDateString = `${year}-${month}-${day}`
-      
-      const response = await fetch('/api/cesta/daily-steps', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goalId: selectedGoal.id,
-          title: newStepTitle.trim(),
-          description: newStepDescription.trim(),
-          date: localDateString
-        })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setDailySteps(prev => [...prev, data.step])
-        
-        // Update goals to refresh progress for steps-based goals
-        setGoals(prev => 
-          prev.map(goal => {
-            if (goal.id === selectedGoal.id && goal.progress_type === 'steps') {
-              const allStepsForGoal = [...dailySteps, data.step].filter(s => s.goal_id === goal.id)
-              const completedSteps = allStepsForGoal.filter(s => s.completed).length
-              const totalSteps = allStepsForGoal.length
-              const newProgressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-              
-              return {
-                ...goal,
-                progress_percentage: newProgressPercentage
-              }
-            }
-            return goal
-          })
-        )
-        
-        // Update selectedGoal if it's currently open
-        if (selectedGoal && selectedGoal.progress_type === 'steps') {
-          const allStepsForGoal = [...dailySteps, data.step].filter(s => s.goal_id === selectedGoal.id)
-          const completedSteps = allStepsForGoal.filter(s => s.completed).length
-          const totalSteps = allStepsForGoal.length
-          const newProgressPercentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
-          
-          setSelectedGoal(prev => prev ? {
-            ...prev,
-            progress_percentage: newProgressPercentage
-          } : null)
-        }
-        
-        setNewStepTitle('')
-        setNewStepDescription('')
-      } else {
-        const errorData = await response.json()
-        console.error('Error adding step:', errorData)
-      }
-    } catch (error) {
-      console.error('Error adding step:', error)
-    } finally {
-      setIsAddingStep(false)
-    }
-  }
 
   const handleStepToggle = async (stepId: string, completed: boolean) => {
     try {
@@ -1168,9 +1050,6 @@ export const MainDashboard = memo(function MainDashboard() {
                         onStepUpdate={handleStepUpdate}
                         onEventComplete={handleEventComplete}
                         onEventPostpone={handleEventPostpone}
-                        showNeededSteps={shouldShowModal}
-                        neededStepsSettings={neededStepsSettings}
-                        onNeededStepsSave={handleNeededStepsSave}
                       />
                     </div>
 
@@ -1418,14 +1297,11 @@ export const MainDashboard = memo(function MainDashboard() {
             console.log('Step clicked:', step)
           }}
           onStepComplete={handleStepComplete}
-          onStepEdit={(step) => {
+          onStepEdit={(step: DailyStep) => {
             // TODO: Implement step edit functionality
             console.log('Step edit:', step)
           }}
-          onStepAdd={(goalId) => {
-            // TODO: Implement step add functionality
-            console.log('Step add for goal:', goalId)
-          }}
+          onStepAdd={handleAddStep}
           onEdit={handleEditGoal}
           onDelete={handleGoalDelete}
         />
@@ -1488,6 +1364,103 @@ export const MainDashboard = memo(function MainDashboard() {
           />
         )}
 
-      </div>
+        {/* Add Step Modal */}
+      {showAddStepModal && selectedGoalForStep && (
+        <AddStepModal
+          goalId={selectedGoalForStep}
+          onClose={() => {
+            setShowAddStepModal(false)
+            setSelectedGoalForStep(null)
+          }}
+          onSave={handleSaveStep}
+        />
+      )}
+    </div>
   )
 })
+
+// Add Step Modal Component
+interface AddStepModalProps {
+  goalId: string
+  onClose: () => void
+  onSave: (stepData: any) => void
+}
+
+const AddStepModal = memo(function AddStepModal({ goalId, onClose, onSave }: AddStepModalProps) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: ''
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (formData.title.trim()) {
+      onSave(formData)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Přidat krok</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Název kroku *
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Např. Pravidelně šetřit"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Popis (volitelné)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                rows={3}
+                placeholder="Popište krok podrobněji..."
+              />
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Zrušit
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              >
+                Přidat krok
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+export default MainDashboard

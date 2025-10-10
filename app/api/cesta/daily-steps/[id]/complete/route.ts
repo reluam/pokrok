@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { completeDailyStep, getUserByClerkId, getDailyStepsByUserId } from '@/lib/cesta-db'
+import { completeDailyStep, getUserByClerkId, getDailyStepsByUserId, updateGoalProgressCombined } from '@/lib/cesta-db'
 
 
 // Force dynamic rendering
@@ -35,9 +35,14 @@ export async function POST(
       return NextResponse.json({ error: 'Step not found or access denied' }, { status: 404 })
     }
 
-    await completeDailyStep(stepId)
+    const updatedStep = await completeDailyStep(stepId)
     
-    return NextResponse.json({ success: true })
+    // Update goal progress using combined formula
+    if (updatedStep.goal_id) {
+      await updateGoalProgressCombined(updatedStep.goal_id)
+    }
+    
+    return NextResponse.json({ success: true, step: updatedStep })
   } catch (error) {
     console.error('Error completing daily step:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

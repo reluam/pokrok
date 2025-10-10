@@ -617,7 +617,7 @@ export async function toggleDailyStep(stepId: string): Promise<DailyStep> {
 
     // Update goal progress if step was completed
     if (newCompleted && step.goal_id) {
-      await updateGoalProgressFromMetrics(step.goal_id)
+      await updateGoalProgressCombined(step.goal_id)
     }
 
     return updatedStep[0] as DailyStep
@@ -644,7 +644,7 @@ export async function completeDailyStep(stepId: string): Promise<DailyStep> {
     
     // Update goal progress if step was completed
     if (step.goal_id) {
-      await updateGoalProgressFromMetrics(step.goal_id)
+      await updateGoalProgressCombined(step.goal_id)
     }
     
     return step
@@ -1334,6 +1334,65 @@ export async function updateGoalProgressFromGoalMetrics(goalId: string) {
     return result
   } catch (error) {
     console.error('Error updating goal progress from goal metrics:', error)
+    throw error
+  }
+}
+
+export async function updateGoalProgressCombined(goalId: string) {
+  try {
+    // Calculate progress based on new formula: 50% metrics + 50% steps
+    const result = await sql`
+      WITH metric_progress AS (
+        SELECT 
+          CASE 
+            WHEN target_value > 0 AND current_value IS NOT NULL THEN
+              LEAST((current_value / target_value) * 100, 100)
+            ELSE 0
+          END as progress
+        FROM goal_metrics
+        WHERE goal_id = ${goalId}
+      ),
+      step_progress AS (
+        SELECT 
+          CASE 
+            WHEN COUNT(*) > 0 THEN
+              LEAST((COUNT(CASE WHEN completed = true THEN 1 END)::float / COUNT(*)) * 100, 100)
+            ELSE 0
+          END as progress
+        FROM daily_steps 
+        WHERE goal_id = ${goalId}
+      ),
+      combined_progress AS (
+        SELECT 
+          CASE 
+            WHEN (SELECT COUNT(*) FROM goal_metrics WHERE goal_id = ${goalId}) > 0 
+                 AND (SELECT COUNT(*) FROM daily_steps WHERE goal_id = ${goalId}) > 0 THEN
+              -- Both metrics and steps exist: 50% metrics + 50% steps
+              ((SELECT AVG(progress) FROM metric_progress) * 0.5) + 
+              ((SELECT progress FROM step_progress) * 0.5)
+            WHEN (SELECT COUNT(*) FROM goal_metrics WHERE goal_id = ${goalId}) > 0 THEN
+              -- Only metrics exist: 100% metrics
+              (SELECT AVG(progress) FROM metric_progress)
+            WHEN (SELECT COUNT(*) FROM daily_steps WHERE goal_id = ${goalId}) > 0 THEN
+              -- Only steps exist: 100% steps
+              (SELECT progress FROM step_progress)
+            ELSE 0
+          END as final_progress
+      )
+      UPDATE goals 
+      SET 
+        progress_percentage = COALESCE(
+          (SELECT ROUND(final_progress) FROM combined_progress), 
+          0
+        ),
+        updated_at = NOW()
+      WHERE id = ${goalId}
+    `
+
+    console.log(`Updated goal ${goalId} progress using combined formula (50% metrics + 50% steps)`)
+    return result
+  } catch (error) {
+    console.error('Error updating goal progress with combined formula:', error)
     throw error
   }
 }
