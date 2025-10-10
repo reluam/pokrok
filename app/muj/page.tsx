@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { InitialOnboarding } from '@/components/InitialOnboarding'
 import { MainDashboard } from '@/components/MainDashboard'
 import { getUserByClerkId } from '@/lib/cesta-db'
 
@@ -23,7 +22,7 @@ export default async function MojePage() {
   }
 
   if (!hasCompletedOnboarding) {
-    return <InitialOnboarding />
+    redirect('/onboarding')
   }
 
   return <MainDashboard />

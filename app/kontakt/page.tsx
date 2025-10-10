@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import ContactForm from '@/components/ContactForm'
+import { getBaseUrl } from '@/lib/utils'
 
 export default function ContactPage() {
   return (
@@ -65,7 +66,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="font-medium text-text-primary">Aplikace</p>
-                    <a href="https://muj.pokrok.app" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
+                    <a href={`${getBaseUrl()}/muj`} target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:text-primary-700">
                       Otevřít aplikaci Pokrok
                     </a>
                   </div>

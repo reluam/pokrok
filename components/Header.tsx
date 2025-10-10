@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, ArrowRight } from 'lucide-react'
+import { getBaseUrl } from '@/lib/utils'
 
 interface NavigationSettings {
   coaching_enabled: boolean
@@ -73,7 +74,7 @@ export default function Header() {
               {/* App Button */}
               <div className="hidden md:block">
                 <a
-                  href="https://muj.pokrok.app"
+                  href={`${getBaseUrl()}/muj`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
@@ -105,7 +106,7 @@ export default function Header() {
                 O aplikaci
               </Link>
               <a
-                href="https://muj.pokrok.app"
+                href={`${getBaseUrl()}/muj`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={closeMenu}

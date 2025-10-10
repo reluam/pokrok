@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
+import { getBaseUrl } from '@/lib/utils'
 
 export default function AboutPage() {
   return (
@@ -130,7 +131,7 @@ export default function AboutPage() {
             Stáhněte si aplikaci Pokrok a začněte svou transformaci ještě dnes.
           </p>
           <a
-            href="https://muj.pokrok.app"
+            href={`${getBaseUrl()}/muj`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"

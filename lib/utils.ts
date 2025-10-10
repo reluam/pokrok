@@ -14,6 +14,28 @@ export function getBaseUrl(): string {
   return 'https://smysluplneziti.vercel.app'
 }
 
+// Get Clerk URLs based on environment
+export function getClerkUrls() {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const baseUrl = getBaseUrl()
+  
+  if (isDevelopment) {
+    return {
+      signInUrl: `${baseUrl}/muj/sign-in`,
+      signUpUrl: `${baseUrl}/muj/sign-up`,
+      fallbackRedirectUrl: `${baseUrl}/muj`,
+      afterSignOutUrl: `${baseUrl}/muj/sign-in`
+    }
+  }
+  
+  return {
+    signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || 'https://accounts.pokrok.app/sign-in',
+    signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || 'https://accounts.pokrok.app/sign-up',
+    fallbackRedirectUrl: process.env.NEXT_PUBLIC_CLERK_FALLBACK_REDIRECT_URL || 'https://muj.pokrok.app',
+    afterSignOutUrl: process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL || 'https://muj.pokrok.app/sign-in'
+  }
+}
+
 // Date utility functions for consistent timezone handling
 export function getToday(): Date {
   const today = new Date()

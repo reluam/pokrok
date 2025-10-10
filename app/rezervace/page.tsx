@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { Calendar, Clock, Users, CheckCircle, ArrowRight } from 'lucide-react'
+import { getBaseUrl } from '@/lib/utils'
 import { CoachingPackage } from '@/lib/admin-types'
 
 // App download options
@@ -155,7 +156,7 @@ export default function DownloadPage() {
 
                   {/* CTA Button */}
                   <a
-                    href="https://muj.pokrok.app"
+                    href={`${getBaseUrl()}/muj`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`w-full ${option.color} ${option.headerTextColor || 'text-white'} px-6 py-4 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center space-x-2 text-asul18 font-medium`}

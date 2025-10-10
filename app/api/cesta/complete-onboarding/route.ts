@@ -20,13 +20,8 @@ export async function POST(request: NextRequest) {
 
     console.log('UserId:', userId)
 
-    const { values } = await request.json()
+    const { values = [] } = await request.json()
     console.log('Values to create:', values)
-
-    if (!values || !Array.isArray(values) || values.length === 0) {
-      console.log('Invalid values provided')
-      return NextResponse.json({ error: 'Invalid values provided' }, { status: 400 })
-    }
 
     // Get or create user
     console.log('Getting or creating user...')
@@ -37,23 +32,27 @@ export async function POST(request: NextRequest) {
     }
     console.log('User ID:', dbUser.id)
 
-    // Create values for the user
-    console.log('Creating values...')
-    const createdValues = []
-    for (const valueName of values) {
-      const valueId = crypto.randomUUID()
-      console.log(`Creating value: ${valueName} with ID: ${valueId}`)
-      
-      const value = await sql`
-        INSERT INTO values (
-          id, user_id, name, description, color, icon, is_custom, created_at
-        ) VALUES (
-          ${valueId}, ${dbUser.id}, ${valueName}, ${valueName}, '#3B82F6', 'star', true,
-          NOW()
-        ) RETURNING *
-      `
-      createdValues.push(value[0])
-      console.log(`Created value:`, value[0])
+    // Create values for the user (optional)
+    if (values && Array.isArray(values) && values.length > 0) {
+      console.log('Creating values...')
+      const createdValues = []
+      for (const valueName of values) {
+        const valueId = crypto.randomUUID()
+        console.log(`Creating value: ${valueName} with ID: ${valueId}`)
+        
+        const value = await sql`
+          INSERT INTO values (
+            id, user_id, name, description, color, icon, is_custom, created_at
+          ) VALUES (
+            ${valueId}, ${dbUser.id}, ${valueName}, ${valueName}, '#3B82F6', 'star', true,
+            NOW()
+          ) RETURNING *
+        `
+        createdValues.push(value[0])
+        console.log(`Created value:`, value[0])
+      }
+    } else {
+      console.log('No values provided, skipping value creation')
     }
 
     // Mark user as having completed onboarding
@@ -74,7 +73,6 @@ export async function POST(request: NextRequest) {
     console.log('Onboarding completed successfully')
     return NextResponse.json({ 
       success: true, 
-      values: createdValues,
       user: {
         id: dbUser.id,
         has_completed_onboarding: true

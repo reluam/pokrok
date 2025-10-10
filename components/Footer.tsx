@@ -1,5 +1,7 @@
 'use client'
 
+import { getBaseUrl } from '@/lib/utils'
+
 export default function Footer() {
   return (
         <footer className="bg-primary-500 relative border-t">
@@ -30,7 +32,7 @@ export default function Footer() {
                     </a>
                   </li>
                   <li>
-                    <a href="https://muj.pokrok.app" target="_blank" rel="noopener noreferrer" className="text-asul16 text-white hover:text-gray-200 transition-colors">
+                    <a href={`${getBaseUrl()}/muj`} target="_blank" rel="noopener noreferrer" className="text-asul16 text-white hover:text-gray-200 transition-colors">
                       Otevřít aplikaci
                     </a>
                   </li>
