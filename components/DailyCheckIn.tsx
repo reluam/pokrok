@@ -147,7 +147,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
   const futureSteps = dailySteps.filter(step => {
     const stepDate = new Date(step.date)
     stepDate.setHours(0, 0, 0, 0)
-    return stepDate !== today // Exclude today's steps, include overdue and future
+    return stepDate.getTime() !== today.getTime() // Proper date comparison
   })
   
   // Filter out completed steps and events
@@ -539,7 +539,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                             className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs font-medium"
                             title="Odložit na zítra"
                           >
-                            ⏰
+                            <Clock className="w-4 h-4" />
                           </button>
                         )}
                       </div>

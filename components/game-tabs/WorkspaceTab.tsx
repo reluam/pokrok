@@ -210,7 +210,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                       <textarea
                         value={newStepDescription}
                         onChange={(e) => setNewStepDescription(e.target.value)}
-                        className="w-full px-3 py-2 bg-transparent border-0 focus:ring-0 focus:outline-none rounded-lg"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
                         rows={2}
                         placeholder="Popište krok podrobněji..."
                       />
@@ -224,7 +224,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                         <select
                           value={selectedGoalId || ''}
                           onChange={(e) => setSelectedGoalId(e.target.value || null)}
-                          className="w-full px-3 py-2 bg-transparent border-0 focus:ring-0 focus:outline-none rounded-lg"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
                         >
                           <option value="">Bez přiřazení k cíli</option>
                           {goals.filter(goal => goal.status === 'active').map((goal) => (
@@ -243,7 +243,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                           type="date"
                           value={selectedDate}
                           onChange={(e) => setSelectedDate(e.target.value)}
-                          className="w-full px-3 py-2 bg-transparent border-0 focus:ring-0 focus:outline-none rounded-lg"
+                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
                         />
                       </div>
                     </div>
