@@ -48,10 +48,11 @@ export async function POST(request: NextRequest) {
     const { 
       goalId, 
       title, 
-      description
+      description,
+      date
     } = await request.json()
 
-    if (!goalId || !title) {
+    if (!title) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       goal_id: goalId,
       title,
       description: description || '',
-      date: new Date(), // Use current date
+      date: date ? new Date(date) : new Date(), // Use provided date or current date
       is_important: false,
       is_urgent: false,
       step_type: 'custom',

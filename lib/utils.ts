@@ -13,3 +13,53 @@ export function getBaseUrl(): string {
   // This should not happen in production, but provides a fallback
   return 'https://smysluplneziti.vercel.app'
 }
+
+// Date utility functions for consistent timezone handling
+export function getToday(): Date {
+  const today = new Date()
+  // Create a new date with local timezone at midnight
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  return localToday
+}
+
+export function getTodayString(): string {
+  const today = getToday()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function isToday(date: Date): boolean {
+  const today = getToday()
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return compareDate.getTime() === today.getTime()
+}
+
+export function isFuture(date: Date): boolean {
+  const today = getToday()
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return compareDate > today
+}
+
+export function getDaysUntil(date: Date): number {
+  const today = getToday()
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return Math.ceil((compareDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+export function formatDateForInput(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function parseDateFromInput(dateString: string): Date {
+  // Parse date string and create local date at midnight
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}

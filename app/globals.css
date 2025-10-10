@@ -197,3 +197,13 @@ body {
   animation: article-lines 0.5s ease-in-out;
 }
 
+/* Subtle cursor blink animation for input fields */
+@keyframes subtle-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+.subtle-cursor::placeholder {
+  animation: subtle-blink 2s ease-in-out infinite;
+}
+

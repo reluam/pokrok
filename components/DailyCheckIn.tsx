@@ -3,6 +3,7 @@
 import { useState, useEffect, memo } from 'react'
 import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { Plus, CheckCircle, Circle, Clock, AlertTriangle, Calendar, Target, Star, Zap, Footprints } from 'lucide-react'
+import { getToday, getTodayString, isToday, isFuture, getDaysUntil } from '@/lib/utils'
 
 interface DailyCheckInProps {
   goals: Goal[]
@@ -47,26 +48,8 @@ export const DailyCheckIn = memo(function DailyCheckIn({
   onStepSelect, 
   onEventSelect 
 }: DailyCheckInProps) {
+  const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  // Function to get today's date string
-  const getTodayString = () => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const dateString = `${year}-${month}-${day}`
-    console.log('getTodayString() returning:', dateString, 'for local date:', today.toLocaleDateString())
-    return dateString
-  }
-
-  // Function to get today's date object
-  const getToday = () => {
-    const today = new Date()
-    // Create a new date with local timezone at midnight
-    const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    console.log('getToday() returning:', localToday, 'for local date:', localToday.toLocaleDateString())
-    return localToday
-  }
 
   const [newStep, setNewStep] = useState({
     goalId: '',
@@ -459,136 +442,6 @@ export const DailyCheckIn = memo(function DailyCheckIn({
       {/* Infinite Feed - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-3">
-          {/* Future steps only - today's steps are now handled in WorkspaceTab */}
-          {sortedFutureSteps.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">Budoucí kroky</h3>
-              {sortedFutureSteps.map((step) => {
-            const goal = goals.find(g => g.id === step.goal_id)
-            const stepDate = new Date(step.date)
-            stepDate.setHours(0, 0, 0, 0)
-            const stepDateStr = stepDate.toLocaleDateString()
-            const todayStr = getToday().toLocaleDateString()
-            const stepDateObj = new Date(stepDateStr)
-            const todayObj = new Date(todayStr)
-            
-            // Determine step status and styling
-            const isOverdue = stepDateObj < todayObj
-            const isToday = stepDateStr === todayStr
-            const isFuture = stepDateObj > todayObj
-            
-            const getStepStatus = () => {
-              if (isOverdue) {
-                const daysOverdue = Math.floor((getToday().getTime() - stepDate.getTime()) / (1000 * 60 * 60 * 24))
-                return { 
-                  text: daysOverdue === 0 ? 'Dnes' : `${daysOverdue} dní zpožděno`,
-                  color: 'text-red-600',
-                  bgColor: 'bg-red-50',
-                  borderColor: 'border-red-200',
-                  buttonColor: 'bg-red-600 hover:bg-red-700'
-                }
-              }
-              if (isToday) {
-                return { 
-                  text: 'Dnes',
-                  color: 'text-orange-600',
-                  bgColor: 'bg-orange-50',
-                  borderColor: 'border-orange-200',
-                  buttonColor: 'bg-orange-600 hover:bg-orange-700'
-                }
-              }
-              if (isFuture) {
-                const daysUntil = Math.ceil((stepDate.getTime() - getToday().getTime()) / (1000 * 60 * 60 * 24))
-                return { 
-                  text: daysUntil === 1 ? 'Zítra' : `Za ${daysUntil} dní`,
-                  color: 'text-blue-600',
-                  bgColor: 'bg-blue-50',
-                  borderColor: 'border-blue-200',
-                  buttonColor: 'bg-blue-600 hover:bg-blue-700'
-                }
-              }
-              return { 
-                text: '',
-                color: 'text-gray-600',
-                bgColor: 'bg-gray-50',
-                borderColor: 'border-gray-200',
-                buttonColor: 'bg-gray-600 hover:bg-gray-700'
-              }
-            }
-            
-            const status = getStepStatus()
-            
-            // Priority indicators
-            const getPriorityIndicators = () => {
-              const indicators = []
-              if (step.is_important) indicators.push('⭐')
-              if (step.is_urgent) indicators.push('🚨')
-              return indicators.join(' ')
-            }
-            
-            const isSelected = selectedStep && selectedStep.id === step.id
-            
-            return (
-              <div 
-                key={step.id} 
-                onClick={() => onStepSelect && onStepSelect(step)}
-                className={`bg-background border border-primary-200 rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 hover:shadow-md relative ${
-                  isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
-                }`}
-              >
-                {/* Footprints icon for user-created steps */}
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-primary-500 opacity-90">
-                  <Footprints className="w-4 h-4 fill-current" />
-                </div>
-                
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h4 className="text-sm font-medium text-gray-600">{step.title}</h4>
-                      {step.is_important && (
-                        <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                          Důležité
-                        </span>
-                      )}
-                      {step.is_urgent && (
-                        <span className="px-1.5 py-0.5 bg-red-100 text-red-800 text-xs rounded-full">
-                          Urgentní
-                        </span>
-                      )}
-                    </div>
-                    {step.description && (
-                      <p className="text-xs text-gray-500 mb-2">{step.description}</p>
-                    )}
-                    {goal && (
-                      <p className="text-xs text-gray-400">Cíl: {goal.title}</p>
-                    )}
-                    <p className={`text-xs font-medium mt-1 ${status.color}`}>
-                      {status.text}
-                    </p>
-                  </div>
-                  <div className="flex space-x-1 ml-3">
-                    <button
-                      onClick={() => onStepComplete(step.id)}
-                      className={`px-3 py-1 text-white rounded-lg transition-colors text-xs font-medium ${status.buttonColor}`}
-                    >
-                      ✓
-                    </button>
-                    {onStepPostpone && (
-                      <button
-                        onClick={() => onStepPostpone(step.id)}
-                        className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs font-medium"
-                        title="Odložit na zítra"
-                      >
-                        ⏰
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-            </div>
-          )}
 
 
           {/* Future steps */}
@@ -598,14 +451,19 @@ export const DailyCheckIn = memo(function DailyCheckIn({
               {sortedFutureSteps.map((step) => {
                 const goal = goals.find(g => g.id === step.goal_id)
                 const stepDate = new Date(step.date)
-                const isFuture = true
+                stepDate.setHours(0, 0, 0, 0)
+                const today = getToday()
+                
+                // Calculate days until step
+                const daysUntil = getDaysUntil(stepDate)
+                const daysText = daysUntil === 1 ? 'Zítra' : `Za ${daysUntil} dní`
                 
                 const isSelected = selectedStep && selectedStep.id === step.id
                 
                 return (
                   <div 
                     key={step.id} 
-                    onClick={() => onStepSelect && onStepSelect(step)}
+                    onClick={() => setSelectedStepForDetails(step)}
                     className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 hover:shadow-md relative ${
                       isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
                     }`}
@@ -636,9 +494,20 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                         {goal && (
                           <p className="text-xs text-gray-400">Cíl: {goal.title}</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">
-                          {stepDate.toLocaleDateString('cs-CZ')}
+                        <p className="text-xs text-primary-500 font-medium mt-1">
+                          {daysText}
                         </p>
+                      </div>
+                      <div className="flex space-x-1 ml-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onStepComplete(step.id)
+                          }}
+                          className="px-3 py-1 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-xs font-medium"
+                        >
+                          ✓
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -677,6 +546,115 @@ export const DailyCheckIn = memo(function DailyCheckIn({
           )}
         </div>
       </div>
+      
+      {/* Step Details Modal */}
+      {selectedStepForDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Detail kroku</h3>
+              <button
+                onClick={() => setSelectedStepForDetails(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
+                <p className="text-gray-900 font-medium">{selectedStepForDetails.title}</p>
+              </div>
+              
+              {selectedStepForDetails.description && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                  <p className="text-gray-600">{selectedStepForDetails.description}</p>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                <p className="text-gray-600">{new Date(selectedStepForDetails.date).toLocaleDateString('cs-CZ')}</p>
+              </div>
+              
+              {selectedStepForDetails.goal_id && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
+                  <p className="text-gray-600">{goals.find(g => g.id === selectedStepForDetails.goal_id)?.title || 'Nepřiřazený cíl'}</p>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stav</label>
+                <div className="flex items-center space-x-2">
+                  {selectedStepForDetails.completed ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-green-600 font-medium">Dokončeno</span>
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-5 h-5 text-gray-300" />
+                      <span className="text-gray-600">Nedokončeno</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {(selectedStepForDetails.is_important || selectedStepForDetails.is_urgent) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Priorita</label>
+                  <div className="flex space-x-2">
+                    {selectedStepForDetails.is_important && (
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                        Důležité
+                      </span>
+                    )}
+                    {selectedStepForDetails.is_urgent && (
+                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                        Urgentní
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  onStepComplete(selectedStepForDetails.id)
+                  setSelectedStepForDetails(null)
+                }}
+                className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors font-medium flex items-center justify-center space-x-2"
+              >
+                {selectedStepForDetails.completed ? (
+                  <>
+                    <Circle className="w-4 h-4" />
+                    <span>Označit jako nedokončené</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Označit jako dokončené</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setSelectedStepForDetails(null)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Zavřít
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 })
