@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, ArrowRight } from 'lucide-react'
 import { getBaseUrl } from '@/lib/utils'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { useTranslations } from '@/lib/use-translations'
 
 interface NavigationSettings {
   coaching_enabled: boolean
@@ -17,6 +19,7 @@ export default function Header() {
     coaching_enabled: false,
     workshops_enabled: false
   })
+  const { translations } = useTranslations()
 
   useEffect(() => {
     loadNavigationSettings()
@@ -62,14 +65,19 @@ export default function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8 ml-auto mr-8">
+          <nav className="hidden md:flex space-x-8 ml-auto mr-4">
             <Link href="/materialy" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-              Materiály
+              {translations?.navigation.materials || 'Materiály'}
             </Link>
             <Link href="/o-mne" className="text-asul18 text-text-primary hover:text-primary-600 transition-colors">
-              O aplikaci
+              {translations?.navigation.about || 'O aplikaci'}
             </Link>
           </nav>
+
+          {/* Language Switcher */}
+          <div className="hidden md:block mr-4">
+            <LanguageSwitcher />
+          </div>
 
               {/* App Button */}
               <div className="hidden md:block">
@@ -79,7 +87,7 @@ export default function Header() {
                   rel="noopener noreferrer"
                   className="bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors flex items-center space-x-2 text-asul18"
                 >
-                  <span>Otevřít aplikaci</span>
+                  <span>{translations?.hero.cta || 'Otevřít aplikaci'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
@@ -100,11 +108,14 @@ export default function Header() {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t">
               <Link href="/materialy" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                Materiály
+                {translations?.navigation.materials || 'Materiály'}
               </Link>
               <Link href="/o-mne" onClick={closeMenu} className="block px-3 py-2 text-asul18 text-text-primary hover:text-primary-600">
-                O aplikaci
+                {translations?.navigation.about || 'O aplikaci'}
               </Link>
+              <div className="px-3 py-2">
+                <LanguageSwitcher />
+              </div>
               <a
                 href={`${getBaseUrl()}/muj`}
                 target="_blank"
@@ -112,7 +123,7 @@ export default function Header() {
                 onClick={closeMenu}
                 className="block px-4 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 flex items-center space-x-2 text-asul18"
               >
-                <span>Otevřít aplikaci</span>
+                <span>{translations?.hero.cta || 'Otevřít aplikaci'}</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>

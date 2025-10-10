@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, ArrowRight, Target, Heart, Zap } from 'lucide-react'
 import { NewGoalOnboarding } from './NewGoalOnboarding'
+import { useTranslations } from '@/lib/use-translations'
 
 export function InitialOnboarding() {
   const [currentStep, setCurrentStep] = useState(0)
@@ -12,22 +13,23 @@ export function InitialOnboarding() {
   const [isCompleting, setIsCompleting] = useState(false)
   const [showGoalOnboarding, setShowGoalOnboarding] = useState(false)
   const router = useRouter()
+  const { translations } = useTranslations()
 
   const predefinedValues = [
-    { id: 'health', name: 'Zdraví', icon: '💪', description: 'Fyzické a duševní zdraví' },
-    { id: 'family', name: 'Rodina', icon: '👨‍👩‍👧‍👦', description: 'Vztahy s blízkými' },
-    { id: 'career', name: 'Kariéra', icon: '💼', description: 'Profesní růst a úspěch' },
-    { id: 'learning', name: 'Učení', icon: '📚', description: 'Rozvoj znalostí a dovedností' },
-    { id: 'adventure', name: 'Dobrodružství', icon: '🌍', description: 'Nové zážitky a cestování' },
-    { id: 'creativity', name: 'Kreativita', icon: '🎨', description: 'Umělecké vyjádření' },
-    { id: 'community', name: 'Komunita', icon: '🤝', description: 'Pomoc druhým' },
-    { id: 'spirituality', name: 'Duchovno', icon: '🧘', description: 'Vnitřní klid a moudrost' }
+    { id: 'health', name: translations?.values.health || 'Zdraví', icon: '💪', description: translations?.values.healthDescription || 'Fyzické a duševní zdraví' },
+    { id: 'family', name: translations?.values.family || 'Rodina', icon: '👨‍👩‍👧‍👦', description: translations?.values.familyDescription || 'Vztahy s blízkými' },
+    { id: 'career', name: translations?.values.career || 'Kariéra', icon: '💼', description: translations?.values.careerDescription || 'Profesní růst a úspěch' },
+    { id: 'learning', name: translations?.values.learning || 'Učení', icon: '📚', description: translations?.values.learningDescription || 'Rozvoj znalostí a dovedností' },
+    { id: 'adventure', name: translations?.values.adventure || 'Dobrodružství', icon: '🌍', description: translations?.values.adventureDescription || 'Nové zážitky a cestování' },
+    { id: 'creativity', name: translations?.values.creativity || 'Kreativita', icon: '🎨', description: translations?.values.creativityDescription || 'Umělecké vyjádření' },
+    { id: 'community', name: translations?.values.community || 'Komunita', icon: '🤝', description: translations?.values.communityDescription || 'Pomoc druhým' },
+    { id: 'spirituality', name: translations?.values.spirituality || 'Duchovno', icon: '🧘', description: translations?.values.spiritualityDescription || 'Vnitřní klid a moudrost' }
   ]
 
   const steps = [
     {
-      title: 'Vítejte v Pokroku!',
-      subtitle: 'Dosáhněte svých cílů s větší jasností',
+      title: translations?.onboarding.welcome || 'Vítejte v Pokroku!',
+      subtitle: translations?.onboarding.subtitle || 'Dosáhněte svých cílů s větší jasností',
       content: (
         <div className="text-center space-y-6">
           <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
@@ -35,11 +37,10 @@ export function InitialOnboarding() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Dosáhněte svých cílů s větší jasností
+              {translations?.onboarding.subtitle || 'Dosáhněte svých cílů s větší jasností'}
             </h2>
             <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
-              Pokrok je aplikace, která vám pomůže dosáhnout vašich cílů a získat větší jasnost v životě. 
-              Definujte si své cíle, rozložte je na kroky a sledujte svůj pokrok.
+              {translations?.onboarding.description || 'Pokrok je aplikace, která vám pomůže dosáhnout vašich cílů a získat větší jasnost v životě. Definujte si své cíle, rozložte je na kroky a sledujte svůj pokrok.'}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">

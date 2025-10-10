@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, memo } from 'react'
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, Globe } from 'lucide-react'
 import { usePageContext } from './PageContext'
+import { useTranslations, useLocale, type Locale } from '@/lib/use-translations'
 
 interface Value {
   id: string
@@ -30,9 +31,11 @@ interface SettingsPageProps {
 
 export const SettingsPage = memo(function SettingsPage({ onValuesChange }: SettingsPageProps = {}) {
   const { setTitle, setSubtitle } = usePageContext()
+  const { translations } = useTranslations()
+  const currentLocale = useLocale()
   const [values, setValues] = useState<Value[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'values' | 'categories'>('values')
+  const [activeTab, setActiveTab] = useState<'values' | 'categories' | 'language'>('values')
   
   // Values editing state
   const [editingValue, setEditingValue] = useState<Value | null>(null)
@@ -43,6 +46,9 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
   const [editingCategorySettings, setEditingCategorySettings] = useState(false)
   const [newCategorySettings, setNewCategorySettings] = useState({ shortTermDays: 90, longTermDays: 365 })
   const [isUpdatingGoals, setIsUpdatingGoals] = useState(false)
+
+  // Language settings state
+  const [selectedLanguage, setSelectedLanguage] = useState<Locale>(currentLocale)
 
   const iconOptions = [
     'heart', 'star', 'compass', 'trending-up', 'palette', 'briefcase', 
@@ -71,8 +77,8 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
         setValues(valuesData.values || [])
         
         // Update page title and subtitle
-        setTitle('Nastavení')
-        setSubtitle(`${(valuesData.values || []).length} hodnot`)
+        setTitle(translations?.settings.title || 'Nastavení')
+        setSubtitle(`${(valuesData.values || []).length} ${translations?.settings.values || 'hodnot'}`)
       }
       
       if (categorySettingsRes.ok) {
@@ -88,6 +94,19 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLanguageChange = (locale: Locale) => {
+    setSelectedLanguage(locale)
+    
+    // Save to localStorage with higher priority
+    localStorage.setItem('app-language-preference', locale)
+    
+    // Trigger a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('locale-change', { detail: { locale } }))
+    
+    // Reload the page to apply the new locale
+    window.location.reload()
   }
 
   const handleCreateValue = async () => {
@@ -209,7 +228,7 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Načítám nastavení...</p>
+          <p className="mt-4 text-gray-600">{translations?.settings.loadingSettings || 'Načítám nastavení...'}</p>
         </div>
       </div>
     )
@@ -230,7 +249,7 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  Hodnoty
+                  {translations?.settings.values || 'Hodnoty'}
                 </button>
                 <button
                   onClick={() => setActiveTab('categories')}
@@ -240,7 +259,18 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  Kategorie cílů
+                  {translations?.settings.categories || 'Kategorie cílů'}
+                </button>
+                <button
+                  onClick={() => setActiveTab('language')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'language'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Globe className="w-4 h-4 inline mr-2" />
+                  {translations?.settings.language || 'Jazyk'}
                 </button>
               </nav>
             </div>
@@ -352,6 +382,88 @@ export const SettingsPage = memo(function SettingsPage({ onValuesChange }: Setti
                         </div>
                         <span className="text-2xl font-bold text-primary-500">1+ rok</span>
                       </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'language' && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {translations?.settings.language || 'Jazyk'}
+                    </h2>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <Globe className="w-5 h-5 text-blue-500 mt-0.5" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-blue-900">
+                          {translations?.settings.languageDescription || 'Vyberte si jazyk aplikace'}
+                        </h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Změna jazyka se projeví okamžitě v celé aplikaci. Toto nastavení má prioritu nad automatickou detekcí jazyka.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <button
+                        onClick={() => handleLanguageChange('cs')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          selectedLanguage === 'cs'
+                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">🇨🇿</span>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Čeština</h3>
+                            <p className="text-sm text-gray-600">Czech</p>
+                          </div>
+                          {selectedLanguage === 'cs' && (
+                            <div className="ml-auto">
+                              <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => handleLanguageChange('en')}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                          selectedLanguage === 'en'
+                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">🇺🇸</span>
+                          <div className="text-left">
+                            <h3 className="font-semibold">English</h3>
+                            <p className="text-sm text-gray-600">Angličtina</p>
+                          </div>
+                          {selectedLanguage === 'en' && (
+                            <div className="ml-auto">
+                              <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </button>
                     </div>
                   </div>
                 </>

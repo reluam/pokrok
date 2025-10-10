@@ -1,11 +1,30 @@
+'use client'
+
 import { SignIn } from '@clerk/nextjs'
+import { useTranslations } from '@/lib/use-translations'
 
 export default function SignInPage() {
+  const { translations, loading } = useTranslations()
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <div className="animate-pulse text-gray-500">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-text-primary mb-2">Pokrok</h1>
-        <p className="text-gray-600">Přihlaste se a začněte dosahovat svých cílů</p>
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          {translations?.app.signInTitle || 'Pokrok'}
+        </h1>
+        <p className="text-gray-600">
+          {translations?.app.signInSubtitle || 'Přihlaste se a začněte dosahovat svých cílů'}
+        </p>
       </div>
       <SignIn
         appearance={{

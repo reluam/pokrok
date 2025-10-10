@@ -11,10 +11,12 @@ import { GoalDetailModal } from './GoalDetailModal'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePageContext } from './PageContext'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
+import { useTranslations } from '@/lib/use-translations'
 
 export const MainDashboard = memo(function MainDashboard() {
   const router = useRouter()
   const { setTitle, setSubtitle } = usePageContext()
+  const { translations } = useTranslations()
   const [goals, setGoals] = useState<Goal[]>([])
   const [values, setValues] = useState<Value[]>([])
   const [dailySteps, setDailySteps] = useState<DailyStep[]>([])
@@ -81,8 +83,8 @@ export const MainDashboard = memo(function MainDashboard() {
       console.log('Data loaded successfully')
       
       // Update page title and subtitle
-      setTitle('Hlavní panel')
-      setSubtitle(`${goalsData.goals.length} cílů, ${(stepsData.steps || []).length} kroků`)
+      setTitle(translations?.app.mainDashboard || 'Hlavní panel')
+      setSubtitle(`${goalsData.goals.length} ${translations?.app.goals || 'cílů'}, ${(stepsData.steps || []).length} ${translations?.app.steps || 'kroků'}`)
       
       // Update selectedGoal if it's currently open
       if (selectedGoal) {

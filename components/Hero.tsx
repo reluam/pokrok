@@ -4,8 +4,23 @@ import { useState, useEffect } from 'react'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import { getBaseUrl } from '@/lib/utils'
+import { useTranslations } from '@/lib/use-translations'
 
 export default function Hero() {
+  const { translations, loading } = useTranslations()
+
+  if (loading) {
+    return (
+      <section className="h-[85vh] flex items-start pt-32 -mt-10">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-gray-500">Loading...</div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="h-[85vh] flex items-start pt-32 -mt-10">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -15,17 +30,17 @@ export default function Hero() {
             {/* Tagline */}
             <div className="flex items-center space-x-3 text-primary-500">
               <Sparkles className="w-5 h-5" />
-              <span className="text-asul18">Pokrok</span>
+              <span className="text-asul18">{translations?.hero.tagline || 'Pokrok'}</span>
             </div>
 
             {/* Main heading */}
             <h1 className="text-h1 text-text-primary">
-              Aplikace pro smysluplné žití a osobní rozvoj.
+              {translations?.hero.title || 'Aplikace pro smysluplné žití a osobní rozvoj.'}
             </h1>
 
             {/* Subtitle */}
             <p className="text-asul18 text-gray-600">
-              Najděte svůj smysl, stanovte si cíle a dosáhněte pokroku v každé oblasti života.
+              {translations?.hero.subtitle || 'Najděte svůj smysl, stanovte si cíle a dosáhněte pokroku v každé oblasti života.'}
             </p>
 
                 {/* CTA Button */}
@@ -36,7 +51,7 @@ export default function Hero() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center space-x-2 bg-primary-500 text-white px-4 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
                   >
-                    <span>Otevřít aplikaci</span>
+                    <span>{translations?.hero.cta || 'Otevřít aplikaci'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

@@ -30,10 +30,10 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-h1 text-text-primary mb-4">
-              {translations?.about.pageTitle || 'O aplikaci Pokrok'}
+              {translations?.about.pageTitle || 'About Progress App'}
             </h1>
             <p className="text-p18 text-gray-600 max-w-3xl mx-auto">
-              {translations?.about.pageSubtitle || 'Objevte aplikaci, která vám pomůže najít smysl života a dosáhnout osobního růstu.'}
+              {translations?.about.pageSubtitle || 'Discover the app that helps you find meaning in life and achieve personal growth.'}
             </p>
           </div>
         </div>
@@ -46,16 +46,16 @@ export default function AboutPage() {
             {/* Text Content */}
             <div className="space-y-6">
               <h2 className="text-h2 text-text-primary">
-                {translations?.about.title || 'Co je Pokrok?'}
+                {translations?.about.title || 'What is Progress?'}
               </h2>
               <p className="text-p16 text-gray-600">
-                {translations?.about.description1 || 'Pokrok je aplikace pro osobní rozvoj, která vám pomůže najít smysl života, stanovit si jasné cíle a systematicky je dosahovat. Aplikace kombinuje osvědčené metody koučingu s moderními technologiemi.'}
+                {translations?.about.description1 || 'Progress is a personal development app that helps you find meaning in life, set clear goals and achieve them systematically. The app combines proven coaching methods with modern technologies.'}
               </p>
               <p className="text-p16 text-gray-600">
-                {translations?.about.description2 || 'Pomocí inteligentních nástrojů můžete sledovat svůj pokrok, oslavovat úspěchy a vytvářet trvalé pozitivní změny ve svém životě. Aplikace je navržena tak, aby byla vaším osobním průvodcem na cestě k lepšímu životu.'}
+                {translations?.about.description2 || 'Using intelligent tools, you can track your progress, celebrate achievements and create lasting positive changes in your life. The app is designed to be your personal guide on the path to a better life.'}
               </p>
               <p className="text-p16 text-gray-600">
-                {translations?.about.description3 || 'Všechny funkce jsou založeny na vědecky podložených metodách osobního rozvoje a jsou přizpůsobeny vašim individuálním potřebám a cílům.'}
+                {translations?.about.description3 || 'All features are based on scientifically proven personal development methods and are tailored to your individual needs and goals.'}
               </p>
             </div>
 
@@ -67,8 +67,8 @@ export default function AboutPage() {
                     <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-white font-bold text-xl">P</span>
                     </div>
-                    <p className="text-asul16 text-gray-600">Screenshot aplikace</p>
-                    <p className="text-asul10 text-gray-500 mt-2">do /public/images/app-screenshot.jpg</p>
+                    <p className="text-asul16 text-gray-600">App Screenshot</p>
+                    <p className="text-asul10 text-gray-500 mt-2">to /public/images/app-screenshot.jpg</p>
                   </div>
                 </div>
               </div>
@@ -82,51 +82,51 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-h2 text-text-primary mb-3">
-              {translations?.about.featuresTitle || 'Klíčové funkce'}
+              {translations?.about.featuresTitle || 'Key Features'}
             </h2>
             <p className="text-p16 text-gray-600">
-              {translations?.about.featuresSubtitle || 'Co aplikace Pokrok umí a jak vám může pomoci'}
+              {translations?.about.featuresSubtitle || 'What Progress app can do and how it can help you'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="text-4xl mb-2">🎯</div>
-              <h3 className="text-h4 text-text-primary">{translations?.about.goalSetting || 'Stanovování cílů'}</h3>
+              <h3 className="text-h4 text-text-primary">{translations?.about.goalSetting || 'Goal Setting'}</h3>
               <p className="text-p14 text-gray-600 leading-relaxed">
-                {translations?.about.goalSettingDesc || 'Vytvářejte si jasné a dosažitelné cíle s pomocí inteligentních nástrojů.'}
+                {translations?.about.goalSettingDesc || 'Create clear and achievable goals with the help of intelligent tools.'}
               </p>
             </div>
 
             <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="text-4xl mb-2">📊</div>
-              <h3 className="text-h4 text-text-primary">{translations?.about.progressTracking || 'Sledování pokroku'}</h3>
+              <h3 className="text-h4 text-text-primary">{translations?.about.progressTracking || 'Progress Tracking'}</h3>
               <p className="text-p14 text-gray-600 leading-relaxed">
-                {translations?.about.progressTrackingDesc || 'Měřte svůj pokrok a oslavujte úspěchy na cestě k lepšímu životu.'}
+                {translations?.about.progressTrackingDesc || 'Measure your progress and celebrate achievements on your path to a better life.'}
               </p>
             </div>
 
             <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="text-4xl mb-2">🧠</div>
-              <h3 className="text-h4 text-text-primary">{translations?.about.personalDevelopment || 'Osobní rozvoj'}</h3>
+              <h3 className="text-h4 text-text-primary">{translations?.about.personalDevelopment || 'Personal Development'}</h3>
               <p className="text-p14 text-gray-600 leading-relaxed">
-                {translations?.about.personalDevelopmentDesc || 'Rozvíjejte se systematicky pomocí personalizovaných cvičení.'}
+                {translations?.about.personalDevelopmentDesc || 'Develop systematically with personalized exercises.'}
               </p>
             </div>
 
             <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="text-4xl mb-2">💡</div>
-              <h3 className="text-h4 text-text-primary">{translations?.about.inspiration || 'Inspirace'}</h3>
+              <h3 className="text-h4 text-text-primary">{translations?.about.inspiration || 'Inspiration'}</h3>
               <p className="text-p14 text-gray-600 leading-relaxed">
-                {translations?.about.inspirationDesc || 'Získejte motivaci a inspiraci pro každý den vašeho života.'}
+                {translations?.about.inspirationDesc || 'Get motivation and inspiration for every day of your life.'}
               </p>
             </div>
 
             <div className="text-center space-y-3 p-4 rounded-lg hover:bg-gray-50 transition-colors">
               <div className="text-4xl mb-2">🤝</div>
-              <h3 className="text-h4 text-text-primary">{translations?.about.support || 'Podpora'}</h3>
+              <h3 className="text-h4 text-text-primary">{translations?.about.support || 'Support'}</h3>
               <p className="text-p14 text-gray-600 leading-relaxed">
-                {translations?.about.supportDesc || 'Získejte podporu a vedení na vaší cestě k osobnímu růstu.'}
+                {translations?.about.supportDesc || 'Get support and guidance on your path to personal growth.'}
               </p>
             </div>
           </div>
@@ -137,10 +137,10 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-h2 text-text-primary mb-4">
-            {translations?.about.ctaTitle || 'Začněte svou cestu k lepšímu životu'}
+            {translations?.about.ctaTitle || 'Start your journey to a better life'}
           </h2>
           <p className="text-p18 text-gray-600 mb-8">
-            {translations?.about.ctaSubtitle || 'Stáhněte si aplikaci Pokrok a začněte svou transformaci ještě dnes.'}
+            {translations?.about.ctaSubtitle || 'Download Progress app and start your transformation today.'}
           </p>
           <a
             href={`${getBaseUrl()}/muj`}
@@ -148,7 +148,7 @@ export default function AboutPage() {
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors text-asul18"
           >
-            <span>{translations?.hero.cta || 'Otevřít aplikaci'}</span>
+            <span>{translations?.hero.cta || 'Open App'}</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
