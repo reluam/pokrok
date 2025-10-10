@@ -143,11 +143,11 @@ export const DailyCheckIn = memo(function DailyCheckIn({
   })
   
   
-  // Future steps (for right column)
+  // Future steps (for right column) - includes overdue steps but excludes today's steps
   const futureSteps = dailySteps.filter(step => {
     const stepDate = new Date(step.date)
     stepDate.setHours(0, 0, 0, 0)
-    return stepDate > today
+    return stepDate !== today // Exclude today's steps, include overdue and future
   })
   
   // Filter out completed steps and events
@@ -447,16 +447,30 @@ export const DailyCheckIn = memo(function DailyCheckIn({
           {/* Future steps */}
           {sortedFutureSteps.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-500 mb-2">Budoucí kroky</h3>
+              <h3 className="text-sm font-semibold text-gray-500 mb-2">Další kroky</h3>
               {sortedFutureSteps.map((step) => {
                 const goal = goals.find(g => g.id === step.goal_id)
                 const stepDate = new Date(step.date)
                 stepDate.setHours(0, 0, 0, 0)
                 const today = getToday()
                 
-                // Calculate days until step
-                const daysUntil = getDaysUntil(stepDate)
-                const daysText = daysUntil === 1 ? 'Zítra' : `Za ${daysUntil} dní`
+                // Calculate days until step or days overdue
+                const daysDiff = Math.ceil((stepDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                let daysText = ''
+                let isOverdue = false
+                
+                if (daysDiff < 0) {
+                  // Overdue
+                  isOverdue = true
+                  const daysOverdue = Math.abs(daysDiff)
+                  daysText = `${daysOverdue} dní zpožděno`
+                } else if (daysDiff === 1) {
+                  // Tomorrow
+                  daysText = 'Zítra'
+                } else {
+                  // Future
+                  daysText = `Za ${daysDiff} dní`
+                }
                 
                 const isSelected = selectedStep && selectedStep.id === step.id
                 
@@ -464,12 +478,16 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                   <div 
                     key={step.id} 
                     onClick={() => setSelectedStepForDetails(step)}
-                    className={`bg-gray-50 border border-gray-200 rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 hover:shadow-md relative ${
-                      isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''
-                    }`}
+                    className={`rounded-lg p-3 mb-2 cursor-pointer transition-all duration-200 hover:shadow-md relative ${
+                      isOverdue 
+                        ? 'bg-red-50 border border-red-200' 
+                        : 'bg-gray-50 border border-gray-200'
+                    } ${isSelected ? 'ring-2 ring-primary-500 ring-opacity-50 shadow-lg' : ''}`}
                   >
                     {/* Footprints icon for future steps */}
-                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-gray-400 opacity-70">
+                    <div className={`absolute -left-2 top-1/2 -translate-y-1/2 opacity-70 ${
+                      isOverdue ? 'text-red-400' : 'text-gray-400'
+                    }`}>
                       <Footprints className="w-4 h-4 fill-current" />
                     </div>
                     
@@ -494,7 +512,9 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                         {goal && (
                           <p className="text-xs text-gray-400">Cíl: {goal.title}</p>
                         )}
-                        <p className="text-xs text-primary-500 font-medium mt-1">
+                        <p className={`text-xs font-medium mt-1 ${
+                          isOverdue ? 'text-red-500' : 'text-primary-500'
+                        }`}>
                           {daysText}
                         </p>
                       </div>
@@ -504,10 +524,24 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                             e.stopPropagation()
                             onStepComplete(step.id)
                           }}
-                          className="px-3 py-1 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-xs font-medium"
+                          className={`px-3 py-1 text-white rounded-lg hover:opacity-80 transition-colors text-xs font-medium ${
+                            isOverdue ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'
+                          }`}
                         >
                           ✓
                         </button>
+                        {onStepPostpone && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onStepPostpone(step.id)
+                            }}
+                            className="px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs font-medium"
+                            title="Odložit na zítra"
+                          >
+                            ⏰
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
