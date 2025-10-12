@@ -319,59 +319,48 @@ export const WorkspaceTab = memo(function WorkspaceTab({
             </h3>
             
             {sortedTodaySteps.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">✨</span>
+              <div className="text-center py-12">
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
+                    <span className="text-4xl">✨</span>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="text-lg">🎉</span>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Všechny kroky jsou hotové!</h3>
-                <p className="text-sm text-gray-600 mb-6">Skvělá práce! Teď je čas na odpočinek a péči o sebe.</p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
-                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">☕</span>
-                      <div>
-                        <p className="font-medium text-blue-900 text-sm">Dejte si kávu nebo čaj</p>
-                        <p className="text-xs text-blue-700">Chvilka klidu pro sebe</p>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-3">
+                  Všechny kroky jsou hotové!
+                </h3>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
+                  Skvělá práce! Teď je čas na odpočinek a péči o sebe. 
+                  Vyberte si něco příjemného pro sebe.
+                </p>
+                
+                <div className="max-w-sm mx-auto">
+                  <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-8 shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 hover:scale-105">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                        <span className="text-2xl">☕</span>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">🧘</span>
-                      <div>
-                        <p className="font-medium text-green-900 text-sm">Meditace</p>
-                        <p className="text-xs text-green-700">5 minut mindfulness</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">🚶</span>
-                      <div>
-                        <p className="font-medium text-purple-900 text-sm">Procházka</p>
-                        <p className="text-xs text-purple-700">Čerstvý vzduch prospěje</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xl">💬</span>
-                      <div>
-                        <p className="font-medium text-orange-900 text-sm">Kontaktujte známého</p>
-                        <p className="text-xs text-orange-700">Společnost je důležitá</p>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Dejte si kávu nebo čaj</h4>
+                      <p className="text-sm text-gray-600 mb-4">Chvilka klidu pro sebe</p>
+                      <div className="flex justify-center space-x-2 text-xs text-gray-500">
+                        <span className="px-2 py-1 bg-gray-100 rounded-full">🧘 Meditace</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded-full">🚶 Procházka</span>
+                        <span className="px-2 py-1 bg-gray-100 rounded-full">💬 Přátelé</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600 italic">
+                <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl border border-gray-200 max-w-lg mx-auto">
+                  <p className="text-sm text-gray-700 italic leading-relaxed">
                     "Odpočinek není odměna za dokončenou práci, ale součást práce samotné."
                   </p>
+                  <div className="mt-3 text-xs text-gray-500 text-right">
+                    — Motivace pro dnešek
+                  </div>
                 </div>
               </div>
             ) : (
