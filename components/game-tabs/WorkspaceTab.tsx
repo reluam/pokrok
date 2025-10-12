@@ -319,10 +319,60 @@ export const WorkspaceTab = memo(function WorkspaceTab({
             </h3>
             
             {sortedTodaySteps.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Footprints className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium">Žádné kroky na dnešek</p>
-                <p className="text-sm">Přidejte první krok pomocí formuláře výše.</p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Všechny kroky jsou hotové!</h3>
+                <p className="text-sm text-gray-600 mb-6">Skvělá práce! Teď je čas na odpočinek a péči o sebe.</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+                  <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">☕</span>
+                      <div>
+                        <p className="font-medium text-blue-900 text-sm">Dejte si kávu nebo čaj</p>
+                        <p className="text-xs text-blue-700">Chvilka klidu pro sebe</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">🧘</span>
+                      <div>
+                        <p className="font-medium text-green-900 text-sm">Meditace</p>
+                        <p className="text-xs text-green-700">5 minut mindfulness</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">🚶</span>
+                      <div>
+                        <p className="font-medium text-purple-900 text-sm">Procházka</p>
+                        <p className="text-xs text-purple-700">Čerstvý vzduch prospěje</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xl">💬</span>
+                      <div>
+                        <p className="font-medium text-orange-900 text-sm">Kontaktujte známého</p>
+                        <p className="text-xs text-orange-700">Společnost je důležitá</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 italic">
+                    "Odpočinek není odměna za dokončenou práci, ale součást práce samotné."
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
