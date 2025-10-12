@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       id: user.id,
-      clerk_id: user.clerk_id,
+      clerk_id: user.clerk_user_id,
       email: user.email,
       name: user.name,
       has_completed_onboarding: user.has_completed_onboarding,
