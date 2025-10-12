@@ -82,17 +82,43 @@ export const WorkspaceTab = memo(function WorkspaceTab({
     }
   }, [selectedDate, todayString])
 
-  // Get today's steps
+  // Get today's steps and overdue steps (not completed)
   const todaySteps = dailySteps.filter(step => {
     const stepDate = new Date(step.date)
     stepDate.setHours(0, 0, 0, 0)
     return stepDate.getTime() === today.getTime()
   })
 
-  // Sort today's steps: incomplete first, then completed
-  const sortedTodaySteps = todaySteps.sort((a, b) => {
-    if (a.completed === b.completed) return 0
-    return a.completed ? 1 : -1
+  // Get overdue steps (not completed and date is before today)
+  const overdueSteps = dailySteps.filter(step => {
+    if (step.completed) return false
+    const stepDate = new Date(step.date)
+    stepDate.setHours(0, 0, 0, 0)
+    return stepDate < today
+  })
+
+  // Combine today's incomplete steps and overdue steps
+  const allRelevantSteps = [
+    ...todaySteps.filter(step => !step.completed),
+    ...overdueSteps
+  ]
+
+  // Sort steps: overdue first, then today's steps
+  const sortedTodaySteps = allRelevantSteps.sort((a, b) => {
+    const aDate = new Date(a.date)
+    const bDate = new Date(b.date)
+    aDate.setHours(0, 0, 0, 0)
+    bDate.setHours(0, 0, 0, 0)
+    
+    // Overdue steps first
+    const aIsOverdue = aDate < today
+    const bIsOverdue = bDate < today
+    
+    if (aIsOverdue && !bIsOverdue) return -1
+    if (!aIsOverdue && bIsOverdue) return 1
+    
+    // If both are overdue or both are today, sort by date
+    return aDate.getTime() - bDate.getTime()
   })
 
   const handleAddStep = async () => {
@@ -289,7 +315,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
           {/* Today's Steps */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900">
-              Dnešní kroky ({sortedTodaySteps.filter(s => !s.completed).length} zbývá)
+              Dnešní kroky ({sortedTodaySteps.length} zbývá)
             </h3>
             
             {sortedTodaySteps.length === 0 ? (
@@ -300,71 +326,85 @@ export const WorkspaceTab = memo(function WorkspaceTab({
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedTodaySteps.map((step) => (
-                  <div
-                    key={step.id}
-                    className={`p-4 rounded-lg border transition-colors cursor-pointer hover:shadow-md ${
-                      step.completed
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-primary-50 border-primary-200'
-                    }`}
-                    onClick={() => setSelectedStepForDetails(step)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <Footprints className={`w-5 h-5 ${step.completed ? 'text-green-500' : 'text-primary-500'}`} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h4 className={`font-medium ${step.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                            {step.title}
-                          </h4>
+                {sortedTodaySteps.map((step) => {
+                  const stepDate = new Date(step.date)
+                  stepDate.setHours(0, 0, 0, 0)
+                  const isOverdue = stepDate < today
+                  
+                  return (
+                    <div
+                      key={step.id}
+                      className={`p-4 rounded-lg border transition-colors cursor-pointer hover:shadow-md ${
+                        isOverdue
+                          ? 'bg-red-50 border-red-200'
+                          : 'bg-primary-50 border-primary-200'
+                      }`}
+                      onClick={() => setSelectedStepForDetails(step)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <Footprints className={`w-5 h-5 ${isOverdue ? 'text-red-500' : 'text-primary-500'}`} />
                         </div>
-                        {step.description && (
-                          <p className={`text-sm ${step.completed ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {step.description}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          <span className="flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {new Date(step.date).toLocaleDateString('cs-CZ')}
-                          </span>
-                          {step.goal_id && (
-                            <span className="flex items-center">
-                              <Target className="w-3 h-3 mr-1" />
-                              {goals.find(g => g.id === step.goal_id)?.title || 'Nepřiřazený cíl'}
-                            </span>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="font-medium text-gray-900">
+                              {step.title}
+                            </h4>
+                            {isOverdue && (
+                              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">
+                                Zpožděno
+                              </span>
+                            )}
+                          </div>
+                          {step.description && (
+                            <p className="text-sm text-gray-600">
+                              {step.description}
+                            </p>
                           )}
+                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                            <span className={`flex items-center ${isOverdue ? 'text-red-600' : ''}`}>
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {new Date(step.date).toLocaleDateString('cs-CZ')}
+                              {isOverdue && (
+                                <span className="ml-1 font-medium">(zpožděno)</span>
+                              )}
+                            </span>
+                            {step.goal_id && (
+                              <span className="flex items-center">
+                                <Target className="w-3 h-3 mr-1" />
+                                {goals.find(g => g.id === step.goal_id)?.title || 'Nepřiřazený cíl'}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleStepComplete(step.id)
-                          }}
-                          className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition-colors ${
-                            step.completed 
-                              ? 'bg-gray-500 hover:bg-gray-600' 
-                              : 'bg-primary-500 hover:bg-primary-600'
-                          }`}
-                        >
-                          {step.completed ? 'Vrátit' : 'Hotovo'}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedStepForDetails(step)
-                          }}
-                          className="px-3 py-1 rounded-lg bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
-                        >
-                          <Clock className="w-4 h-4" />
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStepComplete(step.id)
+                            }}
+                            className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition-colors ${
+                              isOverdue 
+                                ? 'bg-red-500 hover:bg-red-600' 
+                                : 'bg-primary-500 hover:bg-primary-600'
+                            }`}
+                          >
+                            Hotovo
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedStepForDetails(step)
+                            }}
+                            className="px-3 py-1 rounded-lg bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
+                          >
+                            <Clock className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

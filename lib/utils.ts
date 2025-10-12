@@ -11,7 +11,7 @@ export function getBaseUrl(): string {
   
   // Fallback for production when NEXT_PUBLIC_SITE_URL is not set
   // This should not happen in production, but provides a fallback
-  return 'https://smysluplneziti.vercel.app'
+  return 'https://pokrok.vercel.app'
 }
 
 // Get Clerk URLs based on environment
