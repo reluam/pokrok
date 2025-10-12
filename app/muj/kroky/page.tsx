@@ -17,6 +17,8 @@ export default function StepsPage() {
     title: '',
     description: ''
   })
+  const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -71,8 +73,38 @@ export default function StepsPage() {
   }
 
   const handleStepEdit = (step: DailyStep) => {
-    // TODO: Implement step edit functionality
-    console.log('Edit step:', step)
+    setEditingStep({ ...step })
+  }
+
+  const handleStepSave = async () => {
+    if (!editingStep || isSaving) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/cesta/daily-steps/${editingStep.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingStep.title,
+          description: editingStep.description,
+          date: editingStep.date
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSteps(prev => prev.map(step => step.id === editingStep.id ? data.step : step))
+        setEditingStep(null)
+      } else {
+        console.error('Error saving step:', await response.text())
+        alert('Chyba při ukládání kroku')
+      }
+    } catch (error) {
+      console.error('Error saving step:', error)
+      alert('Chyba při ukládání kroku')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const getGoalTitle = (goalId: string) => {
@@ -312,7 +344,7 @@ export default function StepsPage() {
                     <div
                       key={step.id}
                       className={`p-4 rounded-lg border-2 bg-red-50 border-red-200 hover:shadow-md transition-shadow cursor-pointer`}
-                      onClick={() => handleStepComplete(step.id)}
+                      onClick={() => handleStepEdit(step)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -347,14 +379,11 @@ export default function StepsPage() {
                           <button 
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleStepEdit(step)
+                              handleStepComplete(step.id)
                             }}
-                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
                           >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                            <Circle className="w-5 h-5 text-red-400" />
+                            Hotovo
                           </button>
                         </div>
                       </div>
@@ -389,7 +418,7 @@ export default function StepsPage() {
                   <div
                     key={step.id}
                     className={`p-4 rounded-lg border-2 ${getGoalColor(step.goal_id)} hover:shadow-md transition-shadow cursor-pointer`}
-                    onClick={() => handleStepComplete(step.id)}
+                    onClick={() => handleStepEdit(step)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -422,14 +451,11 @@ export default function StepsPage() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleStepEdit(step)
+                            handleStepComplete(step.id)
                           }}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="px-3 py-1 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors"
                         >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                          <Circle className="w-5 h-5 text-gray-400" />
+                          Hotovo
                         </button>
                       </div>
                     </div>
@@ -506,6 +532,115 @@ export default function StepsPage() {
           </div>
         </div>
       </div>
+
+      {/* Step Edit Modal */}
+      {editingStep && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
+              <button
+                onClick={() => setEditingStep(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleStepSave()
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
+                <input
+                  type="text"
+                  value={editingStep.title}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, title: e.target.value } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Název kroku"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                <textarea
+                  value={editingStep.description || ''}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Popis kroku (volitelné)"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                <input
+                  type="date"
+                  value={new Date(editingStep.date).toISOString().split('T')[0]}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, date: new Date(e.target.value) } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              
+              {editingStep.goal_id && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
+                  <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                    {goals.find(g => g.id === editingStep.goal_id)?.title || 'Nepřiřazený cíl'}
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <div className="flex items-center space-x-2">
+                  {editingStep.completed ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-green-600 font-medium">Dokončeno</span>
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-5 h-5 text-gray-300" />
+                      <span className="text-gray-600">Nedokončeno</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 mt-6">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Ukládám...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Uložit</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setEditingStep(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Zrušit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

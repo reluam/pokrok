@@ -32,6 +32,8 @@ export default function CilePage() {
     updateValue: '',
     updateUnit: ''
   })
+  const [editingStepModal, setEditingStepModal] = useState<DailyStep | null>(null)
+  const [isSavingStep, setIsSavingStep] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -167,6 +169,41 @@ export default function CilePage() {
       updateUnit: ''
     })
     setShowStepSettings(true)
+  }
+
+  const handleStepEditModal = (step: DailyStep) => {
+    setEditingStepModal({ ...step })
+  }
+
+  const handleStepSaveModal = async () => {
+    if (!editingStepModal || isSavingStep) return
+
+    setIsSavingStep(true)
+    try {
+      const response = await fetch(`/api/cesta/daily-steps/${editingStepModal.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingStepModal.title,
+          description: editingStepModal.description,
+          date: editingStepModal.date
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSteps(prev => prev.map(step => step.id === editingStepModal.id ? data.step : step))
+        setEditingStepModal(null)
+      } else {
+        console.error('Error saving step:', await response.text())
+        alert('Chyba při ukládání kroku')
+      }
+    } catch (error) {
+      console.error('Error saving step:', error)
+      alert('Chyba při ukládání kroku')
+    } finally {
+      setIsSavingStep(false)
+    }
   }
 
   const handleStepUpdate = async () => {
@@ -539,7 +576,7 @@ export default function CilePage() {
                                     className={`p-2 rounded border ${status.bgColor} ${status.borderColor} cursor-pointer hover:shadow-sm transition-shadow`}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      handleStepClick(step)
+                                      handleStepEditModal(step)
                                     }}
                                   >
                                     <div className="flex items-start justify-between">
@@ -620,173 +657,111 @@ export default function CilePage() {
           </div>
         )}
 
-        {/* Step Settings Modal */}
-        {showStepSettings && selectedStep && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Nastavení šablony kroku</h2>
+        {/* Step Edit Modal */}
+        {editingStepModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
+                <button
+                  onClick={() => setEditingStepModal(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                handleStepSaveModal()
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
+                  <input
+                    type="text"
+                    value={editingStepModal.title}
+                    onChange={(e) => setEditingStepModal(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Název kroku"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                  <textarea
+                    value={editingStepModal.description || ''}
+                    onChange={(e) => setEditingStepModal(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Popis kroku (volitelné)"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                  <input
+                    type="date"
+                    value={new Date(editingStepModal.date).toISOString().split('T')[0]}
+                    onChange={(e) => setEditingStepModal(prev => prev ? { ...prev, date: new Date(e.target.value) } : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                
+                {editingStepModal.goal_id && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
+                    <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                      {goals.find(g => g.id === editingStepModal.goal_id)?.title || 'Nepřiřazený cíl'}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2 pt-2">
+                  <div className="flex items-center space-x-2">
+                    {editingStepModal.completed ? (
+                      <>
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <span className="text-green-600 font-medium">Dokončeno</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-5 h-5 text-gray-300" />
+                        <span className="text-gray-600">Nedokončeno</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3 mt-6">
                   <button
-                    onClick={() => {
-                      setShowStepSettings(false)
-                      setSelectedStep(null)
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
+                    type="submit"
+                    disabled={isSavingStep}
+                    className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center space-x-2"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    {isSavingStep ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Ukládám...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Uložit</span>
+                      </>
+                    )}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setEditingStepModal(null)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Zrušit
                   </button>
                 </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <span className="text-blue-500 text-xl">ℹ️</span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-blue-900">Šablona pro automatické generování</h3>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Nastavujete šablonu, podle které se budou automaticky generovat konkrétní kroky. 
-                        Instance kroků se zobrazují na hlavní stránce.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <form onSubmit={(e) => { e.preventDefault(); handleStepUpdate(); }} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Název kroku
-                    </label>
-                    <input
-                      type="text"
-                      value={editingStep.title}
-                      onChange={(e) => setEditingStep(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Popis
-                    </label>
-                    <textarea
-                      value={editingStep.description}
-                      onChange={(e) => setEditingStep(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Typ kroku
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="stepType"
-                          value="automated"
-                          checked={editingStep.stepType === 'update'}
-                          onChange={(e) => setEditingStep(prev => ({ ...prev, stepType: 'update' }))}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Automatizovaný krok (generuje se podle frekvence)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="stepType"
-                          value="manual"
-                          checked={editingStep.stepType === 'custom'}
-                          onChange={(e) => setEditingStep(prev => ({ ...prev, stepType: 'custom' }))}
-                          className="mr-2"
-                        />
-                        <span className="text-sm">Jednorázový krok (pouze označit hotovo)</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {editingStep.stepType === 'update' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Frekvence generování
-                      </label>
-                      <input
-                        type="text"
-                        value={editingStep.frequencyTime}
-                        onChange={(e) => setEditingStep(prev => ({ ...prev, frequencyTime: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Např. každý den v 20:00, PO, ST, PÁ v 16:00, každou první neděli v měsíci v 18:00"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Zadejte frekvenci v přirozeném jazyce (např. "každý den v 20:00", "PO, ST, PÁ v 16:00")
-                      </p>
-                    </div>
-                  )}
-
-                  {editingStep.stepType === 'custom' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Deadline (volitelné)
-                      </label>
-                      <input
-                        type="date"
-                        value={editingStep.customTypeName || ''}
-                        onChange={(e) => setEditingStep(prev => ({ ...prev, customTypeName: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Datum, do kdy má být krok dokončen
-                      </p>
-                    </div>
-                  )}
-
-
-                  {/* Zobrazení deadline pro jednorázové kroky */}
-                  {selectedStep && selectedStep.step_type === 'custom' && selectedStep.custom_type_name && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h3 className="text-sm font-medium text-gray-900 mb-3">Deadline</h3>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Datum dokončení:</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {new Date(selectedStep.custom_type_name).toLocaleDateString('cs-CZ')}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-3 pt-4">
-                    <button
-                      type="submit"
-                      className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      Uložit změny
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleStepDelete}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      Smazat krok
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowStepSettings(false)
-                        setSelectedStep(null)
-                      }}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
-                    >
-                      Zrušit
-                    </button>
-                  </div>
-                </form>
-              </div>
+              </form>
             </div>
           </div>
         )}
