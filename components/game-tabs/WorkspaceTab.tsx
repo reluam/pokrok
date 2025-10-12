@@ -39,6 +39,8 @@ export const WorkspaceTab = memo(function WorkspaceTab({
   const [isAddingStep, setIsAddingStep] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
+  const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   
   // Ref for detecting clicks outside the form
   const formRef = useRef<HTMLDivElement>(null)
@@ -179,6 +181,43 @@ export const WorkspaceTab = memo(function WorkspaceTab({
     } catch (error) {
       console.error('Error completing step:', error)
     }
+  }
+
+  const handleStepSave = async () => {
+    if (!editingStep || isSaving) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/cesta/daily-steps/${editingStep.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingStep.title,
+          description: editingStep.description,
+          date: editingStep.date
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (onStepUpdate) {
+          onStepUpdate(data.step)
+        }
+        setSelectedStepForDetails(null)
+        setEditingStep(null)
+      } else {
+        console.error('Error saving step:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error saving step:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleStepEdit = (step: DailyStep) => {
+    setSelectedStepForDetails(step)
+    setEditingStep({ ...step })
   }
 
   return (
@@ -362,7 +401,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                           ? 'bg-red-50 border-red-200'
                           : 'bg-primary-50 border-primary-200'
                       }`}
-                      onClick={() => setSelectedStepForDetails(step)}
+                      onClick={() => handleStepEdit(step)}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
@@ -417,7 +456,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              setSelectedStepForDetails(step)
+                              handleStepEdit(step)
                             }}
                             className="px-3 py-1 rounded-lg bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
                           >
@@ -435,14 +474,17 @@ export const WorkspaceTab = memo(function WorkspaceTab({
         </div>
       </div>
       
-      {/* Step Details Modal */}
-      {selectedStepForDetails && (
+      {/* Step Edit Modal */}
+      {editingStep && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Detail kroku</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
               <button
-                onClick={() => setSelectedStepForDetails(null)}
+                onClick={() => {
+                  setSelectedStepForDetails(null)
+                  setEditingStep(null)
+                }}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -451,35 +493,54 @@ export const WorkspaceTab = memo(function WorkspaceTab({
               </button>
             </div>
             
-            <div className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleStepSave()
+            }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
-                <p className="text-gray-900 font-medium">{selectedStepForDetails.title}</p>
+                <input
+                  type="text"
+                  value={editingStep.title}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, title: e.target.value } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Název kroku"
+                />
               </div>
               
-              {selectedStepForDetails.description && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
-                  <p className="text-gray-600">{selectedStepForDetails.description}</p>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                <textarea
+                  value={editingStep.description || ''}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Popis kroku (volitelné)"
+                />
+              </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
-                <p className="text-gray-600">{new Date(selectedStepForDetails.date).toLocaleDateString('cs-CZ')}</p>
+                <input
+                  type="date"
+                  value={new Date(editingStep.date).toISOString().split('T')[0]}
+                  onChange={(e) => setEditingStep(prev => prev ? { ...prev, date: new Date(e.target.value) } : null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
               </div>
               
-              {selectedStepForDetails.goal_id && (
+              {editingStep.goal_id && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
-                  <p className="text-gray-600">{goals.find(g => g.id === selectedStepForDetails.goal_id)?.title || 'Nepřiřazený cíl'}</p>
+                  <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                    {goals.find(g => g.id === editingStep.goal_id)?.title || 'Nepřiřazený cíl'}
+                  </p>
                 </div>
               )}
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Stav</label>
+              <div className="flex items-center space-x-2 pt-2">
                 <div className="flex items-center space-x-2">
-                  {selectedStepForDetails.completed ? (
+                  {editingStep.completed ? (
                     <>
                       <CheckCircle className="w-5 h-5 text-green-500" />
                       <span className="text-green-600 font-medium">Dokončeno</span>
@@ -492,36 +553,38 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                   )}
                 </div>
               </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => {
-                  handleStepComplete(selectedStepForDetails.id)
-                  setSelectedStepForDetails(null)
-                }}
-                className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors font-medium flex items-center justify-center space-x-2"
-              >
-                {selectedStepForDetails.completed ? (
-                  <>
-                    <Circle className="w-4 h-4" />
-                    <span>Označit jako nedokončené</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Označit jako dokončené</span>
-                  </>
-                )}
-              </button>
               
-              <button
-                onClick={() => setSelectedStepForDetails(null)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-              >
-                Zavřít
-              </button>
-            </div>
+              <div className="flex space-x-3 mt-6">
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center space-x-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Ukládám...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Uložit</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedStepForDetails(null)
+                    setEditingStep(null)
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Zrušit
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
