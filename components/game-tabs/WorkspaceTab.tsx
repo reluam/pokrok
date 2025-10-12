@@ -314,41 +314,41 @@ export const WorkspaceTab = memo(function WorkspaceTab({
 
           {/* Today's Steps */}
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Dnešní kroky ({sortedTodaySteps.length} zbývá)
-            </h3>
-            
             {sortedTodaySteps.length === 0 ? (
-              <div className="text-center py-8">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              <div className="text-center py-6">
+                <h3 className="text-lg font-medium text-gray-700 mb-6">
                   Všechny kroky jsou hotové! ✨
                 </h3>
                 
                 <div className="max-w-sm mx-auto">
-                  <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-200">
+                  <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-5 border border-green-200">
                     <div className="text-center">
-                      <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <span className="text-xl">☕</span>
+                      <div className="w-10 h-10 mx-auto mb-3 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span className="text-lg">☕</span>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-900 mb-2">Dejte si kávu nebo čaj</h4>
+                      <h4 className="text-base font-medium text-gray-800 mb-1">Dejte si kávu nebo čaj</h4>
                       <p className="text-sm text-gray-600 mb-3">Chvilka klidu pro sebe</p>
                       <div className="flex justify-center space-x-2 text-xs text-gray-500">
-                        <span className="px-2 py-1 bg-gray-100 rounded-full">🧘</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded-full">🚶</span>
-                        <span className="px-2 py-1 bg-gray-100 rounded-full">💬</span>
+                        <span className="px-2 py-1 bg-green-100 rounded-full">🧘</span>
+                        <span className="px-2 py-1 bg-green-100 rounded-full">🚶</span>
+                        <span className="px-2 py-1 bg-green-100 rounded-full">💬</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200 max-w-md mx-auto">
-                  <p className="text-sm text-gray-600 italic">
+                <div className="mt-5 p-3 bg-green-50 rounded-lg max-w-sm mx-auto border border-green-100">
+                  <p className="text-xs text-green-700 italic">
                     "Odpočinek je součást práce."
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Dnešní kroky ({sortedTodaySteps.length} zbývá)
+                </h3>
+                <div className="space-y-3">
                 {sortedTodaySteps.map((step) => {
                   const stepDate = new Date(step.date)
                   stepDate.setHours(0, 0, 0, 0)
@@ -428,7 +428,8 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                     </div>
                   )
                 })}
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>
