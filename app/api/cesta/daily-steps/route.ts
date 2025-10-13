@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     const step = await createDailyStep({
       user_id: dbUser.id,
-      goal_id: goalId,
+      goal_id: goalId && goalId.trim() !== '' ? goalId : null, // Convert empty string to null
       title,
       description: description || '',
       date: date ? new Date(date) : new Date(), // Use provided date or current date
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     })
     
     // Update goal progress using combined formula
-    if (goalId) {
+    if (goalId && goalId.trim() !== '') {
       await updateGoalProgressCombined(goalId)
     }
     

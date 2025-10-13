@@ -5,6 +5,7 @@ import { Goal, DailyStep, Automation, GoalMetric } from '@/lib/cesta-db'
 import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
+import { UnifiedStepModal } from './UnifiedStepModal'
 
 interface GoalDetailModalProps {
   goal: Goal
@@ -38,6 +39,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false)
   const [showAddMetricModal, setShowAddMetricModal] = useState(false)
   const [showAddStepModal, setShowAddStepModal] = useState(false)
+  const [isSubmittingStep, setIsSubmittingStep] = useState(false)
 
   // Load metrics when metrics tab is opened
   useEffect(() => {
@@ -133,6 +135,39 @@ export const GoalDetailModal = memo(function GoalDetailModal({
       }
     } catch (error) {
       console.error('Error deleting metric:', error)
+    }
+  }
+
+  const handleAddStep = async (stepData: any) => {
+    setIsSubmittingStep(true)
+    try {
+      const response = await fetch('/api/cesta/daily-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goalId: goal.id,
+          title: stepData.title.trim(),
+          description: stepData.description.trim() || undefined,
+          date: stepData.date
+        })
+      })
+
+      if (response.ok) {
+        // Call the parent's onStepAdd callback to refresh data
+        if (onStepAdd) {
+          onStepAdd(goal.id)
+        }
+        setShowAddStepModal(false)
+      } else {
+        const error = await response.json()
+        console.error('Error adding step:', error)
+        alert(`Chyba při přidávání kroku: ${error.error || 'Neznámá chyba'}`)
+      }
+    } catch (error) {
+      console.error('Error adding step:', error)
+      alert('Chyba při přidávání kroku')
+    } finally {
+      setIsSubmittingStep(false)
     }
   }
 
@@ -680,7 +715,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   Kroky ({completedSteps}/{totalSteps})
                 </h3>
                 <button 
-                  onClick={() => onStepAdd?.(goal.id)}
+                  onClick={() => setShowAddStepModal(true)}
                   className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -711,9 +746,12 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                             e.stopPropagation()
                             onStepComplete?.(step.id)
                           }}
+                          disabled={step.isCompleting}
                           className="flex-shrink-0"
                         >
-                          {step.completed ? (
+                          {step.isCompleting ? (
+                            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                          ) : step.completed ? (
                             <CheckCircle className="w-5 h-5 text-green-500" />
                           ) : (
                             <Circle className="w-5 h-5 text-gray-300 hover:text-green-500 transition-colors" />
@@ -997,6 +1035,17 @@ export const GoalDetailModal = memo(function GoalDetailModal({
           onSave={handleAddMetric}
         />
       )}
+
+      {/* Unified Step Modal */}
+      <UnifiedStepModal
+        isOpen={showAddStepModal}
+        onClose={() => setShowAddStepModal(false)}
+        onSave={handleAddStep}
+        goals={[goal]} // Only show the current goal
+        preselectedGoalId={goal.id}
+        width="medium"
+        disableGoalSelection={true}
+      />
     </div>
   )
 })

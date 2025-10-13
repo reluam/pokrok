@@ -61,6 +61,7 @@ export interface DailyStep {
   custom_type_name?: string
   deadline?: Date
   metric_id?: string
+  isCompleting?: boolean // Loading state for completion
 }
 
 export interface Metric {

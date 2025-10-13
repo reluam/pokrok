@@ -106,6 +106,11 @@ export default function CilePage() {
 
   const handleStepToggle = async (stepId: string) => {
     try {
+      // Set loading state for this specific step
+      setSteps(prev => prev.map(step => 
+        step.id === stepId ? { ...step, isCompleting: true } : step
+      ))
+      
       const response = await fetch(`/api/cesta/daily-steps/${stepId}/toggle`, {
         method: 'PATCH',
         headers: {
@@ -119,7 +124,7 @@ export default function CilePage() {
         if (data.step) {
           setSteps(prev => prev.map(step => 
             step.id === stepId 
-              ? { ...step, completed: data.step.completed, completed_at: data.step.completed_at }
+              ? { ...step, completed: data.step.completed, completed_at: data.step.completed_at, isCompleting: false }
               : step
           ))
         } else {
@@ -149,6 +154,10 @@ export default function CilePage() {
       }
     } catch (error) {
       console.error('Error toggling step:', error)
+      // Remove loading state on error
+      setSteps(prev => prev.map(step => 
+        step.id === stepId ? { ...step, isCompleting: false } : step
+      ))
     }
   }
 
@@ -644,10 +653,14 @@ export default function CilePage() {
                                         className="ml-2 flex-shrink-0 cursor-pointer"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          handleStepToggle(step.id)
+                                          if (!step.isCompleting) {
+                                            handleStepToggle(step.id)
+                                          }
                                         }}
                                       >
-                                        {step.completed ? (
+                                        {step.isCompleting ? (
+                                          <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                        ) : step.completed ? (
                                           <CheckCircle className="w-4 h-4 text-green-500" />
                                         ) : (
                                           <Circle className="w-4 h-4 text-gray-400" />

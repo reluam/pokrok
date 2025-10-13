@@ -4,6 +4,7 @@ import { useState, useEffect, memo } from 'react'
 import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { Plus, CheckCircle, Circle, Clock, AlertTriangle, Calendar, Target, Star, Zap, Footprints } from 'lucide-react'
 import { getToday, getTodayString, isToday, isFuture, getDaysUntil } from '@/lib/utils'
+import { UnifiedStepModal } from './UnifiedStepModal'
 
 interface DailyCheckInProps {
   goals: Goal[]
@@ -562,11 +563,20 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                             e.stopPropagation()
                             onStepComplete(step.id)
                           }}
+                          disabled={step.isCompleting}
                           className={`px-3 py-1 text-white rounded-lg hover:opacity-80 transition-colors text-xs font-medium ${
-                            isOverdue ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'
+                            step.isCompleting 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : isOverdue 
+                                ? 'bg-red-500 hover:bg-red-600' 
+                                : 'bg-primary-500 hover:bg-primary-600'
                           }`}
                         >
-                          ✓
+                          {step.isCompleting ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            '✓'
+                          )}
                         </button>
                         {onStepPostpone && (
                           <button

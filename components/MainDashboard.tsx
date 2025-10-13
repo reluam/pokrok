@@ -12,6 +12,7 @@ import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { usePageContext } from './PageContext'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 import { useTranslations } from '@/lib/use-translations'
+import { UnifiedStepModal } from './UnifiedStepModal'
 
 export const MainDashboard = memo(function MainDashboard() {
   const router = useRouter()
@@ -102,6 +103,15 @@ export const MainDashboard = memo(function MainDashboard() {
 
   const handleStepComplete = async (stepId: string) => {
     try {
+      // Set loading state for this specific step
+      setDailySteps(prev => 
+        prev.map(step => 
+          step.id === stepId 
+            ? { ...step, isCompleting: true }
+            : step
+        )
+      )
+      
       await fetch(`/api/cesta/daily-steps/${stepId}/complete`, {
         method: 'PATCH'
       })
@@ -110,7 +120,7 @@ export const MainDashboard = memo(function MainDashboard() {
       setDailySteps(prev => 
         prev.map(step => 
           step.id === stepId 
-            ? { ...step, completed: true, completed_at: new Date() }
+            ? { ...step, completed: true, completed_at: new Date(), isCompleting: false }
             : step
         )
       )
@@ -139,6 +149,14 @@ export const MainDashboard = memo(function MainDashboard() {
       )
     } catch (error) {
       console.error('Error completing step:', error)
+      // Remove loading state on error
+      setDailySteps(prev => 
+        prev.map(step => 
+          step.id === stepId 
+            ? { ...step, isCompleting: false }
+            : step
+        )
+      )
     }
   }
 
@@ -1368,99 +1386,19 @@ export const MainDashboard = memo(function MainDashboard() {
 
         {/* Add Step Modal */}
       {showAddStepModal && selectedGoalForStep && (
-        <AddStepModal
-          goalId={selectedGoalForStep}
+        <UnifiedStepModal
+          isOpen={showAddStepModal}
           onClose={() => {
             setShowAddStepModal(false)
             setSelectedGoalForStep(null)
           }}
           onSave={handleSaveStep}
+          goals={goals}
+          preselectedGoalId={selectedGoalForStep}
+          width="medium"
+          disableGoalSelection={true}
         />
       )}
-    </div>
-  )
-})
-
-// Add Step Modal Component
-interface AddStepModalProps {
-  goalId: string
-  onClose: () => void
-  onSave: (stepData: any) => void
-}
-
-const AddStepModal = memo(function AddStepModal({ goalId, onClose, onSave }: AddStepModalProps) {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: ''
-  })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (formData.title.trim()) {
-      onSave(formData)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Přidat krok</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              ✕
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Název kroku *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Např. Pravidelně šetřit"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Popis (volitelné)
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                rows={3}
-                placeholder="Popište krok podrobněji..."
-              />
-            </div>
-
-            <div className="flex items-center justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Zrušit
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-              >
-                Přidat krok
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
   )
 })

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, memo, useRef, useEffect } from 'react'
+import { useState, memo } from 'react'
 import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { CheckCircle, Clock, Target, BookOpen, Lightbulb, Calendar, Zap, Footprints, Plus, Circle } from 'lucide-react'
 import { getToday, getTodayString, formatDateForInput } from '@/lib/utils'
+import { UnifiedStepModal } from '../UnifiedStepModal'
 
 interface WorkspaceTabProps {
   goals: Goal[]
@@ -32,41 +33,11 @@ export const WorkspaceTab = memo(function WorkspaceTab({
   onEventComplete, 
   onEventPostpone
 }: WorkspaceTabProps) {
-  const [newStepTitle, setNewStepTitle] = useState('')
-  const [newStepDescription, setNewStepDescription] = useState('')
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>('')
-  const [isAddingStep, setIsAddingStep] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
   const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  
-  // Ref for detecting clicks outside the form
-  const formRef = useRef<HTMLDivElement>(null)
-
-  // Handle clicks outside the form to close it
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        if (isExpanded && !newStepTitle.trim()) {
-          // Only close if there's no text entered
-          setIsExpanded(false)
-          setNewStepDescription('')
-          setSelectedGoalId(null)
-        }
-      }
-    }
-
-    if (isExpanded) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isExpanded, newStepTitle])
 
   // Calculate today's date for filtering (local time)
   const getToday = () => {
@@ -76,14 +47,6 @@ export const WorkspaceTab = memo(function WorkspaceTab({
   }
 
   const today = getToday()
-
-  // Initialize selected date to today
-  const todayString = getTodayString()
-  useEffect(() => {
-    if (!selectedDate) {
-      setSelectedDate(todayString)
-    }
-  }, [selectedDate, todayString])
 
   // Get today's steps and overdue steps (not completed)
   const todaySteps = dailySteps.filter(step => {
@@ -124,21 +87,16 @@ export const WorkspaceTab = memo(function WorkspaceTab({
     return aDate.getTime() - bDate.getTime()
   })
 
-  const handleAddStep = async () => {
-    if (!newStepTitle.trim() || isAddingStep) {
-      return
-    }
-
-    setIsAddingStep(true)
+  const handleAddStep = async (stepData: any) => {
     try {
       const response = await fetch('/api/cesta/daily-steps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          goalId: selectedGoalId,
-          title: newStepTitle.trim(),
-          description: newStepDescription.trim() || undefined,
-          date: selectedDate
+          goalId: stepData.goalId,
+          title: stepData.title.trim(),
+          description: stepData.description.trim() || undefined,
+          date: stepData.date
         })
       })
 
@@ -147,11 +105,6 @@ export const WorkspaceTab = memo(function WorkspaceTab({
         if (onStepUpdate) {
           onStepUpdate(data.step)
         }
-        setNewStepTitle('')
-        setNewStepDescription('')
-        setSelectedGoalId(null)
-        setSelectedDate(todayString)
-        setIsExpanded(false)
       } else {
         const error = await response.json()
         console.error('Error adding step:', error)
@@ -160,13 +113,16 @@ export const WorkspaceTab = memo(function WorkspaceTab({
     } catch (error) {
       console.error('Error adding step:', error)
       alert('Chyba při přidávání kroku')
-    } finally {
-      setIsAddingStep(false)
     }
   }
 
   const handleStepComplete = async (stepId: string) => {
     try {
+      // Set loading state for this specific step
+      if (onStepUpdate) {
+        onStepUpdate({ id: stepId, isCompleting: true } as any)
+      }
+      
       const response = await fetch(`/api/cesta/daily-steps/${stepId}/toggle`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -176,11 +132,15 @@ export const WorkspaceTab = memo(function WorkspaceTab({
       if (response.ok) {
         const data = await response.json()
         if (onStepUpdate) {
-          onStepUpdate(data.step)
+          onStepUpdate({ ...data.step, isCompleting: false })
         }
       }
     } catch (error) {
       console.error('Error completing step:', error)
+      // Remove loading state on error
+      if (onStepUpdate) {
+        onStepUpdate({ id: stepId, isCompleting: false } as any)
+      }
     }
   }
 
@@ -265,117 +225,14 @@ export const WorkspaceTab = memo(function WorkspaceTab({
       {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Add New Step Form */}
-          <div ref={formRef} className="relative">
-            {/* Collapsed state - button to open modal */}
-            {!isExpanded && (
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="w-full px-4 py-2 rounded-full bg-gray-50 border border-gray-200 hover:bg-white hover:border-primary-300 hover:ring-2 hover:ring-primary-500 hover:border-transparent transition-all duration-200 subtle-cursor text-left"
-              >
-                <span className="text-gray-500">Přidat nový krok</span>
-              </button>
-            )}
-            
-            {/* Expanded Options - Connected modal */}
-            {isExpanded && (
-              <div className="bg-white rounded-2xl border border-primary-300 shadow-xl transition-all duration-300 animate-in slide-in-from-top-2">
-                {/* Input Field - Same size as collapsed */}
-                <div className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={newStepTitle}
-                    onChange={(e) => setNewStepTitle(e.target.value)}
-                    className="w-full px-4 py-2 rounded-full bg-transparent border-0 focus:ring-0 focus:outline-none transition-all duration-200"
-                    placeholder="Přidat nový krok"
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddStep()}
-                  />
-                </div>
-                
-                {/* Expanded Options */}
-                <div className="border-t border-gray-100 px-4 pb-4">
-                  <div className="space-y-4 pt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Popis (volitelné)
-                      </label>
-                      <textarea
-                        value={newStepDescription}
-                        onChange={(e) => setNewStepDescription(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
-                        rows={2}
-                        placeholder="Popište krok podrobněji..."
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Přiřadit k cíli (volitelné)
-                        </label>
-                        <select
-                          value={selectedGoalId || ''}
-                          onChange={(e) => setSelectedGoalId(e.target.value || null)}
-                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
-                        >
-                          <option value="">Bez přiřazení k cíli</option>
-                          {goals.filter(goal => goal.status === 'active').map((goal) => (
-                            <option key={goal.id} value={goal.id}>
-                              {goal.title}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Datum
-                        </label>
-                        <input
-                          type="date"
-                          value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
-                          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 focus:ring-0 focus:outline-none focus:border-primary-300 rounded-lg transition-colors"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-3 pt-2">
-                      <button
-                        onClick={handleAddStep}
-                        disabled={!newStepTitle.trim() || isAddingStep}
-                        className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center space-x-2"
-                      >
-                        {isAddingStep ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Přidávám...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4" />
-                            <span>Přidat krok</span>
-                          </>
-                        )}
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          setIsExpanded(false)
-                          setNewStepTitle('')
-                          setNewStepDescription('')
-                          setSelectedGoalId(null)
-                          setSelectedDate(todayString)
-                        }}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                      >
-                        Zrušit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Add New Step Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAddStepModal(true)}
+              className="w-full px-4 py-2 rounded-full bg-gray-50 border border-gray-200 hover:bg-white hover:border-primary-300 hover:ring-2 hover:ring-primary-500 hover:border-transparent transition-all duration-200 subtle-cursor text-left"
+            >
+              <span className="text-gray-500">Přidat nový krok</span>
+            </button>
           </div>
 
           {/* Today's Steps */}
@@ -472,13 +329,20 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                               e.stopPropagation()
                               handleStepComplete(step.id)
                             }}
+                            disabled={step.isCompleting}
                             className={`px-3 py-1 rounded-lg text-white text-sm font-medium transition-colors ${
-                              isOverdue 
-                                ? 'bg-red-500 hover:bg-red-600' 
-                                : 'bg-primary-500 hover:bg-primary-600'
+                              step.isCompleting 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : isOverdue 
+                                  ? 'bg-red-500 hover:bg-red-600' 
+                                  : 'bg-primary-500 hover:bg-primary-600'
                             }`}
                           >
-                            Hotovo
+                            {step.isCompleting ? (
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              'Hotovo'
+                            )}
                           </button>
                           <button
                             onClick={(e) => {
@@ -500,6 +364,15 @@ export const WorkspaceTab = memo(function WorkspaceTab({
           </div>
         </div>
       </div>
+      
+      {/* Unified Step Modal */}
+      <UnifiedStepModal
+        isOpen={showAddStepModal}
+        onClose={() => setShowAddStepModal(false)}
+        onSave={handleAddStep}
+        goals={goals}
+        width="medium"
+      />
       
       {/* Step Edit Modal */}
       {editingStep && (
@@ -639,3 +512,5 @@ export const WorkspaceTab = memo(function WorkspaceTab({
     </div>
   )
 })
+
+export default WorkspaceTab
