@@ -400,6 +400,40 @@ export default function CilePage() {
     }
   }
 
+  const getDaysRemaining = (targetDate: string | Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(targetDate)
+    target.setHours(0, 0, 0, 0)
+    const diffTime = target.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  const getDaysRemainingText = (targetDate: string | Date) => {
+    const days = getDaysRemaining(targetDate)
+    if (days < 0) {
+      return `${Math.abs(days)} dní zpožděno`
+    } else if (days === 0) {
+      return 'Dnes'
+    } else if (days === 1) {
+      return 'Zítra'
+    } else {
+      return `${days} dní`
+    }
+  }
+
+  const getDaysRemainingColor = (targetDate: string | Date) => {
+    const days = getDaysRemaining(targetDate)
+    if (days < 0) {
+      return 'text-red-600'
+    } else if (days <= 7) {
+      return 'text-orange-600'
+    } else {
+      return 'text-gray-600'
+    }
+  }
+
   const toggleGoalExpansion = (goalId: string) => {
     setExpandedGoals(prev => {
       const newSet = new Set(prev)
@@ -525,8 +559,9 @@ export default function CilePage() {
                             <div className="space-y-1 text-xs text-gray-500">
                               {goal.target_date && (
                                 <div className="flex items-center">
-                                  <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
-                                  <span className="truncate">{new Date(goal.target_date).toLocaleDateString('cs-CZ')}</span>
+                                  <span className="truncate text-primary-600">
+                                    {getDaysRemainingText(goal.target_date)}
+                                  </span>
                                 </div>
                               )}
                               <div className="flex items-center">

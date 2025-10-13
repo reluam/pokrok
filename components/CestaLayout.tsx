@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { Settings, Home, Target, Footprints, BarChart3, Zap } from 'lucide-react'
+import { Settings, Home, Target, Footprints, BarChart3, Zap, FileText } from 'lucide-react'
 import { memo } from 'react'
 
 interface CestaLayoutProps {
@@ -95,6 +95,20 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   <Zap className="w-5 h-5 text-primary-500" />
                   <span className="text-sm font-medium">Automatizace</span>
                   {currentPage === '/muj/automatizace' && subtitle && (
+                    <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => router.push('/muj/poznamky')}
+                  className={`flex items-center space-x-2 transition-all duration-200 ${
+                    currentPage === '/muj/poznamky' 
+                      ? 'text-primary-600 bg-primary-50 px-3 py-2 rounded-lg' 
+                      : 'text-gray-600 hover:text-primary-600'
+                  }`}
+                >
+                  <FileText className="w-5 h-5 text-primary-500" />
+                  <span className="text-sm font-medium">Poznámky</span>
+                  {currentPage === '/muj/poznamky' && subtitle && (
                     <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                   )}
                 </button>

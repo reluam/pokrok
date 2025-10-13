@@ -91,6 +91,16 @@ export interface GoalMetric {
   updated_at: Date
 }
 
+export interface Note {
+  id: string
+  user_id: string
+  goal_id?: string // Optional - can be assigned to a goal or be standalone
+  title: string
+  content: string
+  created_at: Date
+  updated_at: Date
+}
+
 export interface Event {
   id: string
   user_id: string
@@ -1701,4 +1711,60 @@ export async function generateAutomatedSteps(userId: string): Promise<void> {
     console.error('Error generating automated steps:', error)
     throw error
   }
+}
+
+// Notes functions
+export async function createNote(noteData: Partial<Note>): Promise<Note> {
+  const note = await sql`
+    INSERT INTO notes (
+      user_id, goal_id, title, content
+    ) VALUES (
+      ${noteData.user_id}, ${noteData.goal_id || null}, 
+      ${noteData.title}, ${noteData.content}
+    ) RETURNING *
+  `
+  return note[0] as Note
+}
+
+export async function getNotesByUser(userId: string): Promise<Note[]> {
+  const notes = await sql`
+    SELECT * FROM notes 
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `
+  return notes as Note[]
+}
+
+export async function getNotesByGoal(goalId: string): Promise<Note[]> {
+  const notes = await sql`
+    SELECT * FROM notes 
+    WHERE goal_id = ${goalId}
+    ORDER BY created_at DESC
+  `
+  return notes as Note[]
+}
+
+export async function getStandaloneNotes(userId: string): Promise<Note[]> {
+  const notes = await sql`
+    SELECT * FROM notes 
+    WHERE user_id = ${userId} AND goal_id IS NULL
+    ORDER BY created_at DESC
+  `
+  return notes as Note[]
+}
+
+export async function updateNote(noteId: string, updates: Partial<Note>): Promise<Note> {
+  const note = await sql`
+    UPDATE notes 
+    SET title = ${updates.title}, content = ${updates.content}, updated_at = NOW()
+    WHERE id = ${noteId}
+    RETURNING *
+  `
+  return note[0] as Note
+}
+
+export async function deleteNote(noteId: string): Promise<void> {
+  await sql`
+    DELETE FROM notes WHERE id = ${noteId}
+  `
 }

@@ -101,6 +101,40 @@ export const MainDashboard = memo(function MainDashboard() {
     }
   }
 
+  const getDaysRemaining = (targetDate: string | Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(targetDate)
+    target.setHours(0, 0, 0, 0)
+    const diffTime = target.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  const getDaysRemainingText = (targetDate: string | Date) => {
+    const days = getDaysRemaining(targetDate)
+    if (days < 0) {
+      return `${Math.abs(days)} dní zpožděno`
+    } else if (days === 0) {
+      return 'Dnes'
+    } else if (days === 1) {
+      return 'Zítra'
+    } else {
+      return `${days} dní`
+    }
+  }
+
+  const getDaysRemainingColor = (targetDate: string | Date) => {
+    const days = getDaysRemaining(targetDate)
+    if (days < 0) {
+      return 'text-red-600'
+    } else if (days <= 7) {
+      return 'text-orange-600'
+    } else {
+      return 'text-gray-600'
+    }
+  }
+
   const handleStepComplete = async (stepId: string) => {
     try {
       // Set loading state for this specific step
@@ -732,14 +766,8 @@ export const MainDashboard = memo(function MainDashboard() {
                                         )}
                                       </h4>
                                       {goal.target_date && (
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                                          <span>📅</span>
-                                          <span>
-                                            Do: {typeof goal.target_date === 'string' 
-                                              ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
-                                              : goal.target_date.toLocaleDateString('cs-CZ')
-                                            }
-                                          </span>
+                                        <p className="text-xs text-primary-600">
+                                          {getDaysRemainingText(goal.target_date)}
                                         </p>
                                       )}
                                     </div>
@@ -815,14 +843,8 @@ export const MainDashboard = memo(function MainDashboard() {
                                         )}
                                       </h4>
                                       {goal.target_date && (
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                                          <span>📅</span>
-                                          <span>
-                                            Do: {typeof goal.target_date === 'string' 
-                                              ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
-                                              : goal.target_date.toLocaleDateString('cs-CZ')
-                                            }
-                                          </span>
+                                        <p className="text-xs text-primary-600">
+                                          {getDaysRemainingText(goal.target_date)}
                                         </p>
                                       )}
                                     </div>
@@ -898,14 +920,8 @@ export const MainDashboard = memo(function MainDashboard() {
                                         )}
                                       </h4>
                                       {goal.target_date && (
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                                          <span>📅</span>
-                                          <span>
-                                            Do: {typeof goal.target_date === 'string' 
-                                              ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
-                                              : goal.target_date.toLocaleDateString('cs-CZ')
-                                            }
-                                          </span>
+                                        <p className="text-xs text-primary-600">
+                                          {getDaysRemainingText(goal.target_date)}
                                         </p>
                                       )}
                                     </div>
@@ -981,14 +997,8 @@ export const MainDashboard = memo(function MainDashboard() {
                                       )}
                                     </h3>
                                     {goal.target_date && (
-                                      <p className="text-xs text-gray-500 flex items-center gap-1">
-                                        <span>📅</span>
-                                        <span>
-                                          Do: {typeof goal.target_date === 'string' 
-                                            ? new Date(goal.target_date).toLocaleDateString('cs-CZ')
-                                            : goal.target_date.toLocaleDateString('cs-CZ')
-                                          }
-                                        </span>
+                                      <p className="text-xs text-primary-600">
+                                        {getDaysRemainingText(goal.target_date)}
                                       </p>
                                     )}
                                   </div>
