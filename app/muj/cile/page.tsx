@@ -7,9 +7,11 @@ import { Goal, DailyStep } from '@/lib/cesta-db'
 import { Plus, Target, Calendar, Edit, Trash2, CheckCircle, Circle, Clock, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react'
 import { usePageContext } from '@/components/PageContext'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
+import { useTranslations } from '@/lib/use-translations'
 
 export default function CilePage() {
   const { setTitle, setSubtitle } = usePageContext()
+  const { translations } = useTranslations()
   const [goals, setGoals] = useState<Goal[]>([])
   const [steps, setSteps] = useState<DailyStep[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,8 +39,10 @@ export default function CilePage() {
   const [isDeletingStep, setIsDeletingStep] = useState(false)
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (translations) {
+      fetchData()
+    }
+  }, [translations])
 
   const fetchData = async () => {
     try {
@@ -56,8 +60,8 @@ export default function CilePage() {
       setSteps(stepsData.steps || [])
       
       // Set page title and subtitle
-      setTitle('Cíle')
-      setSubtitle(`${(goalsData.goals || []).length} cílů`)
+      setTitle(translations?.app.goals || 'Cíle')
+      setSubtitle(`${(goalsData.goals || []).length} ${translations?.app.goalsCount || 'cílů'}`)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -353,7 +357,7 @@ export default function CilePage() {
       case 'steps':
         const completedSteps = goalSteps.filter(s => s.completed).length
         const totalSteps = goalSteps.length
-        return `${completedSteps} / ${totalSteps} kroků`
+        return `${completedSteps} / ${totalSteps} ${translations?.app.steps || 'kroků'}`
       default:
         return `${goal.progress_percentage || 0}%`
     }
@@ -366,13 +370,13 @@ export default function CilePage() {
     stepDate.setHours(0, 0, 0, 0)
     
     if (step.completed) {
-      return { text: 'Dokončeno', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' }
+      return { text: translations?.app.completed || 'Dokončeno', color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' }
     }
     
     if (stepDate < today) {
       const daysOverdue = Math.floor((today.getTime() - stepDate.getTime()) / (1000 * 60 * 60 * 24))
       return { 
-        text: `${daysOverdue} dní zpožděno`, 
+        text: `${daysOverdue} ${translations?.app.daysOverdue || 'dní zpožděno'}`, 
         color: 'text-red-600', 
         bgColor: 'bg-red-50', 
         borderColor: 'border-red-200' 
@@ -380,23 +384,23 @@ export default function CilePage() {
     }
     
     if (stepDate.getTime() === today.getTime()) {
-      return { text: 'Dnes', color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' }
+      return { text: translations?.app.today || 'Dnes', color: 'text-orange-600', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' }
     }
     
     const daysUntil = Math.ceil((stepDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-    return { text: `Za ${daysUntil} dní`, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' }
+    return { text: `${translations?.app.inDays || 'Za'} ${daysUntil} ${translations?.app.days || 'dní'}`, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' }
   }
 
   const getCategoryInfo = (category: string) => {
     switch (category) {
       case 'short-term':
-        return { label: 'Krátkodobé', color: 'bg-green-100 text-green-800', icon: '⚡' }
+        return { label: translations?.app.shortTermGoals || 'Krátkodobé', color: 'bg-green-100 text-green-800', icon: '⚡' }
       case 'medium-term':
-        return { label: 'Střednědobé', color: 'bg-blue-100 text-blue-800', icon: '🎯' }
+        return { label: translations?.app.mediumTermGoals || 'Střednědobé', color: 'bg-blue-100 text-blue-800', icon: '🎯' }
       case 'long-term':
-        return { label: 'Dlouhodobé', color: 'bg-purple-100 text-purple-800', icon: '🏆' }
+        return { label: translations?.app.longTermGoals || 'Dlouhodobé', color: 'bg-purple-100 text-purple-800', icon: '🏆' }
       default:
-        return { label: 'Střednědobé', color: 'bg-blue-100 text-blue-800', icon: '🎯' }
+        return { label: translations?.app.mediumTermGoals || 'Střednědobé', color: 'bg-blue-100 text-blue-800', icon: '🎯' }
     }
   }
 
@@ -413,13 +417,13 @@ export default function CilePage() {
   const getDaysRemainingText = (targetDate: string | Date) => {
     const days = getDaysRemaining(targetDate)
     if (days < 0) {
-      return `${Math.abs(days)} dní zpožděno`
+      return `${Math.abs(days)} ${translations?.app.daysOverdue || 'dní zpožděno'}`
     } else if (days === 0) {
-      return 'Dnes'
+      return translations?.app.today || 'Dnes'
     } else if (days === 1) {
-      return 'Zítra'
+      return translations?.app.tomorrow || 'Zítra'
     } else {
-      return `${days} dní`
+      return `${days} ${translations?.app.days || 'dní'}`
     }
   }
 
@@ -466,7 +470,7 @@ export default function CilePage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Načítám cíle...</p>
+          <p className="text-gray-600">{translations?.app.loadingGoals || 'Načítám cíle...'}</p>
         </div>
       </div>
     )
@@ -483,7 +487,7 @@ export default function CilePage() {
             className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            <span>Přidat cíl</span>
+            <span>{translations?.app.addGoal || 'Přidat cíl'}</span>
           </button>
         </div>
 
@@ -500,7 +504,6 @@ export default function CilePage() {
           <GoalDetailModal
             goal={selectedGoal}
             steps={getGoalSteps(selectedGoal.id)}
-            automations={[]}
             onClose={() => {
               setShowGoalDetail(false)
               setSelectedGoal(null)
@@ -526,7 +529,7 @@ export default function CilePage() {
                 <span className="text-2xl">{categoryInfo.icon}</span>
                 <h2 className="text-xl font-bold text-gray-900">{categoryInfo.label}</h2>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${categoryInfo.color}`}>
-                  {categoryGoals.length} cílů
+                  {categoryGoals.length} {translations?.app.goalsCount || 'cílů'}
                 </span>
               </div>
               
@@ -578,7 +581,7 @@ export default function CilePage() {
                                 handleGoalClick(goal)
                               }}
                               className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
-                              title="Zobrazit detail cíle"
+                              title={translations?.app.viewGoalDetail || "Zobrazit detail cíle"}
                             >
                               <Target className="w-4 h-4" />
                             </button>
@@ -588,7 +591,7 @@ export default function CilePage() {
                                 toggleGoalExpansion(goal.id)
                               }}
                               className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
-                              title={isExpanded ? "Skrýt kroky" : "Zobrazit kroky"}
+                              title={isExpanded ? (translations?.app.hideSteps || "Skrýt kroky") : (translations?.app.showSteps || "Zobrazit kroky")}
                             >
                               {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             </button>
@@ -598,7 +601,7 @@ export default function CilePage() {
                                 // TODO: Implement edit functionality
                               }}
                               className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
-                              title="Upravit cíl"
+                              title={translations?.app.editGoal || "Upravit cíl"}
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -608,7 +611,7 @@ export default function CilePage() {
                                 handleDeleteGoal(goal.id)
                               }}
                               className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Smazat cíl"
+                              title={translations?.app.deleteGoal || "Smazat cíl"}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -628,7 +631,7 @@ export default function CilePage() {
                       {isExpanded && (
                         <div className="border-t border-gray-200 p-3 bg-gray-50">
                           <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-900">Kroky ({completedSteps}/{totalSteps})</h4>
+                            <h4 className="text-sm font-medium text-gray-900">{translations?.app.steps || 'Kroky'} ({completedSteps}/{totalSteps})</h4>
                           </div>
 
                           {/* Steps List */}
@@ -636,7 +639,7 @@ export default function CilePage() {
                             {goalSteps.length === 0 ? (
                               <div className="text-center py-3 text-gray-500">
                                 <Target className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                                <p className="text-xs">Žádné kroky</p>
+                                <p className="text-xs">{translations?.app.noSteps || 'Žádné kroky'}</p>
                               </div>
                             ) : (
                               goalSteps.map((step) => {
@@ -662,7 +665,7 @@ export default function CilePage() {
                                             step.step_type === 'update' ? 'bg-blue-100 text-blue-800' :
                                             'bg-purple-100 text-purple-800'
                                           }`}>
-                                            {step.step_type === 'update' ? 'Automatizovaný' : 'Jednorázový'}
+                                            {step.step_type === 'update' ? (translations?.app.automated || 'Automatizovaný') : (translations?.app.oneTime || 'Jednorázový')}
                                           </span>
                                           
                                           
@@ -721,13 +724,13 @@ export default function CilePage() {
         {goals.length === 0 && (
           <div className="text-center py-12">
             <Target className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Žádné cíle</h3>
-            <p className="text-gray-600 mb-6">Začněte svou cestu přidáním prvního cíle</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{translations?.app.noGoals || 'Žádné cíle'}</h3>
+            <p className="text-gray-600 mb-6">{translations?.app.startJourney || 'Začněte svou cestu přidáním prvního cíle'}</p>
             <button
               onClick={() => setShowGoalOnboarding(true)}
               className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
-              Přidat první cíl
+              {translations?.app.addFirstGoal || 'Přidat první cíl'}
             </button>
           </div>
         )}
@@ -737,7 +740,7 @@ export default function CilePage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{translations?.modals.stepModal.editTitle || 'Upravit krok'}</h3>
                 <button
                   onClick={() => setEditingStepModal(null)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -753,29 +756,29 @@ export default function CilePage() {
                 handleStepSaveModal()
               }} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.title || 'Název'}</label>
                   <input
                     type="text"
                     value={editingStepModal.title}
                     onChange={(e) => setEditingStepModal(prev => prev ? { ...prev, title: e.target.value } : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Název kroku"
+                    placeholder={translations?.modals.stepModal.titlePlaceholder || "Název kroku"}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.description || 'Popis'}</label>
                   <textarea
                     value={editingStepModal.description || ''}
                     onChange={(e) => setEditingStepModal(prev => prev ? { ...prev, description: e.target.value } : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     rows={3}
-                    placeholder="Popis kroku (volitelné)"
+                    placeholder={translations?.modals.stepModal.descriptionPlaceholder || "Popis kroku (volitelné)"}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.date || 'Datum'}</label>
                   <input
                     type="date"
                     value={new Date(editingStepModal.date).toISOString().split('T')[0]}
@@ -786,9 +789,9 @@ export default function CilePage() {
                 
                 {editingStepModal.goal_id && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.app.goals || 'Cíl'}</label>
                     <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-                      {goals.find(g => g.id === editingStepModal.goal_id)?.title || 'Nepřiřazený cíl'}
+                      {goals.find(g => g.id === editingStepModal.goal_id)?.title || (translations?.app.unassignedGoal || 'Nepřiřazený cíl')}
                     </p>
                   </div>
                 )}
@@ -798,12 +801,12 @@ export default function CilePage() {
                     {editingStepModal.completed ? (
                       <>
                         <CheckCircle className="w-5 h-5 text-green-500" />
-                        <span className="text-green-600 font-medium">Dokončeno</span>
+                        <span className="text-green-600 font-medium">{translations?.app.completed || 'Dokončeno'}</span>
                       </>
                     ) : (
                       <>
                         <Circle className="w-5 h-5 text-gray-300" />
-                        <span className="text-gray-600">Nedokončeno</span>
+                        <span className="text-gray-600">{translations?.app.incomplete || 'Nedokončeno'}</span>
                       </>
                     )}
                   </div>
@@ -818,12 +821,12 @@ export default function CilePage() {
                     {isSavingStep ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Ukládám...</span>
+                        <span>{translations?.common.saving || 'Ukládám...'}</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle className="w-4 h-4" />
-                        <span>Uložit</span>
+                        <span>{translations?.common.save || 'Uložit'}</span>
                       </>
                     )}
                   </button>
@@ -837,14 +840,14 @@ export default function CilePage() {
                     {isDeletingStep ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Mažu...</span>
+                        <span>{translations?.common.deleting || 'Mažu...'}</span>
                       </>
                     ) : (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        <span>Smazat</span>
+                        <span>{translations?.common.delete || 'Smazat'}</span>
                       </>
                     )}
                   </button>
@@ -854,7 +857,7 @@ export default function CilePage() {
                     onClick={() => setEditingStepModal(null)}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                   >
-                    Zrušit
+                    {translations?.common.cancel || 'Zrušit'}
                   </button>
                 </div>
               </form>

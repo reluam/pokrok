@@ -84,32 +84,29 @@ export interface Translations {
   }
   settings: {
     title: string
-    subtitle: string
-    addValue: string
-    editValue: string
-    deleteValue: string
-    valueName: string
-    valueDescription: string
-    valueColor: string
-    valueIcon: string
-    save: string
-    cancel: string
-    delete: string
+    appManagement: string
+    saveAppearance: string
+    languageChanged: string
+    errorSavingSettings: string
     language: string
-    languageDescription: string
-    values: string
-    categories: string
-    myValues: string
-    categorySettings: string
+    appearance: string
+    appAppearance: string
+    primaryColor: string
+    selectPrimaryColor: string
+    saveSettings: string
     editSettings: string
     shortTermGoals: string
     mediumTermGoals: string
     longTermGoals: string
-    days: string
-    yearPlus: string
-    loadingSettings: string
-    autoUpdateGoals: string
-    autoUpdateDescription: string
+    goalsWithDeadline: string
+    goalsWithDeadlineRange: string
+    goalsWithDeadlineOver: string
+    to: string
+    onePlusYear: string
+    automaticGoalUpdate: string
+    automaticGoalUpdateDescription: string
+    languageDescription: string
+    languageChangeDescription: string
   }
   app: {
     title: string

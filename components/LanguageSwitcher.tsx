@@ -6,20 +6,32 @@ import { useLocale, type Locale } from '@/lib/use-translations'
 
 export function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false)
-  const [currentLocale, setCurrentLocale] = useState<Locale>('cs')
+  const [currentLocale, setCurrentLocale] = useState<Locale>(() => {
+    // Initialize with the correct locale from localStorage immediately
+    if (typeof window !== 'undefined') {
+      const appLanguagePreference = localStorage.getItem('app-language-preference') as Locale
+      if (appLanguagePreference && ['cs', 'en'].includes(appLanguagePreference)) {
+        return appLanguagePreference
+      }
+      
+      const savedLocale = localStorage.getItem('preferred-locale') as Locale
+      if (savedLocale && ['cs', 'en'].includes(savedLocale)) {
+        return savedLocale
+      }
+    }
+    return 'cs'
+  })
 
   useEffect(() => {
-    // Check for app-specific language preference first (higher priority)
-    const appLanguagePreference = localStorage.getItem('app-language-preference') as Locale
-    if (appLanguagePreference && ['cs', 'en'].includes(appLanguagePreference)) {
-      setCurrentLocale(appLanguagePreference)
-      return
+    // Listen for locale changes
+    const handleLocaleChange = (event: CustomEvent) => {
+      setCurrentLocale(event.detail.locale)
     }
     
-    // Fallback to general language preference
-    const savedLocale = localStorage.getItem('preferred-locale') as Locale
-    if (savedLocale && ['cs', 'en'].includes(savedLocale)) {
-      setCurrentLocale(savedLocale)
+    window.addEventListener('locale-change', handleLocaleChange as EventListener)
+    
+    return () => {
+      window.removeEventListener('locale-change', handleLocaleChange as EventListener)
     }
   }, [])
 
@@ -33,9 +45,6 @@ export function LanguageSwitcher() {
     
     // Trigger a custom event to notify other components
     window.dispatchEvent(new CustomEvent('locale-change', { detail: { locale } }))
-    
-    // Reload the page to apply the new locale
-    window.location.reload()
   }
 
   const languages = [

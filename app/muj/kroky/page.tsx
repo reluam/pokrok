@@ -5,9 +5,11 @@ import { DailyStep, Goal } from '@/lib/cesta-db'
 import { CheckCircle, Circle, Clock, AlertTriangle, Plus, X, Edit } from 'lucide-react'
 import { usePageContext } from '@/components/PageContext'
 import { UnifiedStepModal } from '@/components/UnifiedStepModal'
+import { useTranslations } from '@/lib/use-translations'
 
 export default function StepsPage() {
   const { setTitle, setSubtitle } = usePageContext()
+  const { translations } = useTranslations()
   const [steps, setSteps] = useState<DailyStep[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -18,8 +20,10 @@ export default function StepsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (translations) {
+      fetchData()
+    }
+  }, [translations])
 
   const fetchData = async () => {
     try {
@@ -37,8 +41,8 @@ export default function StepsPage() {
       setGoals(goalsData.goals || [])
       
       // Set page title and subtitle
-      setTitle('Kroky')
-      setSubtitle(`${(stepsData.steps || []).length} kroků`)
+      setTitle(translations?.app.steps || 'Kroky')
+      setSubtitle(`${(stepsData.steps || []).length} ${translations?.app.stepsCount || 'kroků'}`)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -214,14 +218,14 @@ export default function StepsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Kroky</h1>
-            <p className="text-gray-600 mt-2">Spravujte své denní kroky a úkoly</p>
+            <p className="text-gray-600 mt-2">{translations?.app.manageSteps || 'Spravujte své denní kroky a úkoly'}</p>
           </div>
           <button
             onClick={() => setShowAddStepModal(true)}
             className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            <span>Přidat krok</span>
+            <span>{translations?.app.addStep || 'Přidat krok'}</span>
           </button>
         </div>
 
@@ -233,7 +237,7 @@ export default function StepsPage() {
                 <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Dnešní kroky</p>
+                <p className="text-sm text-gray-600">{translations?.app.todaysSteps || 'Dnešní kroky'}</p>
                 <p className="text-2xl font-bold text-gray-900">{todaySteps.length}</p>
               </div>
             </div>
@@ -245,7 +249,7 @@ export default function StepsPage() {
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Dokončené</p>
+                <p className="text-sm text-gray-600">{translations?.app.completed || 'Dokončené'}</p>
                 <p className="text-2xl font-bold text-gray-900">{completedSteps.length}</p>
               </div>
             </div>
@@ -257,7 +261,7 @@ export default function StepsPage() {
                 <AlertTriangle className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Zpožděné</p>
+                <p className="text-sm text-gray-600">{translations?.app.overdue || 'Zpožděné'}</p>
                 <p className="text-2xl font-bold text-gray-900">{overdueSteps.length}</p>
               </div>
             </div>
@@ -269,7 +273,7 @@ export default function StepsPage() {
                 <Circle className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Budoucí</p>
+                <p className="text-sm text-gray-600">{translations?.app.future || 'Budoucí'}</p>
                 <p className="text-2xl font-bold text-gray-900">{futureSteps.length}</p>
               </div>
             </div>
@@ -280,12 +284,12 @@ export default function StepsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Today's Steps */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Dnešní kroky</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{translations?.app.todaysSteps || 'Dnešní kroky'}</h2>
             {todaySteps.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium">Žádné kroky na dnešek</p>
-                <p className="text-sm">Přidejte kroky pro dnešek</p>
+                <p className="text-lg font-medium">{translations?.app.noStepsToday || 'Žádné kroky na dnešek'}</p>
+                <p className="text-sm">{translations?.app.addStepsToday || 'Přidejte kroky pro dnešek'}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -320,7 +324,7 @@ export default function StepsPage() {
                         )}
                         {step.goal_id && (
                           <p className="text-xs text-gray-500 mt-1">
-                            Cíl: {goals.find(g => g.id === step.goal_id)?.title || 'Nepřiřazený'}
+                            {translations?.app.goal || 'Cíl'}: {goals.find(g => g.id === step.goal_id)?.title || (translations?.app.unassigned || 'Nepřiřazený')}
                           </p>
                         )}
                       </div>
@@ -335,7 +339,7 @@ export default function StepsPage() {
                             : 'bg-primary-500 hover:bg-primary-600'
                         }`}
                       >
-                        {step.completed ? 'Vrátit' : 'Hotovo'}
+                        {step.completed ? (translations?.app.revert || 'Vrátit') : (translations?.app.done || 'Hotovo')}
                       </button>
                     </div>
                   </div>
@@ -346,12 +350,12 @@ export default function StepsPage() {
 
           {/* Future Steps */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Budoucí kroky</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{translations?.app.futureSteps || 'Budoucí kroky'}</h2>
             {futureSteps.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Circle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium">Žádné budoucí kroky</p>
-                <p className="text-sm">Přidejte kroky pro budoucí dny</p>
+                <p className="text-lg font-medium">{translations?.app.noFutureSteps || 'Žádné budoucí kroky'}</p>
+                <p className="text-sm">{translations?.app.addFutureSteps || 'Přidejte kroky pro budoucí dny'}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -381,7 +385,7 @@ export default function StepsPage() {
                           </span>
                           {step.goal_id && (
                             <span>
-                              Cíl: {goals.find(g => g.id === step.goal_id)?.title || 'Nepřiřazený'}
+                              {translations?.app.goal || 'Cíl'}: {goals.find(g => g.id === step.goal_id)?.title || (translations?.app.unassigned || 'Nepřiřazený')}
                             </span>
                           )}
                         </div>
@@ -397,7 +401,7 @@ export default function StepsPage() {
         {/* Overdue Steps */}
         {overdueSteps.length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Zpožděné kroky</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{translations?.app.overdueSteps || 'Zpožděné kroky'}</h2>
             <div className="space-y-3">
               {overdueSteps.map((step) => (
                 <div
@@ -425,7 +429,7 @@ export default function StepsPage() {
                         </span>
                         {step.goal_id && (
                           <span>
-                            Cíl: {goals.find(g => g.id === step.goal_id)?.title || 'Nepřiřazený'}
+                            {translations?.app.goal || 'Cíl'}: {goals.find(g => g.id === step.goal_id)?.title || (translations?.app.unassigned || 'Nepřiřazený')}
                           </span>
                         )}
                       </div>
@@ -461,7 +465,7 @@ export default function StepsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{translations?.modals.stepModal.editTitle || 'Upravit krok'}</h3>
               <button
                 onClick={() => setEditingStep(null)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -481,23 +485,23 @@ export default function StepsPage() {
                   value={editingStep.title}
                   onChange={(e) => setEditingStep(prev => prev ? { ...prev, title: e.target.value } : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Název kroku"
+                  placeholder={translations?.modals.stepModal.titlePlaceholder || "Název kroku"}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.description || 'Popis'}</label>
                 <textarea
                   value={editingStep.description || ''}
                   onChange={(e) => setEditingStep(prev => prev ? { ...prev, description: e.target.value } : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   rows={3}
-                  placeholder="Popis kroku (volitelné)"
+                  placeholder={translations?.modals.stepModal.descriptionPlaceholder || "Popis kroku (volitelné)"}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.date || 'Datum'}</label>
                 <input
                   type="date"
                   value={new Date(editingStep.date).toISOString().split('T')[0]}
@@ -540,12 +544,12 @@ export default function StepsPage() {
                   {isSaving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Ukládám...</span>
+                      <span>{translations?.common.saving || 'Ukládám...'}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      <span>Uložit</span>
+                      <span>{translations?.common.save || 'Uložit'}</span>
                     </>
                   )}
                 </button>
@@ -559,12 +563,12 @@ export default function StepsPage() {
                   {isDeleting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Mažu...</span>
+                      <span>{translations?.common.deleting || 'Mažu...'}</span>
                     </>
                   ) : (
                     <>
                       <X className="w-4 h-4" />
-                      <span>Smazat</span>
+                      <span>{translations?.common.delete || 'Smazat'}</span>
                     </>
                   )}
                 </button>
@@ -574,7 +578,7 @@ export default function StepsPage() {
                   onClick={() => setEditingStep(null)}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Zrušit
+                  {translations?.common.cancel || 'Zrušit'}
                 </button>
               </div>
             </form>

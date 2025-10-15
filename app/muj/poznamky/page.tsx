@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { Note, Goal } from '@/lib/cesta-db'
 import { FileText, Plus, X, Edit, Trash2, Target, Calendar, StickyNote } from 'lucide-react'
 import { usePageContext } from '@/components/PageContext'
+import { useTranslations } from '@/lib/use-translations'
 
 export default function NotesPage() {
   const { setTitle, setSubtitle } = usePageContext()
+  const { translations } = useTranslations()
   const [notes, setNotes] = useState<Note[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -25,8 +27,10 @@ export default function NotesPage() {
   })
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (translations) {
+      fetchData()
+    }
+  }, [translations])
 
   const fetchData = async () => {
     try {
@@ -44,8 +48,8 @@ export default function NotesPage() {
       setGoals(goalsData.goals || [])
       
       // Set page title and subtitle
-      setTitle('Poznámky')
-      setSubtitle(`${(notesData.notes || []).length} poznámek`)
+      setTitle(translations?.app.notes || 'Poznámky')
+      setSubtitle(`${(notesData.notes || []).length} ${translations?.app.notesCount || 'poznámek'}`)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -78,11 +82,11 @@ export default function NotesPage() {
         setFormData({ title: '', content: '', goalId: '' })
       } else {
         const error = await response.json()
-        alert(`Chyba při vytváření poznámky: ${error.error || 'Neznámá chyba'}`)
+        alert(`${translations?.app.errorCreatingNote || 'Chyba při vytváření poznámky'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error adding note:', error)
-      alert('Chyba při vytváření poznámky')
+      alert(translations?.app.errorCreatingNote || 'Chyba při vytváření poznámky')
     } finally {
       setIsSubmitting(false)
     }
@@ -210,14 +214,14 @@ export default function NotesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Poznámky</h1>
-            <p className="text-gray-600 mt-2">Spravujte své poznámky a myšlenky</p>
+            <p className="text-gray-600 mt-2">{translations?.app.manageNotes || 'Spravujte své poznámky a myšlenky'}</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors font-medium"
           >
             <Plus className="w-5 h-5" />
-            <span>Nová poznámka</span>
+            <span>{translations?.app.addNote || 'Nová poznámka'}</span>
           </button>
         </div>
 
@@ -229,7 +233,7 @@ export default function NotesPage() {
                 <StickyNote className="w-5 h-5 text-primary-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Celkem poznámek</p>
+                <p className="text-sm text-gray-600">{translations?.app.totalNotes || 'Celkem poznámek'}</p>
                 <p className="text-2xl font-bold text-gray-900">{notes.length}</p>
               </div>
             </div>
@@ -241,7 +245,7 @@ export default function NotesPage() {
                 <FileText className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Na volno</p>
+                <p className="text-sm text-gray-600">{translations?.app.standalone || 'Na volno'}</p>
                 <p className="text-2xl font-bold text-gray-900">{notes.filter(n => !n.goal_id).length}</p>
               </div>
             </div>
@@ -253,7 +257,7 @@ export default function NotesPage() {
                 <Target className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Přiřazené</p>
+                <p className="text-sm text-gray-600">{translations?.app.assigned || 'Přiřazené'}</p>
                 <p className="text-2xl font-bold text-gray-900">{notes.filter(n => n.goal_id).length}</p>
               </div>
             </div>
@@ -270,7 +274,7 @@ export default function NotesPage() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Všechny ({notes.length})
+            {translations?.app.all || 'Všechny'} ({notes.length})
           </button>
           <button
             onClick={() => setFilter('standalone')}
@@ -280,7 +284,7 @@ export default function NotesPage() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Na volno ({notes.filter(n => !n.goal_id).length})
+            {translations?.app.standalone || 'Na volno'} ({notes.filter(n => !n.goal_id).length})
           </button>
           <button
             onClick={() => setFilter('assigned')}
@@ -290,7 +294,7 @@ export default function NotesPage() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            Přiřazené ({notes.filter(n => n.goal_id).length})
+            {translations?.app.assigned || 'Přiřazené'} ({notes.filter(n => n.goal_id).length})
           </button>
         </div>
 
@@ -298,19 +302,19 @@ export default function NotesPage() {
         {filteredNotes.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <StickyNote className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Žádné poznámky</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{translations?.app.noNotes || 'Žádné poznámky'}</h3>
             <p className="text-gray-600 mb-6">
               {filter === 'all' 
-                ? 'Zatím nemáte žádné poznámky.' 
+                ? (translations?.app.noNotesYet || 'Zatím nemáte žádné poznámky.') 
                 : filter === 'standalone'
-                ? 'Nemáte žádné poznámky na volno.'
-                : 'Nemáte žádné poznámky přiřazené k cílům.'}
+                ? (translations?.app.noStandaloneNotes || 'Nemáte žádné poznámky na volno.')
+                : (translations?.app.noAssignedNotes || 'Nemáte žádné poznámky přiřazené k cílům.')}
             </p>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
-              Vytvořit první poznámku
+              {translations?.app.createFirstNote || 'Vytvořit první poznámku'}
             </button>
           </div>
         ) : (
@@ -340,7 +344,7 @@ export default function NotesPage() {
                           }}
                           disabled={isDeleting}
                           className="p-1.5 bg-gray-100 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                          title="Smazat poznámku"
+                          title={translations?.app.deleteNote || "Smazat poznámku"}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -387,7 +391,7 @@ export default function NotesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Nová poznámka</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">{translations?.modals.noteModal.title || 'Nová poznámka'}</h2>
                 <button
                   onClick={() => setShowAddModal(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -399,28 +403,28 @@ export default function NotesPage() {
               <form onSubmit={handleAddNote} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Název poznámky
+                    {translations?.modals.noteModal.noteName || 'Název poznámky'}
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
-                    placeholder="Zadejte název poznámky..."
+                    placeholder={translations?.modals.noteModal.noteNamePlaceholder || "Zadejte název poznámky..."}
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Přiřadit k cíli (volitelné)
+                    {translations?.modals.noteModal.assignToGoal || 'Přiřadit k cíli (volitelné)'}
                   </label>
                   <select
                     value={formData.goalId}
                     onChange={(e) => setFormData(prev => ({ ...prev, goalId: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="">Bez přiřazení k cíli</option>
+                    <option value="">{translations?.modals.noteModal.noGoal || 'Bez přiřazení k cíli'}</option>
                     {goals.filter(goal => goal.status === 'active').map((goal) => (
                       <option key={goal.id} value={goal.id}>
                         {goal.title}
@@ -431,14 +435,14 @@ export default function NotesPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Obsah poznámky
+                    {translations?.modals.noteModal.noteDescription || 'Obsah poznámky'}
                   </label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     rows={8}
-                    placeholder="Zadejte obsah poznámky..."
+                    placeholder={translations?.modals.noteModal.noteDescriptionPlaceholder || "Zadejte obsah poznámky..."}
                     required
                   />
                 </div>
@@ -449,7 +453,7 @@ export default function NotesPage() {
                     onClick={() => setShowAddModal(false)}
                     className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   >
-                    Zrušit
+                    {translations?.common.cancel || 'Zrušit'}
                   </button>
                   <button
                     type="submit"
@@ -459,7 +463,7 @@ export default function NotesPage() {
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Ukládám...</span>
+                        <span>{translations?.common.saving || 'Ukládám...'}</span>
                       </>
                     ) : (
                       <>
@@ -479,7 +483,7 @@ export default function NotesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">Upravit poznámku</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">{translations?.modals.noteModal.editTitle || 'Upravit poznámku'}</h2>
                 <button
                   onClick={cancelEdit}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -491,28 +495,28 @@ export default function NotesPage() {
               <form onSubmit={handleEditNote} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Název poznámky
+                    {translations?.modals.noteModal.noteName || 'Název poznámky'}
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
-                    placeholder="Zadejte název poznámky..."
+                    placeholder={translations?.modals.noteModal.noteNamePlaceholder || "Zadejte název poznámky..."}
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Obsah poznámky
+                    {translations?.modals.noteModal.noteDescription || 'Obsah poznámky'}
                   </label>
                   <textarea
                     value={formData.content}
                     onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     rows={8}
-                    placeholder="Zadejte obsah poznámky..."
+                    placeholder={translations?.modals.noteModal.noteDescriptionPlaceholder || "Zadejte obsah poznámky..."}
                     required
                   />
                 </div>
@@ -523,7 +527,7 @@ export default function NotesPage() {
                     onClick={cancelEdit}
                     className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   >
-                    Zrušit
+                    {translations?.common.cancel || 'Zrušit'}
                   </button>
                   <button
                     type="submit"
@@ -533,12 +537,12 @@ export default function NotesPage() {
                     {isSaving ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Ukládám...</span>
+                        <span>{translations?.common.saving || 'Ukládám...'}</span>
                       </>
                     ) : (
                       <>
                         <Edit className="w-4 h-4" />
-                        <span>Uložit změny</span>
+                        <span>{translations?.common.saveChanges || 'Uložit změny'}</span>
                       </>
                     )}
                   </button>

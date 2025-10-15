@@ -5,6 +5,7 @@ import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { CheckCircle, Clock, Target, BookOpen, Lightbulb, Calendar, Zap, Footprints, Plus, Circle } from 'lucide-react'
 import { getToday, getTodayString, formatDateForInput } from '@/lib/utils'
 import { UnifiedStepModal } from '../UnifiedStepModal'
+import { useTranslations } from '@/lib/use-translations'
 
 interface WorkspaceTabProps {
   goals: Goal[]
@@ -33,6 +34,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
   onEventComplete, 
   onEventPostpone
 }: WorkspaceTabProps) {
+  const { translations } = useTranslations()
   const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
   const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
@@ -216,8 +218,8 @@ export const WorkspaceTab = memo(function WorkspaceTab({
             <span className="text-lg">📝</span>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Co je třeba dnes udělat</h2>
-            <p className="text-sm text-gray-600">Přidejte kroky pro dnešek</p>
+            <h2 className="text-xl font-bold text-gray-900">{translations?.app.whatNeedsToBeDoneToday || 'Co je třeba dnes udělat'}</h2>
+            <p className="text-sm text-gray-600">{translations?.app.addStepsForToday || 'Přidejte kroky pro dnešek'}</p>
           </div>
         </div>
       </div>
@@ -231,7 +233,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
               onClick={() => setShowAddStepModal(true)}
               className="w-full px-4 py-2 rounded-full bg-gray-50 border border-gray-200 hover:bg-white hover:border-primary-300 hover:ring-2 hover:ring-primary-500 hover:border-transparent transition-all duration-200 subtle-cursor text-left"
             >
-              <span className="text-gray-500">Přidat nový krok</span>
+              <span className="text-gray-500">{translations?.app.addNewStep || 'Přidat nový krok'}</span>
             </button>
           </div>
 
@@ -240,7 +242,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
             {sortedTodaySteps.length === 0 ? (
               <div className="text-center py-6">
                 <h3 className="text-lg font-medium text-gray-700 mb-6">
-                  Všechny kroky jsou hotové! ✨
+                  {translations?.app.allStepsDone || 'Všechny kroky jsou hotové! ✨'}
                 </h3>
                 
                 <div className="max-w-sm mx-auto">
@@ -249,8 +251,8 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                       <div className="w-10 h-10 mx-auto mb-3 bg-green-100 rounded-lg flex items-center justify-center">
                         <span className="text-lg">☕</span>
                       </div>
-                      <h4 className="text-base font-medium text-gray-800 mb-1">Dejte si kávu nebo čaj</h4>
-                      <p className="text-sm text-gray-600 mb-3">Chvilka klidu pro sebe</p>
+                      <h4 className="text-base font-medium text-gray-800 mb-1">{translations?.app.haveCoffeeOrTea || 'Dejte si kávu nebo čaj'}</h4>
+                      <p className="text-sm text-gray-600 mb-3">{translations?.app.momentOfPeace || 'Chvilka klidu pro sebe'}</p>
                       <div className="flex justify-center space-x-2 text-xs text-gray-500">
                         <span className="px-2 py-1 bg-green-100 rounded-full">🧘</span>
                         <span className="px-2 py-1 bg-green-100 rounded-full">🚶</span>
@@ -262,7 +264,7 @@ export const WorkspaceTab = memo(function WorkspaceTab({
                 
                 <div className="mt-5 p-3 bg-green-50 rounded-lg max-w-sm mx-auto border border-green-100">
                   <p className="text-xs text-green-700 italic">
-                    "Odpočinek je součást práce."
+                    "{translations?.app.restIsPartOfWork || 'Odpočinek je součást práce.'}"
                   </p>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
 import { Plus, CheckCircle, Circle, Clock, AlertTriangle, Calendar, Target, Star, Zap, Footprints } from 'lucide-react'
 import { getToday, getTodayString, isToday, isFuture, getDaysUntil } from '@/lib/utils'
 import { UnifiedStepModal } from './UnifiedStepModal'
+import { useTranslations } from '@/lib/use-translations'
 
 interface DailyCheckInProps {
   goals: Goal[]
@@ -49,6 +50,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
   onStepSelect, 
   onEventSelect 
 }: DailyCheckInProps) {
+  const { translations } = useTranslations()
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
@@ -291,11 +293,11 @@ export const DailyCheckIn = memo(function DailyCheckIn({
       {/* Add Step Form */}
       {showAddForm && (
         <div className="p-3 border-b border-gray-200 bg-gray-50">
-          <h3 className="text-xs font-semibold text-gray-900 mb-2">Přidat nový krok</h3>
+          <h3 className="text-xs font-semibold text-gray-900 mb-2">{translations?.app.addNewStep || 'Přidat nový krok'}</h3>
           <form onSubmit={handleAddStep} className="space-y-2">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Cíl
+                {translations?.app.goal || 'Cíl'}
               </label>
               <select
                 value={newStep.goalId}
@@ -303,7 +305,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                 required
               >
-                <option value="">Vyberte cíl</option>
+                <option value="">{translations?.app.selectGoal || 'Vyberte cíl'}</option>
                 {goals.map(goal => (
                   <option key={goal.id} value={goal.id}>{goal.title}</option>
                 ))}
@@ -312,7 +314,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Název kroku
+                {translations?.modals.stepModal.title || 'Název kroku'}
               </label>
               <input
                 type="text"
@@ -326,7 +328,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Popis (volitelné)
+                {translations?.modals.stepModal.description || 'Popis (volitelné)'}
               </label>
               <textarea
                 value={newStep.description}
@@ -355,7 +357,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
             {newStep.stepType === 'custom' && (
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Název vlastního typu
+                  {translations?.app.customTypeName || 'Název vlastního typu'}
                 </label>
                 <input
                   type="text"
@@ -451,7 +453,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                 type="submit"
                 className="flex-1 px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm"
               >
-                Přidat
+                {translations?.app.add || 'Přidat'}
               </button>
               <button
                 type="button"
@@ -472,7 +474,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                 }}
                 className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
               >
-                Zrušit
+                {translations?.common.cancel || 'Zrušit'}
               </button>
             </div>
           </form>
@@ -502,13 +504,13 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                   // Overdue
                   isOverdue = true
                   const daysOverdue = Math.abs(daysDiff)
-                  daysText = `${daysOverdue} dní zpožděno`
+                  daysText = `${daysOverdue} ${translations?.app.daysOverdue || 'dní zpožděno'}`
                 } else if (daysDiff === 1) {
                   // Tomorrow
-                  daysText = 'Zítra'
+                  daysText = translations?.app.tomorrow || 'Zítra'
                 } else {
                   // Future
-                  daysText = `Za ${daysDiff} dní`
+                  daysText = `${translations?.app.inDays || 'Za'} ${daysDiff} ${translations?.app.days || 'dní'}`
                 }
                 
                 const isSelected = selectedStep && selectedStep.id === step.id
@@ -549,7 +551,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                           <p className="text-xs text-gray-500 mb-2">{step.description}</p>
                         )}
                         {goal && (
-                          <p className="text-xs text-gray-400">Cíl: {goal.title}</p>
+                          <p className="text-xs text-gray-400">{translations?.app.goal || 'Cíl'}: {goal.title}</p>
                         )}
                         <p className={`text-xs font-medium mt-1 ${
                           isOverdue ? 'text-red-500' : 'text-primary-500'
@@ -622,7 +624,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                 }}
                 className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm"
               >
-                Přidat první krok
+                {translations?.app.addFirstStep || 'Přidat první krok'}
               </button>
             </div>
           )}
@@ -634,7 +636,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Upravit krok</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{translations?.modals.stepModal.editTitle || 'Upravit krok'}</h3>
               <button
                 onClick={() => setEditingStep(null)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -650,29 +652,29 @@ export const DailyCheckIn = memo(function DailyCheckIn({
               handleStepSave()
             }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Název</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.title || 'Název'}</label>
                 <input
                   type="text"
                   value={editingStep.title}
                   onChange={(e) => setEditingStep(prev => prev ? { ...prev, title: e.target.value } : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Název kroku"
+                  placeholder={translations?.modals.stepModal.titlePlaceholder || "Název kroku"}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Popis</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.description || 'Popis'}</label>
                 <textarea
                   value={editingStep.description || ''}
                   onChange={(e) => setEditingStep(prev => prev ? { ...prev, description: e.target.value } : null)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   rows={3}
-                  placeholder="Popis kroku (volitelné)"
+                  placeholder={translations?.modals.stepModal.descriptionPlaceholder || "Popis kroku (volitelné)"}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Datum</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.modals.stepModal.date || 'Datum'}</label>
                 <input
                   type="date"
                   value={new Date(editingStep.date).toISOString().split('T')[0]}
@@ -683,9 +685,9 @@ export const DailyCheckIn = memo(function DailyCheckIn({
               
               {editingStep.goal_id && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cíl</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{translations?.app.goal || 'Cíl'}</label>
                   <p className="text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-                    {goals.find(g => g.id === editingStep.goal_id)?.title || 'Nepřiřazený cíl'}
+                    {goals.find(g => g.id === editingStep.goal_id)?.title || (translations?.app.unassignedGoal || 'Nepřiřazený cíl')}
                   </p>
                 </div>
               )}
@@ -715,12 +717,12 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                   {isSaving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Ukládám...</span>
+                      <span>{translations?.common.saving || 'Ukládám...'}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      <span>Uložit</span>
+                      <span>{translations?.common.save || 'Uložit'}</span>
                     </>
                   )}
                 </button>
@@ -734,14 +736,14 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                   {isDeleting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Mažu...</span>
+                      <span>{translations?.common.deleting || 'Mažu...'}</span>
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span>Smazat</span>
+                      <span>{translations?.common.delete || 'Smazat'}</span>
                     </>
                   )}
                 </button>
@@ -751,7 +753,7 @@ export const DailyCheckIn = memo(function DailyCheckIn({
                   onClick={() => setEditingStep(null)}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Zrušit
+                  {translations?.common.cancel || 'Zrušit'}
                 </button>
               </div>
             </form>

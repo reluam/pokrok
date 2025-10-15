@@ -42,8 +42,10 @@ export const MainDashboard = memo(function MainDashboard() {
   const [selectedGoalForStep, setSelectedGoalForStep] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    if (translations) {
+      fetchData()
+    }
+  }, [translations])
 
   // Listen for storage changes to sync values across tabs
   useEffect(() => {
@@ -85,7 +87,7 @@ export const MainDashboard = memo(function MainDashboard() {
       
       // Update page title and subtitle
       setTitle(translations?.app.mainDashboard || 'Hlavní panel')
-      setSubtitle(`${goalsData.goals.length} ${translations?.app.goals || 'cílů'}, ${(stepsData.steps || []).length} ${translations?.app.steps || 'kroků'}`)
+      setSubtitle(`${goalsData.goals.length} ${translations?.app.goalsCount || 'cílů'}, ${(stepsData.steps || []).length} ${translations?.app.stepsCount || 'kroků'}`)
       
       // Update selectedGoal if it's currently open
       if (selectedGoal) {
@@ -114,13 +116,13 @@ export const MainDashboard = memo(function MainDashboard() {
   const getDaysRemainingText = (targetDate: string | Date) => {
     const days = getDaysRemaining(targetDate)
     if (days < 0) {
-      return `${Math.abs(days)} dní zpožděno`
+      return `${Math.abs(days)} ${translations?.app.daysOverdue || 'dní zpožděno'}`
     } else if (days === 0) {
-      return 'Dnes'
+      return translations?.app.today || 'Dnes'
     } else if (days === 1) {
-      return 'Zítra'
+      return translations?.app.tomorrow || 'Zítra'
     } else {
-      return `${days} dní`
+      return `${days} ${translations?.app.days || 'dní'}`
     }
   }
 
@@ -614,14 +616,14 @@ export const MainDashboard = memo(function MainDashboard() {
         
         setEditingProgress(false)
         setProgressValue('')
-        alert('Pokrok byl úspěšně aktualizován!')
+        alert(translations?.app.progressUpdated || 'Pokrok byl úspěšně aktualizován!')
       } else {
         const error = await response.json()
-        alert(`Chyba při aktualizaci pokroku: ${error.error || 'Neznámá chyba'}`)
+        alert(`${translations?.app.errorUpdatingProgress || 'Chyba při aktualizaci pokroku'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error updating progress:', error)
-      alert('Chyba při aktualizaci pokroku')
+      alert(translations?.app.errorUpdatingProgress || 'Chyba při aktualizaci pokroku')
     }
   }
 
@@ -667,6 +669,56 @@ export const MainDashboard = memo(function MainDashboard() {
     )
   }
 
+  const getGoalSortPriority = (goal: Goal) => {
+    const goalSteps = dailySteps.filter(step => step.goal_id === goal.id)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Calculate overdue steps
+    const overdueSteps = goalSteps.filter(step => {
+      if (step.completed) return false
+      const stepDate = new Date(step.date)
+      stepDate.setHours(0, 0, 0, 0)
+      return stepDate < today
+    })
+    
+    // Find most overdue step
+    const mostOverdueStep = overdueSteps.length > 0 
+      ? overdueSteps.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+      : null
+    
+    // Calculate how many days overdue the most overdue step is
+    const mostOverdueDays = mostOverdueStep 
+      ? Math.ceil((today.getTime() - new Date(mostOverdueStep.date).getTime()) / (1000 * 60 * 60 * 24))
+      : 0
+    
+    // Calculate days remaining to goal deadline
+    const daysRemaining = goal.target_date 
+      ? Math.ceil((new Date(goal.target_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      : 999999 // Very far future if no target date
+    
+    return { mostOverdueDays, daysRemaining }
+  }
+
+  const sortGoalsByPriority = (goals: Goal[]) => {
+    return goals.sort((a, b) => {
+      const priorityA = getGoalSortPriority(a)
+      const priorityB = getGoalSortPriority(b)
+      
+      // Priority 1: Goals with overdue steps
+      if (priorityA.mostOverdueDays > 0 && priorityB.mostOverdueDays === 0) return -1
+      if (priorityB.mostOverdueDays > 0 && priorityA.mostOverdueDays === 0) return 1
+      
+      // Priority 2: Among goals with overdue steps, sort by most overdue days
+      if (priorityA.mostOverdueDays > 0 && priorityB.mostOverdueDays > 0) {
+        return priorityB.mostOverdueDays - priorityA.mostOverdueDays
+      }
+      
+      // Priority 3: Among goals without overdue steps, sort by closest deadline
+      return priorityA.daysRemaining - priorityB.daysRemaining
+    })
+  }
+
   const activeGoals = goals.filter(goal => goal.status === 'active')
   console.log('All goals:', goals)
   console.log('Active goals:', activeGoals)
@@ -687,6 +739,21 @@ export const MainDashboard = memo(function MainDashboard() {
 
   return (
     <div className="h-full bg-background flex flex-col">
+      <style jsx>{`
+        @keyframes progressFill {
+          0% {
+            width: 0%;
+            opacity: 0.7;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+        
+        .progress-bar-animated {
+          animation: progressFill 1s ease-out forwards;
+        }
+      `}</style>
       {/* Main Content - 3 Column Layout */}
       <main className="flex-1 flex min-h-0">
                     {/* Left Column - Goals */}
@@ -695,12 +762,12 @@ export const MainDashboard = memo(function MainDashboard() {
                      <div className="flex items-center justify-between mb-2">
                        <div className="flex items-center space-x-3">
                          <div className="flex items-center space-x-2">
-                           <h2 className="text-xl font-bold text-gray-900 hidden lg:block">Moje cíle</h2>
+                           <h2 className="text-xl font-bold text-gray-900 hidden lg:block">{translations?.app.myGoals || 'Moje cíle'}</h2>
                            <h2 className="text-lg font-bold text-gray-900 lg:hidden">🎯</h2>
                            <button
                              onClick={() => setExpandedColumn(expandedColumn === 'goals' ? null : 'goals')}
                              className="p-1 hover:bg-gray-100 rounded transition-colors"
-                             title={expandedColumn === 'goals' ? 'Zavřít' : 'Rozbalit'}
+                             title={expandedColumn === 'goals' ? (translations?.common.close || 'Zavřít') : (translations?.common.expand || 'Rozbalit')}
                            >
                              {expandedColumn === 'goals' ? (
                                <ChevronLeft className="w-4 h-4 text-gray-600" />
@@ -715,10 +782,10 @@ export const MainDashboard = memo(function MainDashboard() {
                          className="flex items-center space-x-1 bg-primary-500 text-white px-2 lg:px-3 py-1.5 rounded-lg hover:bg-primary-600 transition-colors text-sm"
                        >
                          <Plus className="w-4 h-4" />
-                         <span className="hidden lg:inline">Přidat</span>
+                         <span className="hidden lg:inline">{translations?.app.add || 'Přidat'}</span>
                        </button>
                      </div>
-                     <p className="text-sm text-gray-600 hidden lg:block">Sledujte svůj pokrok</p>
+                     <p className="text-sm text-gray-600 hidden lg:block">{translations?.app.trackProgress || 'Sledujte svůj pokrok'}</p>
                    </div>
                   <div className="flex-1 overflow-y-auto p-2 lg:p-6">
                     {expandedColumn === 'goals' ? (
@@ -728,19 +795,10 @@ export const MainDashboard = memo(function MainDashboard() {
                         {/* KRÁTKODOBÉ CÍLE */}
                         <div className="space-y-4">
                           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                            Krátkodobé cíle
+                            {translations?.app.shortTermGoals || 'Krátkodobé cíle'}
                           </h3>
                           <div className="space-y-3">
-                            {activeGoals
-                              .filter(goal => goal.category === 'short-term')
-                              .sort((a, b) => {
-                                if (a.target_date && b.target_date) {
-                                  const dateA = new Date(a.target_date)
-                                  const dateB = new Date(b.target_date)
-                                  return dateA.getTime() - dateB.getTime()
-                                }
-                                return 0
-                              })
+                            {sortGoalsByPriority(activeGoals.filter(goal => goal.category === 'short-term'))
                               .map((goal, index) => (
                               <div
                                 key={goal.id}
@@ -780,17 +838,20 @@ export const MainDashboard = memo(function MainDashboard() {
                                 
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>Pokrok</span>
+                                    <span>{translations?.app.progress || 'Pokrok'}</span>
                                     <span>{getProgressDisplay(goal)}</span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                     <div 
-                                      className={`h-2 rounded-full transition-all duration-500 ${
+                                      className={`h-2 rounded-full transition-all duration-500 progress-bar-animated ${
                                         goal.status === 'completed' 
                                           ? 'bg-green-500' 
                                           : 'bg-primary-500'
                                       }`}
-                                      style={{ width: `${goal.progress_percentage || 0}%` }}
+                                      style={{ 
+                                        width: `${goal.progress_percentage || 0}%`,
+                                        animationDelay: `${index * 100}ms`
+                                      }}
                                     />
                                   </div>
                                 </div>
@@ -805,19 +866,10 @@ export const MainDashboard = memo(function MainDashboard() {
                         {/* STŘEDNĚDOBÉ CÍLE */}
                         <div className="space-y-4">
                           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                            Střednědobé cíle
+                            {translations?.app.mediumTermGoals || 'Střednědobé cíle'}
                           </h3>
                           <div className="space-y-3">
-                            {activeGoals
-                              .filter(goal => goal.category === 'medium-term')
-                              .sort((a, b) => {
-                                if (a.target_date && b.target_date) {
-                                  const dateA = new Date(a.target_date)
-                                  const dateB = new Date(b.target_date)
-                                  return dateA.getTime() - dateB.getTime()
-                                }
-                                return 0
-                              })
+                            {sortGoalsByPriority(activeGoals.filter(goal => goal.category === 'medium-term'))
                               .map((goal, index) => (
                               <div
                                 key={goal.id}
@@ -857,17 +909,20 @@ export const MainDashboard = memo(function MainDashboard() {
                                 
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>Pokrok</span>
+                                    <span>{translations?.app.progress || 'Pokrok'}</span>
                                     <span>{getProgressDisplay(goal)}</span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                     <div 
-                                      className={`h-2 rounded-full transition-all duration-500 ${
+                                      className={`h-2 rounded-full transition-all duration-500 progress-bar-animated ${
                                         goal.status === 'completed' 
                                           ? 'bg-green-500' 
                                           : 'bg-primary-500'
                                       }`}
-                                      style={{ width: `${goal.progress_percentage || 0}%` }}
+                                      style={{ 
+                                        width: `${goal.progress_percentage || 0}%`,
+                                        animationDelay: `${index * 100}ms`
+                                      }}
                                     />
                                   </div>
                                 </div>
@@ -882,19 +937,10 @@ export const MainDashboard = memo(function MainDashboard() {
                         {/* DLOUHODOBÉ CÍLE */}
                         <div className="space-y-4">
                           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                            Dlouhodobé cíle
+                            {translations?.app.longTermGoals || 'Dlouhodobé cíle'}
                           </h3>
                           <div className="space-y-3">
-                            {activeGoals
-                              .filter(goal => goal.category === 'long-term')
-                              .sort((a, b) => {
-                                if (a.target_date && b.target_date) {
-                                  const dateA = new Date(a.target_date)
-                                  const dateB = new Date(b.target_date)
-                                  return dateA.getTime() - dateB.getTime()
-                                }
-                                return 0
-                              })
+                            {sortGoalsByPriority(activeGoals.filter(goal => goal.category === 'long-term'))
                               .map((goal, index) => (
                               <div
                                 key={goal.id}
@@ -934,17 +980,20 @@ export const MainDashboard = memo(function MainDashboard() {
                                 
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>Pokrok</span>
+                                    <span>{translations?.app.progress || 'Pokrok'}</span>
                                     <span>{getProgressDisplay(goal)}</span>
                                   </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                     <div 
-                                      className={`h-2 rounded-full transition-all duration-500 ${
+                                      className={`h-2 rounded-full transition-all duration-500 progress-bar-animated ${
                                         goal.status === 'completed' 
                                           ? 'bg-green-500' 
                                           : 'bg-primary-500'
                                       }`}
-                                      style={{ width: `${goal.progress_percentage || 0}%` }}
+                                      style={{ 
+                                        width: `${goal.progress_percentage || 0}%`,
+                                        animationDelay: `${index * 100}ms`
+                                      }}
                                     />
                                   </div>
                                 </div>
@@ -959,17 +1008,7 @@ export const MainDashboard = memo(function MainDashboard() {
                     ) : (
                       // NORMÁLNÍ ZOBRAZENÍ - Seznam cílů ve sloupci
                       <div className="space-y-2 lg:space-y-4">
-                        {activeGoals
-                          .sort((a, b) => {
-                            if (a.target_date && b.target_date) {
-                              const dateA = new Date(a.target_date)
-                              const dateB = new Date(b.target_date)
-                              return dateA.getTime() - dateB.getTime()
-                            }
-                            if (a.target_date && !b.target_date) return -1
-                            if (!a.target_date && b.target_date) return 1
-                            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                          })
+                        {sortGoalsByPriority(activeGoals)
                           .map((goal, index) => (
                           <div
                             key={goal.id}
@@ -1011,17 +1050,20 @@ export const MainDashboard = memo(function MainDashboard() {
                               
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs text-gray-500">
-                                  <span>Pokrok</span>
+                                  <span>{translations?.app.progress || 'Pokrok'}</span>
                                   <span>{getProgressDisplay(goal)}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                   <div 
-                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                    className={`h-2 rounded-full transition-all duration-500 progress-bar-animated ${
                                       goal.status === 'completed' 
                                         ? 'bg-green-500' 
                                         : 'bg-primary-500'
                                     }`}
-                                    style={{ width: `${goal.progress_percentage || 0}%` }}
+                                    style={{ 
+                                      width: `${goal.progress_percentage || 0}%`,
+                                      animationDelay: `${index * 100}ms`
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -1038,16 +1080,24 @@ export const MainDashboard = memo(function MainDashboard() {
                               }`}>
                                 {goal.status === 'completed' ? '✓' : (goal.icon ? getIconEmoji(goal.icon) : index + 1)}
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                 <div 
-                                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                                  className={`h-1.5 rounded-full transition-all duration-500 progress-bar-animated ${
                                     goal.status === 'completed' 
                                       ? 'bg-green-500' 
                                       : 'bg-primary-500'
                                   }`}
-                                  style={{ width: `${goal.progress_percentage || 0}%` }}
+                                  style={{ 
+                                    width: `${goal.progress_percentage || 0}%`,
+                                    animationDelay: `${index * 100}ms`
+                                  }}
                                 />
                               </div>
+                              {goal.target_date && (
+                                <p className="text-xs text-primary-600 text-center">
+                                  {getDaysRemainingText(goal.target_date)}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1057,8 +1107,8 @@ export const MainDashboard = memo(function MainDashboard() {
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                               <span className="text-2xl">🎯</span>
                             </div>
-                            <p className="text-gray-500 text-sm">Zatím nemáte žádné cíle</p>
-                            <p className="text-gray-400 text-xs mt-1">Přidejte svůj první cíl</p>
+                            <p className="text-gray-500 text-sm">{translations?.app.noGoalsYet || 'Zatím nemáte žádné cíle'}</p>
+                            <p className="text-gray-400 text-xs mt-1">{translations?.app.addFirstGoal || 'Přidejte svůj první cíl'}</p>
                           </div>
                         )}
                       </div>
@@ -1091,7 +1141,7 @@ export const MainDashboard = memo(function MainDashboard() {
                        <button
                          onClick={() => setExpandedColumn(expandedColumn === 'steps' ? null : 'steps')}
                          className="p-1 hover:bg-gray-100 rounded transition-colors"
-                         title={expandedColumn === 'steps' ? 'Zavřít' : 'Rozbalit'}
+                         title={expandedColumn === 'steps' ? (translations?.common.close || 'Zavřít') : (translations?.common.expand || 'Rozbalit')}
                        >
                          {expandedColumn === 'steps' ? (
                            <ChevronRight className="w-4 h-4 text-gray-600" />
@@ -1099,10 +1149,10 @@ export const MainDashboard = memo(function MainDashboard() {
                            <ChevronLeft className="w-4 h-4 text-gray-600" />
                          )}
                        </button>
-                       <h2 className="text-xl font-bold text-gray-900">Další kroky</h2>
+                       <h2 className="text-xl font-bold text-gray-900">{translations?.app.nextSteps || 'Další kroky'}</h2>
                      </div>
                    </div>
-                   <p className="text-sm text-gray-600">Co dnes uděláte?</p>
+                   <p className="text-sm text-gray-600">{translations?.app.whatWillYouDoToday || 'Co dnes uděláte?'}</p>
                  </div>
                   <div className="flex-1 overflow-y-auto">
                     {expandedColumn === 'steps' ? (
@@ -1151,7 +1201,7 @@ export const MainDashboard = memo(function MainDashboard() {
                                           </p>
                                         )}
                                         <p className="text-xs text-red-600 mt-1">
-                                          Zpožděno: {new Date(step.date).toLocaleDateString('cs-CZ')}
+                                          {translations?.app.overdue || 'Zpožděno'}: {new Date(step.date).toLocaleDateString('cs-CZ')}
                                         </p>
                                       </div>
                                     </div>
@@ -1228,7 +1278,7 @@ export const MainDashboard = memo(function MainDashboard() {
                                         <p className={`text-xs mt-1 ${
                                           isToday ? 'text-primary-600' : 'text-gray-500'
                                         }`}>
-                                          {isToday ? 'Dnes: ' : 'Budoucí: '}{new Date(step.date).toLocaleDateString('cs-CZ')}
+                                          {isToday ? (translations?.app.today || 'Dnes') + ': ' : (translations?.app.future || 'Budoucí') + ': '}{new Date(step.date).toLocaleDateString('cs-CZ')}
                                         </p>
                                       </div>
                                     </div>
@@ -1278,7 +1328,7 @@ export const MainDashboard = memo(function MainDashboard() {
                                           </p>
                                         )}
                                         <p className="text-xs text-green-600 mt-1">
-                                          Dokončeno: {new Date(step.date).toLocaleDateString('cs-CZ')}
+                                          {translations?.app.completed || 'Dokončeno'}: {new Date(step.date).toLocaleDateString('cs-CZ')}
                                         </p>
                                       </div>
                                     </div>
@@ -1317,7 +1367,6 @@ export const MainDashboard = memo(function MainDashboard() {
         <GoalDetailModal
           goal={selectedGoal}
           steps={dailySteps.filter(step => step.goal_id === selectedGoal.id)}
-          automations={automations}
           onClose={() => {
             setShowGoalDetails(false)
             setSelectedGoal(null)
@@ -1341,15 +1390,15 @@ export const MainDashboard = memo(function MainDashboard() {
       {editingProgress && selectedGoal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Upravit pokrok cíle</h3>
+            <h3 className="text-lg font-semibold mb-4">{translations?.app.editGoalProgress || 'Upravit pokrok cíle'}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {selectedGoal.progress_type === 'percentage' ? 'Pokrok (%)' : 
-                   selectedGoal.progress_type === 'count' ? `Počet (${selectedGoal.progress_unit || 'krát'})` :
-                   selectedGoal.progress_type === 'amount' ? `Částka (${selectedGoal.progress_unit || 'Kč'})` :
-                   'Pokrok'}
+                  {selectedGoal.progress_type === 'percentage' ? (translations?.app.progressPercentage || 'Pokrok (%)') : 
+                   selectedGoal.progress_type === 'count' ? (translations?.app.count || `Počet (${selectedGoal.progress_unit || 'krát'})`) :
+                   selectedGoal.progress_type === 'amount' ? (translations?.app.amount || `Částka (${selectedGoal.progress_unit || 'Kč'})`) :
+                   (translations?.app.progress || 'Pokrok')}
                 </label>
                 <input
                   type="number"
@@ -1362,7 +1411,7 @@ export const MainDashboard = memo(function MainDashboard() {
                 />
                 {selectedGoal.progress_target && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Cíl: {selectedGoal.progress_target} {selectedGoal.progress_unit || ''}
+                    {translations?.app.goal || 'Cíl'}: {selectedGoal.progress_target} {selectedGoal.progress_unit || ''}
                   </p>
                 )}
               </div>
@@ -1373,13 +1422,13 @@ export const MainDashboard = memo(function MainDashboard() {
                 onClick={handleProgressUpdate}
                 className="flex-1 bg-primary-500 hover:bg-primary-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Uložit
+                {translations?.common.save || 'Uložit'}
               </button>
               <button
                 onClick={() => setEditingProgress(false)}
                 className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Zrušit
+                {translations?.common.cancel || 'Zrušit'}
               </button>
             </div>
           </div>

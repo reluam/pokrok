@@ -5,22 +5,23 @@ import { useState, useEffect } from 'react'
 export type Locale = 'cs' | 'en'
 
 export function useLocale(): Locale {
-  const [locale, setLocale] = useState<Locale>('cs')
+  const [locale, setLocale] = useState<Locale>(() => {
+    // Initialize with the correct locale from localStorage immediately
+    if (typeof window !== 'undefined') {
+      const appLanguagePreference = localStorage.getItem('app-language-preference') as Locale
+      if (appLanguagePreference && ['cs', 'en'].includes(appLanguagePreference)) {
+        return appLanguagePreference
+      }
+      
+      const savedLocale = localStorage.getItem('preferred-locale') as Locale
+      if (savedLocale && ['cs', 'en'].includes(savedLocale)) {
+        return savedLocale
+      }
+    }
+    return 'cs'
+  })
   
   useEffect(() => {
-    // Check for app-specific language preference first (higher priority)
-    const appLanguagePreference = localStorage.getItem('app-language-preference') as Locale
-    if (appLanguagePreference && ['cs', 'en'].includes(appLanguagePreference)) {
-      setLocale(appLanguagePreference)
-      return
-    }
-    
-    // Fallback to general language preference
-    const savedLocale = localStorage.getItem('preferred-locale') as Locale
-    if (savedLocale && ['cs', 'en'].includes(savedLocale)) {
-      setLocale(savedLocale)
-    }
-    
     // Listen for locale changes
     const handleLocaleChange = (event: CustomEvent) => {
       setLocale(event.detail.locale)

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { PageProvider } from '../components/PageContext'
+import { ThemeProvider } from '../components/ThemeProvider'
 import './globals.css'
 
 const inter = Inter({ 
@@ -34,9 +35,11 @@ export default function RootLayout({
           <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         </head>
         <body className={`${inter.variable} antialiased`}>
-          <PageProvider>
-            {children}
-          </PageProvider>
+          <ThemeProvider>
+            <PageProvider>
+              {children}
+            </PageProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

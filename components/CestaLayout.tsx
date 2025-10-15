@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
-import { Settings, Home, Target, Footprints, BarChart3, Zap, FileText } from 'lucide-react'
+import { Settings, Home, Target, Footprints, FileText } from 'lucide-react'
 import { memo } from 'react'
+import { useTranslations } from '@/lib/use-translations'
 
 interface CestaLayoutProps {
   children: React.ReactNode
@@ -14,6 +15,7 @@ interface CestaLayoutProps {
 
 export const CestaLayout = memo(function CestaLayout({ children, title, subtitle, currentPage }: CestaLayoutProps) {
   const router = useRouter()
+  const { translations } = useTranslations()
 
   return (
     <div className="h-screen bg-background flex flex-col">
@@ -32,7 +34,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                 }`}
               >
                 <Home className="w-5 h-5 text-primary-500" />
-                <span className="text-sm font-medium">Hlavní panel</span>
+                <span className="text-sm font-medium">{translations?.app.mainDashboard || 'Hlavní panel'}</span>
                 {currentPage === '/muj' && subtitle && (
                   <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                 )}
@@ -51,7 +53,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   }`}
                 >
                   <Target className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Cíle</span>
+                  <span className="text-sm font-medium">{translations?.app.goals || 'Cíle'}</span>
                   {currentPage === '/muj/cile' && subtitle && (
                     <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                   )}
@@ -65,36 +67,8 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   }`}
                 >
                   <Footprints className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Kroky</span>
+                  <span className="text-sm font-medium">{translations?.app.steps || 'Kroky'}</span>
                   {currentPage === '/muj/kroky' && subtitle && (
-                    <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => router.push('/muj/prehled')}
-                  className={`flex items-center space-x-2 transition-all duration-200 ${
-                    currentPage === '/muj/prehled' 
-                      ? 'text-primary-600 bg-primary-50 px-3 py-2 rounded-lg' 
-                      : 'text-gray-600 hover:text-primary-600'
-                  }`}
-                >
-                  <BarChart3 className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Přehled</span>
-                  {currentPage === '/muj/prehled' && subtitle && (
-                    <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => router.push('/muj/automatizace')}
-                  className={`flex items-center space-x-2 transition-all duration-200 ${
-                    currentPage === '/muj/automatizace' 
-                      ? 'text-primary-600 bg-primary-50 px-3 py-2 rounded-lg' 
-                      : 'text-gray-600 hover:text-primary-600'
-                  }`}
-                >
-                  <Zap className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Automatizace</span>
-                  {currentPage === '/muj/automatizace' && subtitle && (
                     <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                   )}
                 </button>
@@ -107,7 +81,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   }`}
                 >
                   <FileText className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Poznámky</span>
+                  <span className="text-sm font-medium">{translations?.app.notes || 'Poznámky'}</span>
                   {currentPage === '/muj/poznamky' && subtitle && (
                     <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                   )}
@@ -121,7 +95,7 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
                   }`}
                 >
                   <Settings className="w-5 h-5 text-primary-500" />
-                  <span className="text-sm font-medium">Nastavení</span>
+                  <span className="text-sm font-medium">{translations?.app.settings || 'Nastavení'}</span>
                   {currentPage === '/muj/nastaveni' && subtitle && (
                     <span className="text-xs text-gray-500 ml-2">{subtitle}</span>
                   )}

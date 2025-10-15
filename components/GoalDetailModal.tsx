@@ -1,16 +1,16 @@
 'use client'
 
 import { useState, memo, useEffect } from 'react'
-import { Goal, DailyStep, Automation, GoalMetric, Note } from '@/lib/cesta-db'
-import { X, Calendar, Target, Clock, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type, FileText } from 'lucide-react'
+import { Goal, DailyStep, GoalMetric, Note } from '@/lib/cesta-db'
+import { X, Calendar, Target, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type, FileText } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 import { UnifiedStepModal } from './UnifiedStepModal'
+import { useTranslations } from '@/lib/use-translations'
 
 interface GoalDetailModalProps {
   goal: Goal
   steps: DailyStep[]
-  automations: Automation[]
   onClose: () => void
   onStepClick?: (step: DailyStep) => void
   onStepComplete?: (stepId: string) => void
@@ -23,7 +23,6 @@ interface GoalDetailModalProps {
 export const GoalDetailModal = memo(function GoalDetailModal({ 
   goal, 
   steps, 
-  automations, 
   onClose, 
   onStepClick, 
   onStepComplete,
@@ -32,7 +31,8 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   onEdit, 
   onDelete 
 }: GoalDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'metrics' | 'automations' | 'notes'>('overview')
+  const { translations } = useTranslations()
+  const [activeTab, setActiveTab] = useState<'overview' | 'steps' | 'metrics' | 'notes'>('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [editedGoal, setEditedGoal] = useState<Goal>(goal)
   const [metrics, setMetrics] = useState<GoalMetric[]>([])
@@ -122,11 +122,11 @@ export const GoalDetailModal = memo(function GoalDetailModal({
       } else {
         const error = await response.json()
         console.error('Error saving goal:', error)
-        alert(`Chyba při ukládání cíle: ${error.error || 'Neznámá chyba'}`)
+        alert(`${translations?.app.errorSavingGoal || 'Chyba při ukládání cíle'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error saving goal:', error)
-      alert('Chyba při ukládání cíle')
+      alert(translations?.app.errorSavingGoal || 'Chyba při ukládání cíle')
     }
   }
 
@@ -218,11 +218,11 @@ export const GoalDetailModal = memo(function GoalDetailModal({
       } else {
         const error = await response.json()
         console.error('Error adding step:', error)
-        alert(`Chyba při přidávání kroku: ${error.error || 'Neznámá chyba'}`)
+        alert(`${translations?.app.errorAddingStep || 'Chyba při přidávání kroku'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error adding step:', error)
-      alert('Chyba při přidávání kroku')
+      alert(translations?.app.errorAddingStep || 'Chyba při přidávání kroku')
     } finally {
       setIsSubmittingStep(false)
     }
@@ -248,11 +248,11 @@ export const GoalDetailModal = memo(function GoalDetailModal({
       } else {
         const error = await response.json()
         console.error('Error adding note:', error)
-        alert(`Chyba při přidávání poznámky: ${error.error || 'Neznámá chyba'}`)
+        alert(`${translations?.app.errorAddingNote || 'Chyba při přidávání poznámky'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error adding note:', error)
-      alert('Chyba při přidávání poznámky')
+      alert(translations?.app.errorAddingNote || 'Chyba při přidávání poznámky')
     } finally {
       setIsSubmittingNote(false)
     }
@@ -262,22 +262,22 @@ export const GoalDetailModal = memo(function GoalDetailModal({
     switch (goalType) {
       case 'outcome':
         return {
-          label: 'Výsledkový cíl',
-          description: 'Konkrétní, měřitelný výsledek, který chcete dosáhnout',
+          label: translations?.modals.goalDetail.outcomeGoal || 'Výsledkový cíl',
+          description: translations?.modals.goalDetail.outcomeDescription || 'Konkrétní, měřitelný výsledek, který chcete dosáhnout',
           icon: '🎯',
           color: 'text-blue-600 bg-blue-100'
         }
       case 'process':
         return {
-          label: 'Procesní cíl',
-          description: 'Zaměřený na pravidelné aktivity a návyky',
+          label: translations?.modals.goalDetail.processGoal || 'Procesní cíl',
+          description: translations?.modals.goalDetail.processDescription || 'Zaměřený na pravidelné aktivity a návyky',
           icon: '🔄',
           color: 'text-green-600 bg-green-100'
         }
       default:
         return {
-          label: 'Neznámý typ',
-          description: 'Typ cíle není definován',
+          label: translations?.modals.goalDetail.unknownType || 'Neznámý typ',
+          description: translations?.modals.goalDetail.unknownTypeDescription || 'Typ cíle není definován',
           icon: '❓',
           color: 'text-gray-600 bg-gray-100'
         }
@@ -288,32 +288,32 @@ export const GoalDetailModal = memo(function GoalDetailModal({
     switch (progressType) {
       case 'percentage':
         return {
-          label: 'Procentuální',
-          description: 'Pokrok se měří v procentech (0-100%)',
+          label: translations?.modals.goalDetail.percentage || 'Procentuální',
+          description: translations?.modals.goalDetail.percentageDescription || 'Pokrok se měří v procentech (0-100%)',
           icon: '📊'
         }
       case 'count':
         return {
-          label: 'Počet',
-          description: 'Pokrok se měří počtem dokončených akcí',
+          label: translations?.modals.goalDetail.count || 'Počet',
+          description: translations?.modals.goalDetail.countDescription || 'Pokrok se měří počtem dokončených akcí',
           icon: '🔢'
         }
       case 'amount':
         return {
-          label: 'Částka',
-          description: 'Pokrok se měří v peněžních jednotkách',
+          label: translations?.modals.goalDetail.amount || 'Částka',
+          description: translations?.modals.goalDetail.amountDescription || 'Pokrok se měří v peněžních jednotkách',
           icon: '💰'
         }
       case 'steps':
         return {
-          label: 'Kroky',
-          description: 'Pokrok se měří počtem dokončených kroků',
+          label: translations?.app.steps || 'Kroky',
+          description: translations?.modals.goalDetail.stepsDescription || 'Pokrok se měří počtem dokončených kroků',
           icon: '👣'
         }
       default:
         return {
-          label: 'Neznámý',
-          description: 'Typ měření není definován',
+          label: translations?.modals.goalDetail.unknown || 'Neznámý',
+          description: translations?.modals.goalDetail.unknownDescription || 'Typ měření není definován',
           icon: '❓'
         }
     }
@@ -323,29 +323,29 @@ export const GoalDetailModal = memo(function GoalDetailModal({
     switch (category) {
       case 'short-term':
         return {
-          label: 'Krátkodobý',
-          description: 'Cíl na nejbližší období (obvykle do 3 měsíců)',
+          label: translations?.modals.goalDetail.shortTerm || 'Krátkodobý',
+          description: translations?.modals.goalDetail.shortTermDescription || 'Cíl na nejbližší období (obvykle do 3 měsíců)',
           icon: '⚡',
           color: 'text-orange-600 bg-orange-100'
         }
       case 'medium-term':
         return {
-          label: 'Střednědobý',
-          description: 'Cíl na střední období (obvykle 3-12 měsíců)',
+          label: translations?.modals.goalDetail.mediumTerm || 'Střednědobý',
+          description: translations?.modals.goalDetail.mediumTermDescription || 'Cíl na střední období (obvykle 3-12 měsíců)',
           icon: '📅',
           color: 'text-blue-600 bg-blue-100'
         }
       case 'long-term':
         return {
-          label: 'Dlouhodobý',
-          description: 'Cíl na dlouhé období (obvykle více než 1 rok)',
+          label: translations?.modals.goalDetail.longTerm || 'Dlouhodobý',
+          description: translations?.modals.goalDetail.longTermDescription || 'Cíl na dlouhé období (obvykle více než 1 rok)',
           icon: '🏆',
           color: 'text-purple-600 bg-purple-100'
         }
       default:
         return {
-          label: 'Neznámý',
-          description: 'Kategorie není definována',
+          label: translations?.modals.goalDetail.unknownCategory || 'Neznámý',
+          description: translations?.modals.goalDetail.unknownCategoryDescription || 'Kategorie není definována',
           icon: '❓',
           color: 'text-gray-600 bg-gray-100'
         }
@@ -362,11 +362,10 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   const totalSteps = userSteps.length
 
   const tabs = [
-    { id: 'overview', label: 'Přehled', icon: Info },
-    { id: 'steps', label: 'Kroky', icon: CheckCircle },
-    { id: 'metrics', label: 'Metriky', icon: Gauge },
-    { id: 'automations', label: 'Automatizace', icon: Clock },
-    { id: 'notes', label: 'Poznámky', icon: FileText }
+    { id: 'overview', label: translations?.modals.goalDetail.overview || 'Přehled', icon: Info },
+    { id: 'steps', label: translations?.app.steps || 'Kroky', icon: CheckCircle },
+    { id: 'metrics', label: translations?.modals.goalDetail.metrics || 'Metriky', icon: Gauge },
+    { id: 'notes', label: translations?.app.notes || 'Poznámky', icon: FileText }
   ]
 
   return (
@@ -382,7 +381,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   value={editedGoal.title}
                   onChange={(e) => handleFieldChange('title', e.target.value)}
                   className="text-2xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none hover:border-gray-400 transition-colors"
-                  placeholder="Název cíle..."
+                  placeholder={translations?.modals.goalDetail.goalTitlePlaceholder || "Název cíle..."}
                 />
                 {goal.icon && (
                   <span className="text-2xl">{getIconEmoji(goal.icon)}</span>
@@ -395,7 +394,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               <div className="flex items-center space-x-4 mb-3">
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Cílové datum:</span>
+                  <span className="text-sm text-gray-600">{translations?.modals.goalDetail.targetDate || 'Cílové datum'}:</span>
                   <input
                     type="date"
                     value={editedGoal.target_date ? new Date(editedGoal.target_date).toISOString().split('T')[0] : ''}
@@ -448,16 +447,16 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 border border-primary-200">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-primary-900">Celkový pokrok</h3>
-                    <p className="text-sm text-primary-700">Kombinovaný pokrok z kroků a metrik</p>
+                    <h3 className="text-lg font-semibold text-primary-900">{translations?.modals.goalDetail.totalProgress || 'Celkový pokrok'}</h3>
+                    <p className="text-sm text-primary-700">{translations?.modals.goalDetail.combinedProgress || 'Kombinovaný pokrok z kroků a metrik'}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-primary-900">{goal.progress_percentage || 0}%</div>
                     <div className="text-sm text-primary-700">
-                      {goal.progress_percentage >= 80 ? 'Skvěle!' : 
-                       goal.progress_percentage >= 60 ? 'Dobře!' : 
-                       goal.progress_percentage >= 40 ? 'Pokračuj!' : 
-                       goal.progress_percentage >= 20 ? 'Začni!' : 'Začni hned!'}
+                      {goal.progress_percentage >= 80 ? (translations?.modals.goalDetail.excellent || 'Skvěle!') : 
+                       goal.progress_percentage >= 60 ? (translations?.modals.goalDetail.good || 'Dobře!') : 
+                       goal.progress_percentage >= 40 ? (translations?.modals.goalDetail.continue || 'Pokračuj!') : 
+                       goal.progress_percentage >= 20 ? (translations?.modals.goalDetail.start || 'Začni!') : (translations?.modals.goalDetail.startNow || 'Začni hned!')}
                     </div>
                   </div>
                 </div>
@@ -470,8 +469,8 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                 </div>
 
                 <div className="flex justify-between text-sm text-primary-700">
-                  <span>Začátek</span>
-                  <span>Dokončeno</span>
+                  <span>{translations?.modals.goalDetail.start || 'Začátek'}</span>
+                  <span>{translations?.modals.goalDetail.completed || 'Dokončeno'}</span>
                 </div>
               </div>
 
@@ -482,17 +481,17 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Target className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-gray-900">Kroky</span>
+                      <span className="font-medium text-gray-900">{translations?.app.steps || 'Kroky'}</span>
                     </div>
                     <span className="text-xs text-gray-500">{completedSteps}/{totalSteps}</span>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Dokončené</span>
+                      <span className="text-gray-600">{translations?.app.completed || 'Dokončené'}</span>
                       <span className="font-medium text-blue-600">{completedSteps}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Zbývá</span>
+                      <span className="text-gray-600">{translations?.modals.goalDetail.remaining || 'Zbývá'}</span>
                       <span className="font-medium text-gray-900">{totalSteps - completedSteps}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -509,7 +508,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <Gauge className="w-5 h-5 text-green-600" />
-                      <span className="font-medium text-gray-900">Metriky</span>
+                      <span className="font-medium text-gray-900">{translations?.modals.goalDetail.metrics || 'Metriky'}</span>
                     </div>
                     <span className="text-xs text-gray-500">{metrics.length}</span>
                   </div>
@@ -517,15 +516,15 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                     {metrics.length > 0 ? (
                       <>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Aktivní</span>
+                          <span className="text-gray-600">{translations?.modals.goalDetail.active || 'Aktivní'}</span>
                           <span className="font-medium text-green-600">{metrics.length}</span>
                         </div>
                         <div className="text-xs text-gray-500">
-                          Průměrný pokrok: {Math.round(metrics.reduce((acc, m) => acc + ((m.current_value / m.target_value) * 100), 0) / metrics.length)}%
+                          {translations?.modals.goalDetail.averageProgress || 'Průměrný pokrok'}: {Math.round(metrics.reduce((acc, m) => acc + ((m.current_value / m.target_value) * 100), 0) / metrics.length)}%
                         </div>
                       </>
                     ) : (
-                      <div className="text-sm text-gray-500">Žádné metriky</div>
+                      <div className="text-sm text-gray-500">{translations?.modals.goalDetail.noMetrics || 'Žádné metriky'}</div>
                     )}
                   </div>
                 </div>
@@ -535,7 +534,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <h4 className="font-medium text-gray-900 mb-3 flex items-center">
                   <Info className="w-4 h-4 mr-2 text-blue-600" />
-                  Klíčové poznatky
+                  {translations?.modals.goalDetail.keyInsights || 'Klíčové poznatky'}
                 </h4>
                 <div className="space-y-2 text-sm">
                   {(() => {
@@ -881,15 +880,15 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Přidat krok</span>
+                  <span>{translations?.modals.goalDetail.addStep || 'Přidat krok'}</span>
                 </button>
               </div>
 
               {totalSteps === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-lg font-medium">Žádné kroky</p>
-                  <p className="text-sm">K tomuto cíli nejsou přiřazeny žádné kroky.</p>
+                  <p className="text-lg font-medium">{translations?.modals.goalDetail.noSteps || 'Žádné kroky'}</p>
+                  <p className="text-sm">{translations?.modals.goalDetail.noStepsDescription || 'K tomuto cíli nejsou přiřazeny žádné kroky.'}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -960,7 +959,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Přidat metriku</span>
+                  <span>{translations?.modals.goalDetail.addMetric || 'Přidat metriku'}</span>
                 </button>
               </div>
 
@@ -972,8 +971,8 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               ) : !Array.isArray(metrics) || metrics.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-lg font-medium">Žádné metriky</p>
-                  <p className="text-sm">Pro tento cíl nejsou nastaveny žádné metriky.</p>
+                  <p className="text-lg font-medium">{translations?.modals.goalDetail.noMetrics || 'Žádné metriky'}</p>
+                  <p className="text-sm">{translations?.modals.goalDetail.noMetricsDescription || 'Pro tento cíl nejsou nastaveny žádné metriky.'}</p>
                 </div>
               ) : Array.isArray(metrics) && metrics.length > 0 ? (
                 <div className="space-y-3">
@@ -1065,25 +1064,10 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Gauge className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p className="text-lg font-medium">Chyba při načítání metrik</p>
-                  <p className="text-sm">Nepodařilo se načíst metriky pro tento cíl.</p>
+                  <p className="text-lg font-medium">{translations?.modals.goalDetail.errorLoadingMetrics || 'Chyba při načítání metrik'}</p>
+                  <p className="text-sm">{translations?.modals.goalDetail.errorLoadingMetricsDescription || 'Nepodařilo se načíst metriky pro tento cíl.'}</p>
                 </div>
               )}
-            </div>
-          )}
-
-          {activeTab === 'automations' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Automatizace</h3>
-                <p className="text-gray-600 mb-4">Na této funkci pracujeme</p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                  <p className="text-sm text-blue-800">
-                    Automatizace vám pomohou vytvářet kroky a aktualizovat metriky automaticky na základě vašich preferencí a pravidel.
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 
@@ -1098,7 +1082,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                   className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Přidat</span>
+                  <span>{translations?.app.add || 'Přidat'}</span>
                 </button>
               </div>
 
@@ -1110,8 +1094,8 @@ export const GoalDetailModal = memo(function GoalDetailModal({
               ) : notes.length === 0 ? (
                 <div className="text-center py-6 text-gray-500">
                   <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm font-medium">Žádné poznámky</p>
-                  <p className="text-xs">Pro tento cíl nejsou nastaveny žádné poznámky.</p>
+                  <p className="text-sm font-medium">{translations?.modals.goalDetail.noNotes || 'Žádné poznámky'}</p>
+                  <p className="text-xs">{translations?.modals.goalDetail.noNotesDescription || 'Pro tento cíl nejsou nastaveny žádné poznámky.'}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1140,7 +1124,7 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                                   console.log('Delete note:', note)
                                 }}
                                 className="p-1 bg-gray-100 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                title="Smazat poznámku"
+                                title={translations?.modals.goalDetail.deleteNote || "Smazat poznámku"}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
@@ -1188,20 +1172,20 @@ export const GoalDetailModal = memo(function GoalDetailModal({
             onClick={onClose}
             className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Zavřít
+            {translations?.common.close || 'Zavřít'}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
           >
-            Uložit
+            {translations?.common.save || 'Uložit'}
           </button>
           {onDelete && (
             <button
               onClick={() => onDelete(goal.id)}
               className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
-              Smazat
+              {translations?.common.delete || 'Smazat'}
             </button>
           )}
         </div>
@@ -1247,6 +1231,7 @@ interface AddNoteModalProps {
 }
 
 const AddNoteModal = memo(function AddNoteModal({ goalId, onClose, onSave }: AddNoteModalProps) {
+  const { translations } = useTranslations()
   const [formData, setFormData] = useState({
     title: '',
     content: ''
@@ -1315,14 +1300,14 @@ const AddNoteModal = memo(function AddNoteModal({ goalId, onClose, onSave }: Add
               onClick={onClose}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Zrušit
+              {translations?.common.cancel || 'Zrušit'}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? 'Ukládám...' : 'Vytvořit poznámku'}
+              {isSubmitting ? (translations?.common.saving || 'Ukládám...') : (translations?.modals.goalDetail.createNote || 'Vytvořit poznámku')}
             </button>
           </div>
         </form>
@@ -1332,6 +1317,7 @@ const AddNoteModal = memo(function AddNoteModal({ goalId, onClose, onSave }: Add
 })
 
 const AddMetricModal = memo(function AddMetricModal({ goalId, onClose, onSave }: { goalId: string, onClose: () => void, onSave: (metricData: any) => void }) {
+  const { translations } = useTranslations()
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -1477,7 +1463,7 @@ const AddMetricModal = memo(function AddMetricModal({ goalId, onClose, onSave }:
                 onClick={onClose}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
-                Zrušit
+                {translations?.common.cancel || 'Zrušit'}
               </button>
               <button
                 type="submit"
