@@ -498,9 +498,10 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           {/* Planning Mode - only show if user needs to plan */}
           {shouldShowPlanning ? (
             <div className="space-y-6">
-              {/* Planning Header */}
+              {/* Unified Planning Interface */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between">
+                {/* Header with controls */}
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-4">
                     <div className="p-3 bg-blue-100 rounded-full">
                       <Target className="w-6 h-6 text-blue-600" />
@@ -555,143 +556,157 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                     </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Warning if too many steps */}
-              {tempPlannedSteps.length > (userSettings?.daily_steps_count || 3) && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
-                    <div>
-                      <h4 className="text-sm font-semibold text-yellow-800">Pozor - hodně kroků!</h4>
-                      <p className="text-xs text-yellow-700">
-                        Máte vybráno {tempPlannedSteps.length} kroků, doporučujeme {userSettings?.daily_steps_count || 3}. 
-                        Ujistěte se, že si nedáváte na talíř příliš velké sousto.
-                      </p>
+                {/* Warning if too many steps */}
+                {tempPlannedSteps.length > (userSettings?.daily_steps_count || 3) && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-yellow-800">Pozor - hodně kroků!</h4>
+                        <p className="text-xs text-yellow-700">
+                          Máte vybráno {tempPlannedSteps.length} kroků, doporučujeme {userSettings?.daily_steps_count || 3}. 
+                          Ujistěte se, že si nedáváte na talíř příliš velké sousto.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Two column layout for planning */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Selected Steps */}
-                <div className="space-y-4">
-                  <h4 className="text-md font-semibold text-gray-900">
-                    Vybráno pro dnešek ({tempPlannedSteps.length})
-                  </h4>
-                  <div 
-                    className="min-h-[200px] border-2 border-dashed border-primary-300 rounded-lg p-4 bg-primary-50 transition-colors"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    {tempPlannedStepsData.length > 0 ? (
-                      <div className="space-y-2">
-                        {tempPlannedStepsData.map((step) => {
-                          const goal = goals.find(g => g.id === step.goal_id)
-                          const stepDate = new Date(step.date)
-                          stepDate.setHours(0, 0, 0, 0)
-                          const isOverdue = stepDate < today
-                          
-                          return (
-                            <div
-                              key={step.id}
-                              className="flex items-center justify-between p-3 bg-white rounded-lg border border-primary-200 shadow-sm"
-                            >
+                {/* Single table layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Selected Steps Column */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        Vybráno pro dnešek
+                      </h4>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                        {tempPlannedSteps.length}
+                      </span>
+                    </div>
+                    <div 
+                      className="min-h-[300px] border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/50 transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      {tempPlannedStepsData.length > 0 ? (
+                        <div className="space-y-3">
+                          {tempPlannedStepsData.map((step) => {
+                            const goal = goals.find(g => g.id === step.goal_id)
+                            const stepDate = new Date(step.date)
+                            stepDate.setHours(0, 0, 0, 0)
+                            const isOverdue = stepDate < today
+                            
+                            return (
+                              <div
+                                key={step.id}
+                                className="flex items-center justify-between p-4 bg-white rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow"
+                              >
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-gray-900 text-sm mb-1">{step.title}</h5>
+                                  {step.description && (
+                                    <p className="text-xs text-gray-600 mb-2">{step.description}</p>
+                                  )}
+                                  {goal && (
+                                    <p className="text-xs text-gray-500 mb-2">
+                                      {goal.icon && `${goal.icon} `}{goal.title}
+                                    </p>
+                                  )}
+                                  {isOverdue && (
+                                    <span className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                      Zpožděno
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveStepFromTempPlanning(step.id)}
+                                  className="ml-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+                                  title="Odebrat z plánu"
+                                >
+                                  <Circle className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <div className="text-4xl mb-3">📝</div>
+                          <p className="text-sm font-medium mb-1">Přetáhněte kroky sem</p>
+                          <p className="text-xs">nebo klikněte na dostupné kroky</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Available Steps Column */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        Dostupné kroky
+                      </h4>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                        {availableSteps.length}
+                      </span>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                      {availableSteps.map((step) => {
+                        const goal = goals.find(g => g.id === step.goal_id)
+                        const stepDate = new Date(step.date)
+                        stepDate.setHours(0, 0, 0, 0)
+                        const isOverdue = stepDate < today
+                        const isToday = stepDate.getTime() === today.getTime()
+                        
+                        return (
+                          <div
+                            key={step.id}
+                            className={`p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                              isOverdue ? 'bg-red-50' : isToday ? 'bg-blue-50' : 'bg-gray-50'
+                            } ${draggedStepId === step.id ? 'opacity-50' : ''}`}
+                            onClick={() => handleAddStepToTempPlanning(step.id)}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, step.id)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h5 className="font-medium text-gray-900 text-sm">{step.title}</h5>
+                                <h5 className="font-medium text-gray-900 text-sm mb-1">{step.title}</h5>
+                                {step.description && (
+                                  <p className="text-xs text-gray-600 mb-2">{step.description}</p>
+                                )}
                                 {goal && (
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-gray-500 mb-2">
                                     {goal.icon && `${goal.icon} `}{goal.title}
                                   </p>
                                 )}
-                                {isOverdue && (
-                                  <span className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full mt-1">
-                                    Zpožděno
-                                  </span>
-                                )}
+                                <div className="flex items-center space-x-2">
+                                  {isOverdue && (
+                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                      Zpožděno
+                                    </span>
+                                  )}
+                                  {isToday && !isOverdue && (
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                      Dnes
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleRemoveStepFromTempPlanning(step.id)}
-                                className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                              >
-                                <Circle className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <div className="text-2xl mb-2">📝</div>
-                        <p className="text-sm font-medium mb-1">Přetáhněte kroky sem</p>
-                        <p className="text-xs">nebo klikněte na dostupné kroky</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Available Steps */}
-                <div className="space-y-4">
-                  <h4 className="text-md font-semibold text-gray-900">
-                    Dostupné kroky ({availableSteps.length})
-                  </h4>
-                  <div className="max-h-[400px] overflow-y-auto space-y-2">
-                    {availableSteps.map((step) => {
-                      const goal = goals.find(g => g.id === step.goal_id)
-                      const stepDate = new Date(step.date)
-                      stepDate.setHours(0, 0, 0, 0)
-                      const isOverdue = stepDate < today
-                      const isToday = stepDate.getTime() === today.getTime()
-                      
-                      return (
-                        <div
-                          key={step.id}
-                          className={`p-3 rounded-lg border border-gray-200 hover:border-primary-300 transition-all duration-200 cursor-pointer ${
-                            isOverdue ? 'bg-red-50' : isToday ? 'bg-blue-50' : 'bg-gray-50'
-                          } ${draggedStepId === step.id ? 'opacity-50' : ''}`}
-                          onClick={() => handleAddStepToTempPlanning(step.id)}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, step.id)}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900 text-sm">{step.title}</h5>
-                              {step.description && (
-                                <p className="text-xs text-gray-600 mt-1">{step.description}</p>
-                              )}
-                              {goal && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {goal.icon && `${goal.icon} `}{goal.title}
-                                </p>
-                              )}
-                              <div className="flex items-center space-x-2 mt-2">
-                                {isOverdue && (
-                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                    Zpožděno
-                                  </span>
-                                )}
-                                {isToday && !isOverdue && (
-                                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                    Dnes
-                                  </span>
-                                )}
+                              <div className="flex items-center space-x-2 ml-3">
+                                <div className="w-4 h-4 flex flex-col space-y-0.5">
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                </div>
+                                <Plus className="w-4 h-4 text-gray-400" />
                               </div>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <div className="w-4 h-4 flex flex-col space-y-0.5">
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                              </div>
-                              <Plus className="w-4 h-4 text-gray-400" />
                             </div>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
