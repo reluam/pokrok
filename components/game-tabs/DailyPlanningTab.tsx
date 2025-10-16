@@ -499,31 +499,24 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           {shouldShowPlanning ? (
             <div className="space-y-6">
               {/* Unified Planning Interface */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+              <div className="bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 rounded-xl p-6 shadow-sm">
                 {/* Header with controls */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <Target className="w-6 h-6 text-blue-600" />
+                    <div className="p-3 bg-primary-100 rounded-full">
+                      <Target className="w-6 h-6 text-primary-600" />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">Plánování dne</h3>
                       <p className="text-sm text-gray-600 mt-1">
                         Vyberte kroky pro dnešek 
-                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
                           {tempPlannedSteps.length} vybráno
                         </span>
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-3">
-                    <button
-                      onClick={() => setShowAddStepModal(true)}
-                      className="group flex items-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                    >
-                      <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      <span className="font-medium">Nový krok</span>
-                    </button>
                     <button
                       onClick={handleSkipToday}
                       disabled={isSavingPlan}
@@ -532,15 +525,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                       <span className="font-medium">Dnes přeskočit</span>
                     </button>
                     <button
-                      onClick={handleCancelPlanning}
-                      className="group px-4 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
-                    >
-                      <span className="font-medium">Zrušit</span>
-                    </button>
-                    <button
                       onClick={handleSavePlanning}
                       disabled={isSavingPlan}
-                      className="group flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                      className="group flex items-center space-x-2 px-6 py-2.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                     >
                       {isSavingPlan ? (
                         <>
@@ -581,12 +568,21 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                       <h4 className="text-lg font-semibold text-gray-900">
                         Vybráno pro dnešek
                       </h4>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                        {tempPlannedSteps.length}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+                          {tempPlannedSteps.length}
+                        </span>
+                        <button
+                          onClick={() => setShowAddStepModal(true)}
+                          className="group flex items-center space-x-1 px-2 py-1 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-all duration-200 text-xs"
+                        >
+                          <Plus className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">Nový</span>
+                        </button>
+                      </div>
                     </div>
                     <div 
-                      className="min-h-[300px] border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/50 transition-colors"
+                      className="min-h-[300px] border-2 border-dashed border-primary-300 rounded-lg p-4 bg-primary-50/50 transition-colors"
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
                     >
@@ -601,7 +597,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                             return (
                               <div
                                 key={step.id}
-                                className="flex items-center justify-between p-4 bg-white rounded-lg border border-blue-200 shadow-sm hover:shadow-md transition-shadow"
+                                className="flex items-center justify-between p-4 bg-white rounded-lg border border-primary-200 shadow-sm hover:shadow-md transition-shadow"
                               >
                                 <div className="flex-1">
                                   <h5 className="font-medium text-gray-900 text-sm mb-1">{step.title}</h5>
@@ -661,8 +657,8 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                         return (
                           <div
                             key={step.id}
-                            className={`p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer ${
-                              isOverdue ? 'bg-red-50' : isToday ? 'bg-blue-50' : 'bg-gray-50'
+                            className={`p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all duration-200 cursor-pointer ${
+                              isOverdue ? 'bg-red-50' : isToday ? 'bg-primary-50' : 'bg-gray-50'
                             } ${draggedStepId === step.id ? 'opacity-50' : ''}`}
                             onClick={() => handleAddStepToTempPlanning(step.id)}
                             draggable
@@ -687,7 +683,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                                     </span>
                                   )}
                                   {isToday && !isOverdue && (
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                    <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
                                       Dnes
                                     </span>
                                   )}
