@@ -499,51 +499,61 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           {shouldShowPlanning ? (
             <div className="space-y-6">
               {/* Planning Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Plánování dne</h3>
-                  <p className="text-sm text-gray-600">
-                    Vyberte kroky pro dnešek ({tempPlannedSteps.length} vybráno)
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowAddStepModal(true)}
-                    className="flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Nový krok</span>
-                  </button>
-                  <button
-                    onClick={handleSkipToday}
-                    disabled={isSavingPlan}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    Dnes přeskočit
-                  </button>
-                  <button
-                    onClick={handleCancelPlanning}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Zrušit
-                  </button>
-                  <button
-                    onClick={handleSavePlanning}
-                    disabled={isSavingPlan}
-                    className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-                  >
-                    {isSavingPlan ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Ukládám...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Uložit plán</span>
-                      </>
-                    )}
-                  </button>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      <Target className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Plánování dne</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Vyberte kroky pro dnešek 
+                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          {tempPlannedSteps.length} vybráno
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setShowAddStepModal(true)}
+                      className="group flex items-center space-x-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="font-medium">Nový krok</span>
+                    </button>
+                    <button
+                      onClick={handleSkipToday}
+                      disabled={isSavingPlan}
+                      className="group px-4 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="font-medium">Dnes přeskočit</span>
+                    </button>
+                    <button
+                      onClick={handleCancelPlanning}
+                      className="group px-4 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      <span className="font-medium">Zrušit</span>
+                    </button>
+                    <button
+                      onClick={handleSavePlanning}
+                      disabled={isSavingPlan}
+                      className="group flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                    >
+                      {isSavingPlan ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span className="font-semibold">Ukládám...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          <span className="font-semibold">Uložit plán</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
