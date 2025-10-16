@@ -22,7 +22,7 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const { translations, locale } = useTranslations()
   const currentLocale = useLocale()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'categories' | 'language' | 'appearance'>('categories')
+  const [activeTab, setActiveTab] = useState<'categories' | 'language' | 'appearance' | 'daily-planning'>('categories')
   
   // Category settings state
   const [categorySettings, setCategorySettings] = useState<CategorySettings | null>(null)
@@ -36,6 +36,12 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   // Appearance settings state
   const [primaryColor, setPrimaryColor] = useState('#E8871E') // Default orange
   const [isSavingAppearance, setIsSavingAppearance] = useState(false)
+
+  // Daily planning settings state
+  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number } | null>(null)
+  const [editingDailyPlanning, setEditingDailyPlanning] = useState(false)
+  const [newDailyStepsCount, setNewDailyStepsCount] = useState(3)
+  const [isSavingDailyPlanning, setIsSavingDailyPlanning] = useState(false)
 
   const colorOptions = colorPalettes
 
@@ -56,7 +62,10 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const loadData = async () => {
     try {
       setLoading(true)
-      const categorySettingsRes = await fetch('/api/cesta/category-settings')
+      const [categorySettingsRes, userSettingsRes] = await Promise.all([
+        fetch('/api/cesta/category-settings'),
+        fetch('/api/cesta/user-settings')
+      ])
       
       if (categorySettingsRes.ok) {
         const categoryData = await categorySettingsRes.json()
@@ -65,6 +74,12 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
           shortTermDays: categoryData.settings?.short_term_days || 90,
           longTermDays: categoryData.settings?.long_term_days || 365
         })
+      }
+
+      if (userSettingsRes.ok) {
+        const userData = await userSettingsRes.json()
+        setUserSettings(userData.settings)
+        setNewDailyStepsCount(userData.settings?.daily_steps_count || 3)
       }
       
       // Load appearance settings
@@ -164,6 +179,36 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
     }
   }
 
+  const handleSaveDailyPlanningSettings = async () => {
+    setIsSavingDailyPlanning(true)
+    try {
+      const response = await fetch('/api/cesta/user-settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          daily_steps_count: newDailyStepsCount
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUserSettings(data.settings)
+        setEditingDailyPlanning(false)
+        alert('Nastavení denního plánování bylo uloženo!')
+      } else {
+        const error = await response.json()
+        alert(`Chyba při ukládání nastavení: ${error.error || 'Neznámá chyba'}`)
+      }
+    } catch (error) {
+      console.error('Error saving daily planning settings:', error)
+      alert('Chyba při ukládání nastavení denního plánování')
+    } finally {
+      setIsSavingDailyPlanning(false)
+    }
+  }
+
 
 
 
@@ -215,6 +260,16 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                   }`}
                 >
                   {translations?.settings.appearance || 'Zobrazení'}
+                </button>
+                <button
+                  onClick={() => setActiveTab('daily-planning')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'daily-planning'
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Denní plánování
                 </button>
               </nav>
             </div>
@@ -449,6 +504,100 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                           )}
                         </div>
                       </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'daily-planning' && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">Denní plánování</h2>
+                    <button
+                      onClick={() => setEditingDailyPlanning(true)}
+                      className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span>Upravit nastavení</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <span className="text-green-500 text-xl">📅</span>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-green-900">Denní plánování kroků</h3>
+                        <p className="text-sm text-green-700 mt-1">
+                          Nastavte si, kolik kroků chcete plánovat každý den. Aplikace vás bude vybízet k doplnění plánu, pokud nebude mít dostatek kroků na dnešek.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Počet denních kroků</h3>
+                          <p className="text-sm text-gray-600">
+                            {userSettings?.daily_steps_count || 3} kroků denně
+                          </p>
+                        </div>
+                        <span className="text-2xl font-bold text-primary-500">
+                          {userSettings?.daily_steps_count || 3}
+                        </span>
+                      </div>
+                      
+                      {editingDailyPlanning && (
+                        <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                          <h4 className="font-medium text-gray-900 mb-4">Upravit počet denních kroků</h4>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Počet kroků (1-10)
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={newDailyStepsCount}
+                                onChange={(e) => setNewDailyStepsCount(parseInt(e.target.value) || 3)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={handleSaveDailyPlanningSettings}
+                                disabled={isSavingDailyPlanning}
+                                className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
+                              >
+                                {isSavingDailyPlanning ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span>Ukládám...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4" />
+                                    <span>Uložit</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingDailyPlanning(false)
+                                  setNewDailyStepsCount(userSettings?.daily_steps_count || 3)
+                                }}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                Zrušit
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </>

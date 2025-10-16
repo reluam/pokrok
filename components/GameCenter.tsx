@@ -1,7 +1,7 @@
 'use client'
 
 import { Goal, Value, DailyStep, Event } from '@/lib/cesta-db'
-import { WorkspaceTab } from './game-tabs/WorkspaceTab'
+import { DailyPlanningTab } from './game-tabs/DailyPlanningTab'
 import { memo } from 'react'
 
 interface GameCenterProps {
@@ -33,7 +33,7 @@ export const GameCenter = memo(function GameCenter({
 }: GameCenterProps) {
   return (
     <div className="h-full overflow-y-auto">
-      <WorkspaceTab 
+      <DailyPlanningTab 
         goals={goals}
         values={values}
         dailySteps={dailySteps}

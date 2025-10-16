@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { getDailyStepsByUserId, getUserByClerkId, createDailyStep, updateGoalProgressCombined } from '@/lib/cesta-db'
+import { getDailyStepsByUserId, getUserByClerkId, createDailyStep, updateGoalProgressCombined, updateDailyStep } from '@/lib/cesta-db'
 
 
 // Force dynamic rendering
@@ -76,6 +76,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ step })
   } catch (error) {
     console.error('Error creating daily step:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId } = await auth()
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const dbUser = await getUserByClerkId(userId)
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const { stepId, completed } = await request.json()
+
+    if (!stepId || typeof completed !== 'boolean') {
+      return NextResponse.json({ error: 'stepId and completed are required' }, { status: 400 })
+    }
+
+    console.log('Updating step:', stepId, 'completed:', completed)
+
+    const step = await updateDailyStep(stepId, { 
+      completed,
+      completed_at: completed ? new Date() : undefined
+    })
+
+    console.log('Step updated successfully:', step)
+
+    // Update goal progress if step is completed
+    if (completed && step.goal_id) {
+      await updateGoalProgressCombined(step.goal_id)
+    }
+
+    return NextResponse.json({ step })
+  } catch (error) {
+    console.error('Error updating daily step:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

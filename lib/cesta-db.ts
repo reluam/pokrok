@@ -168,6 +168,34 @@ export interface NeededStepsSettings {
   updated_at: Date
 }
 
+export interface UserSettings {
+  id: string
+  user_id: string
+  daily_steps_count: number
+  created_at: Date
+  updated_at: Date
+}
+
+export interface DailyPlanning {
+  id: string
+  user_id: string
+  date: Date
+  planned_steps: string[] // Array of step IDs
+  completed_steps: string[] // Array of completed step IDs
+  created_at: Date
+  updated_at: Date
+}
+
+export interface UserStreak {
+  id: string
+  user_id: string
+  current_streak: number
+  longest_streak: number
+  last_activity_date: Date
+  created_at: Date
+  updated_at: Date
+}
+
 export async function initializeCestaDatabase() {
   try {
     // Create users table
@@ -193,6 +221,8 @@ export async function initializeCestaDatabase() {
         color VARCHAR(7) NOT NULL,
         icon VARCHAR(50) NOT NULL,
         is_custom BOOLEAN DEFAULT FALSE,
+        level INTEGER DEFAULT 1,
+        experience INTEGER DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `
@@ -224,7 +254,7 @@ export async function initializeCestaDatabase() {
       CREATE TABLE IF NOT EXISTS daily_steps (
         id VARCHAR(255) PRIMARY KEY,
         user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        goal_id VARCHAR(255) NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+        goal_id VARCHAR(255) REFERENCES goals(id) ON DELETE CASCADE,
         title VARCHAR(255) NOT NULL,
         description TEXT,
         completed BOOLEAN DEFAULT FALSE,
@@ -343,6 +373,46 @@ export async function initializeCestaDatabase() {
       )
     `
 
+    // Create user_settings table
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        daily_steps_count INTEGER DEFAULT 3,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id)
+      )
+    `
+
+    // Create daily_planning table
+    await sql`
+      CREATE TABLE IF NOT EXISTS daily_planning (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        date DATE NOT NULL,
+        planned_steps TEXT[] DEFAULT ARRAY[]::TEXT[],
+        completed_steps TEXT[] DEFAULT ARRAY[]::TEXT[],
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, date)
+      )
+    `
+
+    // Create user_streak table
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_streak (
+        id VARCHAR(255) PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        current_streak INTEGER DEFAULT 0,
+        longest_streak INTEGER DEFAULT 0,
+        last_activity_date DATE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id)
+      )
+    `
+
     // Add metric_id column to daily_steps table
     await sql`
       ALTER TABLE daily_steps 
@@ -372,6 +442,10 @@ export async function initializeCestaDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_events_completed ON events(completed)`
     await sql`CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type)`
     await sql`CREATE INDEX IF NOT EXISTS idx_category_settings_user_id ON category_settings(user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_daily_planning_user_id ON daily_planning(user_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_daily_planning_date ON daily_planning(date)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_user_streak_user_id ON user_streak(user_id)`
 
     // Insert default values library
     await sql`
@@ -589,14 +663,13 @@ export async function createDailyStep(stepData: Partial<DailyStep>): Promise<Dai
     INSERT INTO daily_steps (
       id, user_id, goal_id, title, description, completed, date, 
       is_important, is_urgent, step_type, custom_type_name, 
-      deadline, metric_id
+      deadline
     ) VALUES (
       ${id}, ${stepData.user_id}, ${stepData.goal_id}, ${stepData.title}, 
       ${stepData.description || null}, ${stepData.completed || false}, 
       ${stepData.date}, ${stepData.is_important || false}, 
       ${stepData.is_urgent || false}, ${stepData.step_type || 'custom'}, 
-      ${stepData.custom_type_name || null}, ${stepData.deadline || null}, 
-      ${stepData.metric_id || null}
+      ${stepData.custom_type_name || null}, ${stepData.deadline || null}
     ) RETURNING *
   `
   return step[0] as DailyStep
@@ -669,13 +742,8 @@ export async function updateDailyStep(stepId: string, stepData: Partial<DailySte
   try {
     const updatedStep = await sql`
       UPDATE daily_steps 
-      SET title = ${stepData.title || ''}, 
-          description = ${stepData.description || ''},
-          completed = ${stepData.completed || false},
-          completed_at = ${stepData.completed ? new Date().toISOString() : null},
-          date = ${stepData.date ? new Date(stepData.date).toISOString().split('T')[0] : ''},
-          is_important = ${stepData.is_important || false},
-          is_urgent = ${stepData.is_urgent || false},
+      SET completed = ${stepData.completed || false},
+          completed_at = ${stepData.completed_at ? stepData.completed_at.toISOString() : null},
           updated_at = NOW()
       WHERE id = ${stepId}
       RETURNING *
@@ -1767,4 +1835,187 @@ export async function deleteNote(noteId: string): Promise<void> {
   await sql`
     DELETE FROM notes WHERE id = ${noteId}
   `
+}
+
+// User Settings functions
+export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  try {
+    const settings = await sql`
+      SELECT * FROM user_settings 
+      WHERE user_id = ${userId}
+    `
+    return settings[0] as UserSettings || null
+  } catch (error) {
+    console.error('Error fetching user settings:', error)
+    return null
+  }
+}
+
+export async function createOrUpdateUserSettings(userId: string, dailyStepsCount: number): Promise<UserSettings> {
+  try {
+    const settings = await sql`
+      INSERT INTO user_settings (id, user_id, daily_steps_count)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${dailyStepsCount})
+      ON CONFLICT (user_id) 
+      DO UPDATE SET 
+        daily_steps_count = ${dailyStepsCount},
+        updated_at = NOW()
+      RETURNING *
+    `
+    return settings[0] as UserSettings
+  } catch (error) {
+    console.error('Error creating/updating user settings:', error)
+    throw error
+  }
+}
+
+// Daily Planning functions
+export async function getDailyPlanning(userId: string, date: Date): Promise<DailyPlanning | null> {
+  try {
+    const planning = await sql`
+      SELECT * FROM daily_planning 
+      WHERE user_id = ${userId} AND date = ${date.toISOString().split('T')[0]}
+    `
+    return planning[0] as DailyPlanning || null
+  } catch (error) {
+    console.error('Error fetching daily planning:', error)
+    return null
+  }
+}
+
+export async function createOrUpdateDailyPlanning(userId: string, date: Date, plannedSteps: string[]): Promise<DailyPlanning> {
+  try {
+    const planning = await sql`
+      INSERT INTO daily_planning (id, user_id, date, planned_steps)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${date.toISOString().split('T')[0]}, ${plannedSteps})
+      ON CONFLICT (user_id, date) 
+      DO UPDATE SET 
+        planned_steps = ${plannedSteps},
+        updated_at = NOW()
+      RETURNING *
+    `
+    return planning[0] as DailyPlanning
+  } catch (error) {
+    console.error('Error creating/updating daily planning:', error)
+    throw error
+  }
+}
+
+export async function markStepAsCompleted(userId: string, date: Date, stepId: string): Promise<DailyPlanning> {
+  try {
+    // First get current planning
+    const currentPlanning = await getDailyPlanning(userId, date)
+    if (!currentPlanning) {
+      throw new Error('Daily planning not found')
+    }
+
+    // Remove step from planned_steps and add to completed_steps
+    const plannedSteps = currentPlanning.planned_steps.filter(id => id !== stepId)
+    const completedSteps = currentPlanning.completed_steps.includes(stepId) 
+      ? currentPlanning.completed_steps 
+      : [...currentPlanning.completed_steps, stepId]
+
+    const planning = await sql`
+      UPDATE daily_planning 
+      SET planned_steps = ${plannedSteps}, completed_steps = ${completedSteps}, updated_at = NOW()
+      WHERE user_id = ${userId} AND date = ${date.toISOString().split('T')[0]}
+      RETURNING *
+    `
+    return planning[0] as DailyPlanning
+  } catch (error) {
+    console.error('Error marking step as completed:', error)
+    throw error
+  }
+}
+
+// User Streak functions
+export async function getUserStreak(userId: string): Promise<UserStreak | null> {
+  try {
+    const streak = await sql`
+      SELECT * FROM user_streak 
+      WHERE user_id = ${userId}
+    `
+    return streak[0] as UserStreak || null
+  } catch (error) {
+    console.error('Error fetching user streak:', error)
+    return null
+  }
+}
+
+export async function createOrUpdateUserStreak(userId: string, currentStreak: number, longestStreak: number, lastActivityDate: Date): Promise<UserStreak> {
+  try {
+    const streak = await sql`
+      INSERT INTO user_streak (id, user_id, current_streak, longest_streak, last_activity_date)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${currentStreak}, ${longestStreak}, ${lastActivityDate.toISOString().split('T')[0]})
+      ON CONFLICT (user_id) 
+      DO UPDATE SET 
+        current_streak = ${currentStreak},
+        longest_streak = ${longestStreak},
+        last_activity_date = ${lastActivityDate.toISOString().split('T')[0]},
+        updated_at = NOW()
+      RETURNING *
+    `
+    return streak[0] as UserStreak
+  } catch (error) {
+    console.error('Error creating/updating user streak:', error)
+    throw error
+  }
+}
+
+export async function updateUserStreak(userId: string): Promise<UserStreak> {
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Get current streak
+    const currentStreak = await getUserStreak(userId)
+    
+    if (!currentStreak) {
+      // Create new streak
+      return await createOrUpdateUserStreak(userId, 1, 1, today)
+    }
+    
+    const lastActivity = new Date(currentStreak.last_activity_date)
+    lastActivity.setHours(0, 0, 0, 0)
+    
+    const daysDiff = Math.floor((today.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24))
+    
+    let newCurrentStreak = currentStreak.current_streak
+    let newLongestStreak = currentStreak.longest_streak
+    
+    if (daysDiff === 1) {
+      // Consecutive day - increment streak
+      newCurrentStreak = currentStreak.current_streak + 1
+      newLongestStreak = Math.max(newCurrentStreak, currentStreak.longest_streak)
+    } else if (daysDiff > 1) {
+      // Gap in days - reset streak
+      newCurrentStreak = 1
+    }
+    // If daysDiff === 0, it's the same day, keep current streak
+    
+    return await createOrUpdateUserStreak(userId, newCurrentStreak, newLongestStreak, today)
+  } catch (error) {
+    console.error('Error updating user streak:', error)
+    throw error
+  }
+}
+
+// Statistics functions
+export async function getUserStepStatistics(userId: string): Promise<{ completed: number, total: number }> {
+  try {
+    const stats = await sql`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN completed = true THEN 1 END) as completed
+      FROM daily_steps 
+      WHERE user_id = ${userId}
+    `
+    return {
+      completed: parseInt(stats[0].completed) || 0,
+      total: parseInt(stats[0].total) || 0
+    }
+  } catch (error) {
+    console.error('Error fetching user step statistics:', error)
+    return { completed: 0, total: 0 }
+  }
 }
