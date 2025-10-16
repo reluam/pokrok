@@ -494,29 +494,31 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           
           {/* Planning Modal - only show if user needs to plan */}
           {shouldShowPlanning && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
-              <div className="bg-white rounded-xl shadow-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-                <div className="p-6 flex-1 overflow-y-auto">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center z-50 p-6">
+              <div className="bg-gradient-to-br from-primary-50 to-primary-100 shadow-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-primary-300" style={{boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)'}}>
+                <div className="p-8 flex-1 overflow-y-auto" style={{backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(139, 69, 19, 0.15) 1px, transparent 0)', backgroundSize: '20px 20px'}}>
                 {/* Header with controls */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-primary-400" style={{borderStyle: 'dashed'}}>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">Plánování dne</h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <h3 className="text-2xl font-bold text-primary-900" style={{fontFamily: 'serif', textShadow: '1px 1px 2px rgba(0,0,0,0.1)'}}>📔 Denní plánovač</h3>
+                    <p className="text-sm text-primary-700 mt-2 font-medium">
                       {tempPlannedSteps.length} z {userSettings?.daily_steps_count || 3} kroků vybráno
                     </p>
                   </div>
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-4">
                     <button
                       onClick={handleSkipToday}
                       disabled={isSavingPlan}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2 text-primary-700 hover:text-primary-900 hover:bg-primary-100 border border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      style={{fontFamily: 'serif', borderRadius: '0'}}
                     >
-                      Dnes přeskočit
+                      ✏️ Přeskočit
                     </button>
                     <button
                       onClick={handleSavePlanning}
                       disabled={isSavingPlan}
-                      className="flex items-center space-x-2 px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                      style={{fontFamily: 'serif', borderRadius: '0', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'}}
                     >
                       {isSavingPlan ? (
                         <>
@@ -525,7 +527,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                         </>
                       ) : (
                         <>
-                          <CheckCircle className="w-4 h-4" />
+                          <span>✓</span>
                           <span>Uložit plán</span>
                         </>
                       )}
@@ -535,12 +537,12 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
 
                 {/* Warning if too many steps */}
                 {tempPlannedSteps.length > (userSettings?.daily_steps_count || 3) && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertCircle className="w-4 h-4 text-yellow-600" />
+                  <div className="bg-primary-100 border-2 border-primary-400 p-4 mb-6" style={{borderStyle: 'dashed', borderRadius: '0'}}>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">⚠️</span>
                       <div>
-                        <h4 className="text-sm font-semibold text-yellow-800">Pozor - hodně kroků!</h4>
-                        <p className="text-xs text-yellow-700">
+                        <h4 className="text-sm font-bold text-primary-900" style={{fontFamily: 'serif'}}>Pozor - hodně kroků!</h4>
+                        <p className="text-xs text-primary-800 font-medium">
                           Máte vybráno {tempPlannedSteps.length} kroků, doporučujeme {userSettings?.daily_steps_count || 3}.
                         </p>
                       </div>
@@ -551,26 +553,28 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                 {/* Single table layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Selected Steps Column */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-primary-50 rounded-lg border border-primary-200">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-primary-100 border-2 border-primary-400" style={{borderStyle: 'dashed', borderRadius: '0'}}>
                       <div>
-                        <h4 className="text-base font-semibold text-primary-900">
-                          Vybráno pro dnešek
+                        <h4 className="text-lg font-bold text-primary-900" style={{fontFamily: 'serif'}}>
+                          📝 Vybráno pro dnešek
                         </h4>
-                        <p className="text-sm text-primary-600 mt-1">
+                        <p className="text-sm text-primary-800 mt-1 font-medium">
                           {tempPlannedSteps.length} kroků vybráno
                         </p>
                       </div>
                       <button
                         onClick={() => setShowAddStepModal(true)}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-primary-500 text-white rounded-md hover:bg-primary-600 transition-colors text-sm"
+                        className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 transition-colors font-bold"
+                        style={{fontFamily: 'serif', borderRadius: '0', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'}}
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <span>+</span>
                         <span>Nový</span>
                       </button>
                     </div>
                     <div 
-                      className="min-h-[300px] border-2 border-dashed border-primary-300 rounded-lg p-4 bg-primary-50/30 transition-colors"
+                      className="min-h-[300px] border-2 border-dashed border-primary-400 p-6 bg-primary-50 transition-colors"
+                      style={{borderRadius: '0'}}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
                     >
@@ -615,23 +619,23 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                           })}
                         </div>
                       ) : (
-                        <div className="text-center py-16 text-primary-400">
-                          <div className="text-3xl mb-3">📝</div>
-                          <p className="text-base font-medium mb-2 text-primary-600">Přetáhněte kroky sem</p>
-                          <p className="text-sm text-primary-500">nebo klikněte na dostupné kroky</p>
+                        <div className="text-center py-16 text-primary-600">
+                          <div className="text-4xl mb-4">📝</div>
+                          <p className="text-lg font-bold mb-3 text-primary-800" style={{fontFamily: 'serif'}}>Přetáhněte kroky sem</p>
+                          <p className="text-sm text-primary-700 font-medium">nebo klikněte na dostupné kroky</p>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Available Steps Column */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-primary-100 border-2 border-primary-400" style={{borderStyle: 'dashed', borderRadius: '0'}}>
                       <div>
-                        <h4 className="text-base font-semibold text-gray-900">
-                          Dostupné kroky
+                        <h4 className="text-lg font-bold text-primary-900" style={{fontFamily: 'serif'}}>
+                          📋 Dostupné kroky
                         </h4>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-primary-800 mt-1 font-medium">
                           {availableSteps.length} kroků k dispozici
                         </p>
                       </div>
