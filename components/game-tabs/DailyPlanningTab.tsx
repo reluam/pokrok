@@ -664,8 +664,37 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       // Update streak
       await fetch('/api/cesta/user-stats', { method: 'POST' })
 
-      // Refresh data
-      await fetchData()
+      // Update local state immediately to remove step from daily plan
+      if (dailyPlanning) {
+        const updatedPlannedSteps = dailyPlanning.planned_steps.filter(id => id !== stepId)
+        const updatedCompletedSteps = [...completedStepIds, stepId]
+        
+        setDailyPlanning({
+          ...dailyPlanning,
+          planned_steps: updatedPlannedSteps,
+          completed_steps: updatedCompletedSteps
+        })
+      }
+
+      // Update newlyAddedSteps to mark step as completed
+      setNewlyAddedSteps(prevSteps => 
+        prevSteps.map(step => 
+          step.id === stepId 
+            ? { ...step, completed: true, completed_at: new Date() }
+            : step
+        )
+      )
+
+      // Notify parent component about step update
+      if (onStepUpdate) {
+        const completedStep = [...dailySteps, ...newlyAddedSteps].find(step => step.id === stepId)
+        if (completedStep) {
+          onStepUpdate({ ...completedStep, completed: true, completed_at: new Date() })
+        }
+      }
+
+      // Refresh data in background for consistency
+      setTimeout(() => fetchData(), 100)
     } catch (error) {
       console.error('Error completing step:', error)
     }
@@ -784,43 +813,6 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           </div>
         )}
 
-        {allPlannedStepsCompleted && (
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-4">
-            <div className="text-center">
-              <div className="text-4xl mb-3">🎉</div>
-              <h3 className="text-lg font-bold text-green-800 mb-2">Skvělá práce!</h3>
-              <p className="text-sm text-green-700 mb-4">
-                Dokončil jsi všechny kroky z dnešního plánu. Teď si můžeš odpočinout!
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-green-600">
-                <div className="flex items-center space-x-1">
-                  <span>💆‍♀️</span>
-                  <span>Odpočiň si</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>☕</span>
-                  <span>Dej si čaj</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>📚</span>
-                  <span>Přečti si</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>🎵</span>
-                  <span>Poslouchej hudbu</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>🚶‍♂️</span>
-                  <span>Jdi na procházku</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>🧘‍♀️</span>
-                  <span>Medituj</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Content */}
@@ -1092,7 +1084,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                 {/* Other Steps */}
                 <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-200">
                   {allIncompleteSteps
-                    .filter(step => !plannedStepIds.includes(step.id))
+                    .filter(step => !plannedStepIds.includes(step.id) && !step.completed)
                     .map((step) => {
                       const goal = goals.find(g => g.id === step.goal_id)
                       const stepDate = new Date(step.date)
@@ -1267,84 +1259,6 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
             )}
           </div>
 
-              {/* Available Steps for Planning - show when planning needed or all steps completed */}
-              {(shouldShowPlanning || allPlannedStepsCompleted) && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {shouldShowPlanning ? 'Dostupné kroky' : 'Další dostupné kroky'} ({availableSteps.length})
-                  </h3>
-                  
-                  {availableSteps.length > 0 ? (
-                    <div className="grid gap-3">
-                      {availableSteps.slice(0, 10).map((step) => {
-                      const goal = goals.find(g => g.id === step.goal_id)
-                      const stepDate = new Date(step.date)
-                      stepDate.setHours(0, 0, 0, 0)
-                      const isOverdue = stepDate < today
-                      const isToday = stepDate.getTime() === today.getTime()
-                      
-                      return (
-                        <div
-                          key={step.id}
-                          className={`p-4 rounded-lg border border-gray-200 hover:border-primary-300 transition-all duration-200 ${
-                            isOverdue ? 'bg-red-50' : isToday ? 'bg-blue-50' : 'bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <h4 className="font-medium text-gray-900">{step.title}</h4>
-                                {isOverdue && (
-                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                    Zpožděno
-                                  </span>
-                                )}
-                                {isToday && !isOverdue && (
-                                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                    Dnes
-                                  </span>
-                                )}
-                              </div>
-                              {step.description && (
-                                <p className="text-sm text-gray-600 mb-2">{step.description}</p>
-                              )}
-                              {goal && (
-                                <p className="text-xs text-gray-500">
-                                  {goal.icon && `${goal.icon} `}{goal.title}
-                                </p>
-                              )}
-                              <p className="text-xs text-gray-400 mt-1">
-                                {isOverdue ? 'Zpožděno' : isToday ? 'Dnešní datum' : 'Budoucí datum'}: {new Date(step.date).toLocaleDateString('cs-CZ')}
-                              </p>
-                            </div>
-                            {needsPlanning && (
-                              <button
-                                onClick={() => handleAddStepToPlanning(step.id)}
-                                className="ml-4 px-3 py-1 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
-                              >
-                                Přidat
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <div className="text-4xl mb-3">📝</div>
-                      <h3 className="text-sm font-semibold text-gray-900 mb-1">Žádné dostupné kroky</h3>
-                      <p className="text-xs text-gray-600 mb-4">Všechny kroky jsou již naplánované nebo dokončené</p>
-                      <button
-                        onClick={() => setShowAddStepModal(true)}
-                        className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
-                      >
-                        Vytvořit nový krok
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
