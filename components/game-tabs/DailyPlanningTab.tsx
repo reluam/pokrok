@@ -371,7 +371,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       } catch (error) {
         console.error('Error auto-saving step:', error)
       } finally {
-        // Keep animation running for total of 1 second from start
+        // Keep animation running for maximum 300ms, then show "Uloženo"
         setTimeout(() => {
           setIsSaving(false)
           setShowSaved(true)
@@ -379,7 +379,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           setTimeout(() => {
             setShowSaved(false)
           }, 2000)
-        }, 1000 - 650) // 350ms remaining after 650ms delay
+        }, 300) // Maximum 300ms loading animation
       }
     }, 650) // 650ms delay for auto-save
   }
