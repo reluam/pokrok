@@ -173,6 +173,14 @@ export interface UserSettings {
   user_id: string
   daily_steps_count: number
   workflow: 'daily_planning' | 'no_workflow'
+  filters?: {
+    showToday: boolean
+    showOverdue: boolean
+    showFuture: boolean
+    showWithGoal: boolean
+    showWithoutGoal: boolean
+    sortBy: 'date' | 'priority' | 'title'
+  }
   created_at: Date
   updated_at: Date
 }
@@ -1852,21 +1860,35 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
   }
 }
 
-export async function createOrUpdateUserSettings(userId: string, dailyStepsCount?: number, workflow?: 'daily_planning' | 'no_workflow'): Promise<UserSettings> {
+export async function createOrUpdateUserSettings(
+  userId: string, 
+  dailyStepsCount?: number, 
+  workflow?: 'daily_planning' | 'no_workflow',
+  filters?: UserSettings['filters']
+): Promise<UserSettings> {
   try {
     // Get existing settings to preserve values not being updated
     const existingSettings = await getUserSettings(userId)
     
     const finalDailyStepsCount = dailyStepsCount ?? existingSettings?.daily_steps_count ?? 3
     const finalWorkflow = workflow ?? existingSettings?.workflow ?? 'daily_planning'
+    const finalFilters = filters ?? existingSettings?.filters ?? {
+      showToday: true,
+      showOverdue: true,
+      showFuture: false,
+      showWithGoal: true,
+      showWithoutGoal: true,
+      sortBy: 'date' as const
+    }
     
     const settings = await sql`
-      INSERT INTO user_settings (id, user_id, daily_steps_count, workflow)
-      VALUES (${crypto.randomUUID()}, ${userId}, ${finalDailyStepsCount}, ${finalWorkflow})
+      INSERT INTO user_settings (id, user_id, daily_steps_count, workflow, filters)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${finalDailyStepsCount}, ${finalWorkflow}, ${JSON.stringify(finalFilters)})
       ON CONFLICT (user_id) 
       DO UPDATE SET 
         daily_steps_count = ${finalDailyStepsCount},
         workflow = ${finalWorkflow},
+        filters = ${JSON.stringify(finalFilters)},
         updated_at = NOW()
       RETURNING *
     `

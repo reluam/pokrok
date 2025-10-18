@@ -45,17 +45,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const { daily_steps_count, workflow } = await request.json()
+          const { daily_steps_count, workflow, filters } = await request.json()
 
-    if (daily_steps_count && (typeof daily_steps_count !== 'number' || daily_steps_count < 1 || daily_steps_count > 10)) {
-      return NextResponse.json({ error: 'Invalid daily_steps_count. Must be between 1 and 10.' }, { status: 400 })
-    }
+          if (daily_steps_count && (typeof daily_steps_count !== 'number' || daily_steps_count < 1 || daily_steps_count > 10)) {
+            return NextResponse.json({ error: 'Invalid daily_steps_count. Must be between 1 and 10.' }, { status: 400 })
+          }
 
-    if (workflow && !['daily_planning', 'no_workflow'].includes(workflow)) {
-      return NextResponse.json({ error: 'Invalid workflow. Must be daily_planning or no_workflow.' }, { status: 400 })
-    }
+          if (workflow && !['daily_planning', 'no_workflow'].includes(workflow)) {
+            return NextResponse.json({ error: 'Invalid workflow. Must be daily_planning or no_workflow.' }, { status: 400 })
+          }
 
-    const settings = await createOrUpdateUserSettings(dbUser.id, daily_steps_count, workflow)
+          const settings = await createOrUpdateUserSettings(dbUser.id, daily_steps_count, workflow, filters)
     
     return NextResponse.json({ settings })
   } catch (error) {

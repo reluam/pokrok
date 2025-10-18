@@ -22,7 +22,7 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const { translations, locale } = useTranslations()
   const currentLocale = useLocale()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'categories' | 'language' | 'appearance' | 'daily-planning'>('categories')
+  const [activeTab, setActiveTab] = useState<'categories' | 'language' | 'appearance' | 'workflow'>('categories')
   
   // Category settings state
   const [categorySettings, setCategorySettings] = useState<CategorySettings | null>(null)
@@ -37,12 +37,12 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const [primaryColor, setPrimaryColor] = useState('#E8871E') // Default orange
   const [isSavingAppearance, setIsSavingAppearance] = useState(false)
 
-  // Daily planning settings state
+  // Workflow settings state
   const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow' } | null>(null)
-  const [editingDailyPlanning, setEditingDailyPlanning] = useState(false)
   const [newDailyStepsCount, setNewDailyStepsCount] = useState(3)
-  const [newWorkflow, setNewWorkflow] = useState<'daily_planning' | 'no_workflow'>('daily_planning')
-  const [isSavingDailyPlanning, setIsSavingDailyPlanning] = useState(false)
+  const [newWorkflow, setNewWorkflow] = useState<'denni_planovani' | 'zadna_workflow'>('denni_planovani')
+  const [isSavingWorkflow, setIsSavingWorkflow] = useState(false)
+  const [activeWorkflowTab, setActiveWorkflowTab] = useState<'denni_planovani' | 'zadna_workflow'>('denni_planovani')
 
   const colorOptions = colorPalettes
 
@@ -81,7 +81,8 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
         const userData = await userSettingsRes.json()
         setUserSettings(userData.settings)
         setNewDailyStepsCount(userData.settings?.daily_steps_count || 3)
-        setNewWorkflow(userData.settings?.workflow || 'daily_planning')
+        setNewWorkflow(userData.settings?.workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
+        setActiveWorkflowTab(userData.settings?.workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
       }
       
       // Load appearance settings
@@ -181,8 +182,39 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
     }
   }
 
-  const handleSaveDailyPlanningSettings = async () => {
-    setIsSavingDailyPlanning(true)
+  const handleQuickWorkflowChange = async (workflow: 'daily_planning' | 'no_workflow') => {
+    setIsSavingWorkflow(true)
+    try {
+      const response = await fetch('/api/cesta/user-settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workflow: workflow
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUserSettings(data.settings)
+        setNewWorkflow(workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
+        setActiveWorkflowTab(workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
+        alert(`Workflow změněn na ${workflow === 'daily_planning' ? 'Denní plánování' : 'Žádná workflow'}!`)
+      } else {
+        const error = await response.json()
+        alert(`Chyba při změně workflow: ${error.error || 'Neznámá chyba'}`)
+      }
+    } catch (error) {
+      console.error('Error changing workflow:', error)
+      alert('Chyba při změně workflow')
+    } finally {
+      setIsSavingWorkflow(false)
+    }
+  }
+
+  const handleSaveWorkflowSettings = async () => {
+    setIsSavingWorkflow(true)
     try {
       const response = await fetch('/api/cesta/user-settings', {
         method: 'PATCH',
@@ -191,24 +223,23 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
         },
         body: JSON.stringify({
           daily_steps_count: newDailyStepsCount,
-          workflow: newWorkflow
+          workflow: newWorkflow === 'denni_planovani' ? 'daily_planning' : 'no_workflow'
         })
       })
 
       if (response.ok) {
         const data = await response.json()
         setUserSettings(data.settings)
-        setEditingDailyPlanning(false)
-        alert('Nastavení denního plánování bylo uloženo!')
+        alert('Nastavení workflow bylo uloženo!')
       } else {
         const error = await response.json()
         alert(`Chyba při ukládání nastavení: ${error.error || 'Neznámá chyba'}`)
       }
     } catch (error) {
-      console.error('Error saving daily planning settings:', error)
-      alert('Chyba při ukládání nastavení denního plánování')
+      console.error('Error saving workflow settings:', error)
+      alert('Chyba při ukládání nastavení workflow')
     } finally {
-      setIsSavingDailyPlanning(false)
+      setIsSavingWorkflow(false)
     }
   }
 
@@ -227,55 +258,58 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            {/* Tab Navigation */}
-            <div className="border-b border-gray-200 mb-6">
-              <nav className="flex space-x-8">
-                <button
-                  onClick={() => setActiveTab('categories')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'categories'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {translations?.settings.categories || 'Kategorie cílů'}
-                </button>
-                <button
-                  onClick={() => setActiveTab('language')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'language'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Globe className="w-4 h-4 inline mr-2" />
-                  {translations?.settings.language || 'Jazyk'}
-                </button>
-                <button
-                  onClick={() => setActiveTab('appearance')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'appearance'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {translations?.settings.appearance || 'Zobrazení'}
-                </button>
-                <button
-                  onClick={() => setActiveTab('daily-planning')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'daily-planning'
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  Denní plánování
-                </button>
-              </nav>
-            </div>
+    <div className="h-full flex">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-gray-50 border-r border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Nastavení</h2>
+        <nav className="space-y-2">
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'categories'
+                ? 'bg-primary-100 text-primary-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            {translations?.settings.categories || 'Kategorie cílů'}
+          </button>
+          <button
+            onClick={() => setActiveTab('language')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'language'
+                ? 'bg-primary-100 text-primary-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <Globe className="w-4 h-4 inline mr-2" />
+            {translations?.settings.language || 'Jazyk'}
+          </button>
+          <button
+            onClick={() => setActiveTab('appearance')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'appearance'
+                ? 'bg-primary-100 text-primary-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            {translations?.settings.appearance || 'Zobrazení'}
+          </button>
+          <button
+            onClick={() => setActiveTab('workflow')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === 'workflow'
+                ? 'bg-primary-100 text-primary-700'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            Workflow
+          </button>
+        </nav>
+      </div>
+
+      {/* Right Content Area */}
+      <div className="flex-1 p-8">
+        <div className="max-w-4xl">
 
             <div className="space-y-6">
               {activeTab === 'appearance' && (
@@ -512,174 +546,232 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                 </>
               )}
 
-              {activeTab === 'daily-planning' && (
+              {activeTab === 'workflow' && (
                 <>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Denní plánování</h2>
-                    <button
-                      onClick={() => setEditingDailyPlanning(true)}
-                      className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      <span>Upravit nastavení</span>
-                    </button>
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Workflow</h2>
+                    <p className="text-gray-600">
+                      Vyberte si způsob, jak chcete pracovat s kroky a cíli v aplikaci.
+                    </p>
                   </div>
 
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <span className="text-green-500 text-xl">📅</span>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-green-900">Denní plánování kroků</h3>
-                        <p className="text-sm text-green-700 mt-1">
-                          Nastavte si, kolik kroků chcete plánovat každý den. Aplikace vás bude vybízet k doplnění plánu, pokud nebude mít dostatek kroků na dnešek.
-                        </p>
-                      </div>
+                  {/* Workflow Tabs */}
+                  <div className="mb-8">
+                    <div className="border-b border-gray-200">
+                      <nav className="flex space-x-8">
+                        <button
+                          onClick={() => setActiveWorkflowTab('denni_planovani')}
+                          className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                            activeWorkflowTab === 'denni_planovani'
+                              ? 'border-primary-500 text-primary-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <span>📅</span>
+                          <span>Denní plánování</span>
+                          {userSettings?.workflow === 'daily_planning' && (
+                            <span className="text-primary-500">✓</span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setActiveWorkflowTab('zadna_workflow')}
+                          className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                            activeWorkflowTab === 'zadna_workflow'
+                              ? 'border-primary-500 text-primary-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <span>📋</span>
+                          <span>Žádná workflow</span>
+                          {userSettings?.workflow === 'no_workflow' && (
+                            <span className="text-primary-500">✓</span>
+                          )}
+                        </button>
+                      </nav>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="space-y-6">
-                      {/* Workflow Selection */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Workflow</h3>
-                          <p className="text-sm text-gray-600">
-                            {userSettings?.workflow === 'daily_planning' ? 'Denní plánování' : 'Žádná workflow'}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            userSettings?.workflow === 'daily_planning' 
-                              ? 'bg-primary-100 text-primary-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {userSettings?.workflow === 'daily_planning' ? '📅 Denní plánování' : '📋 Žádná workflow'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Daily Steps Count */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">Počet denních kroků</h3>
-                          <p className="text-sm text-gray-600">
-                            {userSettings?.daily_steps_count || 3} kroků denně
-                          </p>
-                        </div>
-                        <span className="text-2xl font-bold text-primary-500">
-                          {userSettings?.daily_steps_count || 3}
-                        </span>
-                      </div>
-                      
-                      {editingDailyPlanning && (
-                        <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
-                          <h4 className="font-medium text-gray-900 mb-4">Upravit nastavení workflow</h4>
-                          <div className="space-y-6">
-                            {/* Workflow Selection */}
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Typ workflow
-                              </label>
-                              <div className="space-y-3">
-                                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                  <input
-                                    type="radio"
-                                    name="workflow"
-                                    value="daily_planning"
-                                    checked={newWorkflow === 'daily_planning'}
-                                    onChange={(e) => setNewWorkflow(e.target.value as 'daily_planning' | 'no_workflow')}
-                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-lg">📅</span>
-                                      <span className="font-medium text-gray-900">Denní plánování</span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      Každý den si naplánujete 3-5 kroků a postupně je plníte
-                                    </p>
-                                  </div>
-                                </label>
-                                
-                                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                                  <input
-                                    type="radio"
-                                    name="workflow"
-                                    value="no_workflow"
-                                    checked={newWorkflow === 'no_workflow'}
-                                    onChange={(e) => setNewWorkflow(e.target.value as 'daily_planning' | 'no_workflow')}
-                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-lg">📋</span>
-                                      <span className="font-medium text-gray-900">Žádná workflow</span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      Zobrazí se všechny kroky k dokončení (dnešní a zpožděné)
-                                    </p>
-                                  </div>
-                                </label>
-                              </div>
+                  {/* Daily Planning Tab */}
+                  {activeWorkflowTab === 'denni_planovani' && (
+                    <div className="space-y-8">
+                      {/* Description */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <span className="text-2xl">📅</span>
                             </div>
-
-                            {/* Daily Steps Count - only show for daily_planning */}
-                            {newWorkflow === 'daily_planning' && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Počet kroků (1-10)
-                                </label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max="10"
-                                  value={newDailyStepsCount}
-                                  onChange={(e) => setNewDailyStepsCount(parseInt(e.target.value) || 3)}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-blue-900 mb-2">Denní plánování</h3>
+                            <p className="text-blue-800 mb-4">
+                              Každý den si naplánujete 3-5 kroků a postupně je plníte. Aplikace vás bude vybízet k doplnění plánu, pokud nebude mít dostatek kroků na dnešek.
+                            </p>
+                            
+                            {/* Workflow Diagram */}
+                            <div className="bg-white rounded-lg p-4 border border-blue-200">
+                              <h4 className="font-medium text-blue-900 mb-3">Jak to funguje:</h4>
+                              <div className="flex items-center space-x-4 text-sm text-blue-800">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                                  <span>Ráno si naplánujete kroky</span>
+                                </div>
+                                <div className="text-blue-300">→</div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                                  <span>Postupně je plníte</span>
+                                </div>
+                                <div className="text-blue-300">→</div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                                  <span>Inspirace po dokončení</span>
+                                </div>
                               </div>
-                            )}
-                            <div className="flex space-x-3">
-                              <button
-                                onClick={handleSaveDailyPlanningSettings}
-                                disabled={isSavingDailyPlanning}
-                                className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-                              >
-                                {isSavingDailyPlanning ? (
-                                  <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Ukládám...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Save className="w-4 h-4" />
-                                    <span>Uložit</span>
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditingDailyPlanning(false)
-                                  setNewDailyStepsCount(userSettings?.daily_steps_count || 3)
-                                }}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                              >
-                                Zrušit
-                              </button>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Settings */}
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Nastavení</h3>
+                          <div className="flex items-center space-x-3">
+                            {userSettings?.workflow !== 'daily_planning' && (
+                              <button
+                                onClick={() => handleQuickWorkflowChange('daily_planning')}
+                                disabled={isSavingWorkflow}
+                                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                              >
+                                <span>✓</span>
+                                <span>Vybrat workflow</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-6">
+                          {/* Počet denních kroků - inline editace */}
+                          <div className="bg-white rounded-lg p-6 border border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h4 className="font-medium text-gray-900">Počet denních kroků</h4>
+                                <p className="text-sm text-gray-600">
+                                  Kolik kroků chcete plánovat každý den
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-4">
+                              <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={newDailyStepsCount}
+                                onChange={(e) => setNewDailyStepsCount(parseInt(e.target.value) || 3)}
+                                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-semibold"
+                              />
+                              <span className="text-gray-600">kroků denně</span>
+                            </div>
+                          </div>
+
+                          {/* Uložit tlačítko */}
+                          <div className="flex justify-end">
+                            <button
+                              onClick={handleSaveWorkflowSettings}
+                              disabled={isSavingWorkflow}
+                              className="flex items-center space-x-2 bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
+                            >
+                              {isSavingWorkflow ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span>Ukládám...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="w-4 h-4" />
+                                  <span>Uložit nastavení</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* No Workflow Tab */}
+                  {activeWorkflowTab === 'zadna_workflow' && (
+                    <div className="space-y-8">
+                      {/* Description */}
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                              <span className="text-2xl">📋</span>
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-green-900 mb-2">Žádná workflow</h3>
+                            <p className="text-green-800 mb-4">
+                              Zobrazí se všechny kroky k dokončení (dnešní a zpožděné). Jednoduchý seznam bez plánování - můžete pracovat s kroky přímo.
+                            </p>
+                            
+                            {/* Workflow Diagram */}
+                            <div className="bg-white rounded-lg p-4 border border-green-200">
+                              <h4 className="font-medium text-green-900 mb-3">Jak to funguje:</h4>
+                              <div className="flex items-center space-x-4 text-sm text-green-800">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                                  <span>Zobrazí se všechny kroky</span>
+                                </div>
+                                <div className="text-green-300">→</div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                                  <span>Označujete jako hotové</span>
+                                </div>
+                                <div className="text-green-300">→</div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+                                  <span>Přidáváte nové</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Settings */}
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Nastavení</h3>
+                          <div className="flex items-center space-x-3">
+                            {userSettings?.workflow !== 'no_workflow' && (
+                              <button
+                                onClick={() => handleQuickWorkflowChange('no_workflow')}
+                                disabled={isSavingWorkflow}
+                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                              >
+                                <span>✓</span>
+                                <span>Vybrat workflow</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-center py-8 text-gray-500">
+                          <p>Tato workflow nevyžaduje žádné další nastavení.</p>
+                          <p className="text-sm mt-2">Jednoduše zobrazuje všechny kroky k dokončení.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </>
               )}
-
             </div>
-          </div>
         </div>
       </div>
-    )
-  })
+    </div>
+  )
+})
