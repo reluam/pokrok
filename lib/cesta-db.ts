@@ -769,6 +769,60 @@ export async function updateDailyStep(stepId: string, stepData: Partial<DailySte
   }
 }
 
+export async function updateDailyStepGeneral(stepId: string, stepData: Partial<DailyStep>): Promise<DailyStep> {
+  try {
+    // Update each field individually using template literals
+    if (stepData.title !== undefined) {
+      await sql`UPDATE daily_steps SET title = ${stepData.title}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.description !== undefined) {
+      await sql`UPDATE daily_steps SET description = ${stepData.description}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.date !== undefined) {
+      const dateValue = stepData.date instanceof Date ? stepData.date.toISOString() : stepData.date
+      await sql`UPDATE daily_steps SET date = ${dateValue}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.goal_id !== undefined) {
+      await sql`UPDATE daily_steps SET goal_id = ${stepData.goal_id}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.is_important !== undefined) {
+      await sql`UPDATE daily_steps SET is_important = ${stepData.is_important}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.is_urgent !== undefined) {
+      await sql`UPDATE daily_steps SET is_urgent = ${stepData.is_urgent}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.step_type !== undefined) {
+      await sql`UPDATE daily_steps SET step_type = ${stepData.step_type}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.custom_type_name !== undefined) {
+      await sql`UPDATE daily_steps SET custom_type_name = ${stepData.custom_type_name}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.deadline !== undefined) {
+      const deadlineValue = stepData.deadline instanceof Date ? stepData.deadline.toISOString() : stepData.deadline
+      await sql`UPDATE daily_steps SET deadline = ${deadlineValue}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.completed !== undefined) {
+      await sql`UPDATE daily_steps SET completed = ${stepData.completed}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    if (stepData.completed_at !== undefined) {
+      const completedAtValue = stepData.completed_at instanceof Date ? stepData.completed_at.toISOString() : stepData.completed_at
+      await sql`UPDATE daily_steps SET completed_at = ${completedAtValue}, updated_at = NOW() WHERE id = ${stepId}`
+    }
+    
+    // Get the updated step
+    const updatedStep = await sql`SELECT * FROM daily_steps WHERE id = ${stepId}`
+    
+    if (updatedStep.length === 0) {
+      throw new Error('Step not found')
+    }
+    
+    return updatedStep[0] as DailyStep
+  } catch (error) {
+    console.error('Error updating daily step:', error)
+    throw error
+  }
+}
+
 export async function deleteDailyStep(stepId: string): Promise<void> {
   try {
     await sql`

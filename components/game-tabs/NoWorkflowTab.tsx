@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, memo } from 'react'
-import { CheckCircle, Circle, Plus, Calendar, Clock, Target, Filter, Save, X } from 'lucide-react'
+import { useState, useEffect, memo, useRef } from 'react'
+import { CheckCircle, Circle, Plus, Calendar, Clock, Target, Filter, Save, X, Footprints } from 'lucide-react'
 import { usePageContext } from '../PageContext'
 import { useTranslations } from '@/lib/use-translations'
 import { DailyStep, Goal } from '@/lib/cesta-db'
+import { getToday, formatDateForInput } from '@/lib/utils'
 import { UnifiedStepModal } from '../UnifiedStepModal'
 
 interface NoWorkflowTabProps {}
@@ -26,8 +27,13 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
   const [goals, setGoals] = useState<Goal[]>([])
   const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
+  const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
+  const [editingStepData, setEditingStepData] = useState<Partial<DailyStep>>({})
+  const [isSaving, setIsSaving] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [isSavingFilters, setIsSavingFilters] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Filter settings
   const [filters, setFilters] = useState<FilterSettings>({
@@ -53,6 +59,23 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
       loadFilterSettings()
     }
   }, [translations, setTitle, setSubtitle])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showFilters) {
+        const target = event.target as Element
+        if (!target.closest('.filter-dropdown')) {
+          setShowFilters(false)
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showFilters])
 
   const loadFilterSettings = async () => {
     try {
@@ -100,6 +123,120 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
   const resetFilters = () => {
     setTempFilters(filters)
   }
+
+  // Expandable edit functions
+  const handleStepClick = (step: DailyStep) => {
+    // Only open if not already editing this step
+    if (editingStep?.id !== step.id) {
+      setEditingStep(step)
+      setEditingStepData({
+        title: step.title,
+        description: step.description || '',
+        date: step.date,
+        goal_id: step.goal_id,
+        is_important: step.is_important,
+        is_urgent: step.is_urgent,
+        step_type: step.step_type,
+        custom_type_name: step.custom_type_name,
+        deadline: step.deadline
+      })
+    }
+  }
+
+  const handleStepFieldChange = async (field: keyof DailyStep, value: any) => {
+    if (!editingStep) return
+
+    const newData = { ...editingStepData, [field]: value }
+    setEditingStepData(newData)
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Auto-save after a short delay
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true)
+        console.log('Saving step field:', field, 'value:', value, 'stepId:', editingStep.id)
+        
+        const response = await fetch('/api/cesta/daily-steps', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingStep.id,
+            [field]: value
+          })
+        })
+
+        console.log('Save response status:', response.status)
+        
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Save result:', result)
+          
+          // Update editingStepData to reflect the change immediately
+          setEditingStepData(prev => ({ ...prev, [field]: value }))
+          
+          // Update the step in the local state immediately
+          const updatedStep = { ...editingStep, [field]: value }
+          setEditingStep(updatedStep)
+          
+          // Update dailySteps to reflect the change immediately
+          setDailySteps(prevSteps => 
+            prevSteps.map(step => 
+              step.id === editingStep.id 
+                ? { ...step, [field]: value }
+                : step
+            )
+          )
+          
+          // Refresh data in background for consistency
+          setTimeout(() => fetchData(), 100)
+        } else {
+          const error = await response.text()
+          console.error('Save error:', error)
+        }
+      } catch (error) {
+        console.error('Error auto-saving step:', error)
+      } finally {
+        // Keep animation running for total of 1 second from start
+        setTimeout(() => {
+          setIsSaving(false)
+          setShowSaved(true)
+          // Hide "Uloženo" text after 2000ms (1000ms visible + 1000ms dissolve)
+          setTimeout(() => {
+            setShowSaved(false)
+          }, 2000)
+        }, 1000 - 650) // 350ms remaining after 650ms delay
+      }
+    }, 650) // 650ms delay for auto-save
+  }
+
+  const handleStepBlur = () => {
+    // Close editing mode when clicking outside
+    setEditingStep(null)
+    setEditingStepData({})
+  }
+
+  // Close editing mode when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editingStep) {
+        const target = event.target as HTMLElement
+        // Check if click is outside any step card
+        if (!target.closest('.step-card')) {
+          setEditingStep(null)
+          setEditingStepData({})
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [editingStep])
 
   // Filter and sort steps based on current filters
   const getFilteredSteps = () => {
@@ -226,44 +363,6 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
     }
   }
 
-  const getStepGoal = (step: DailyStep) => {
-    return goals.find(goal => goal.id === step.goal_id)
-  }
-
-  const isOverdue = (step: DailyStep) => {
-    const stepDate = new Date(step.date)
-    stepDate.setHours(0, 0, 0, 0)
-    return stepDate < today && !step.completed
-  }
-
-  const isToday = (step: DailyStep) => {
-    const stepDate = new Date(step.date)
-    stepDate.setHours(0, 0, 0, 0)
-    return stepDate.getTime() === today.getTime()
-  }
-
-  // Get all incomplete steps up to today (including today and overdue)
-  const allIncompleteSteps = dailySteps.filter(step => {
-    if (step.completed) return false
-    const stepDate = new Date(step.date)
-    stepDate.setHours(0, 0, 0, 0)
-    return stepDate <= today
-  })
-
-  // Sort steps: overdue first, then today, then by date
-  const sortedSteps = allIncompleteSteps.sort((a, b) => {
-    const aOverdue = isOverdue(a)
-    const bOverdue = isOverdue(b)
-    const aToday = isToday(a)
-    const bToday = isToday(b)
-
-    if (aOverdue && !bOverdue) return -1
-    if (!aOverdue && bOverdue) return 1
-    if (aToday && !bToday) return -1
-    if (!aToday && bToday) return 1
-
-    return new Date(a.date).getTime() - new Date(b.date).getTime()
-  })
 
   if (isLoading) {
     return (
@@ -276,30 +375,206 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
   const filteredSteps = getFilteredSteps()
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Všechny kroky</h2>
-          <p className="text-gray-600 mt-1">
-            Zobrazují se všechny kroky k dokončení ({filteredSteps.length} kroků)
-          </p>
+    <div className="h-full flex flex-col relative">
+      {/* Header with stats */}
+      <div className="flex-shrink-0 p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-100">
+              <span className="text-lg">📋</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Všechny kroky</h2>
+              <p className="text-sm text-gray-600">Zobrazují se všechny kroky k dokončení</p>
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="text-center">
+              <div className="flex items-center space-x-1">
+                <Target className="w-4 h-4 text-blue-500" />
+                <span className="font-semibold">{filteredSteps.length}</span>
+              </div>
+              <p className="text-xs text-gray-500">Celkem</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4 text-red-500" />
+                <span className="font-semibold">{filteredSteps.filter(step => {
+                  const stepDate = new Date(step.date)
+                  stepDate.setHours(0, 0, 0, 0)
+                  return stepDate < today
+                }).length}</span>
+              </div>
+              <p className="text-xs text-gray-500">Zpožděno</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-              showFilters 
-                ? 'bg-primary-500 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span>Filtry</span>
-          </button>
+
+        {/* Compact Filter Row */}
+        <div className="flex items-center justify-between pt-4 pb-0 px-4 bg-primary-50/30">
+          <div className="flex items-center space-x-4">
+            {/* Filter Dropdown */}
+            <div className="relative filter-dropdown">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 px-3 py-2 bg-white border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors text-sm"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filtry</span>
+                <svg className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {showFilters && (
+                <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-primary-200 rounded-lg shadow-lg z-10">
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Date Filters */}
+                      <div>
+                        <h4 className="font-medium text-primary-900 mb-3">Zobrazit kroky</h4>
+                        <div className="space-y-2">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={tempFilters.showOverdue}
+                              onChange={(e) => setTempFilters(prev => ({ ...prev, showOverdue: e.target.checked }))}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-primary-700">Zpožděné kroky</span>
+                          </label>
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={tempFilters.showToday}
+                              onChange={(e) => setTempFilters(prev => ({ ...prev, showToday: e.target.checked }))}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-primary-700">Dnešní kroky</span>
+                          </label>
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={tempFilters.showFuture}
+                              onChange={(e) => setTempFilters(prev => ({ ...prev, showFuture: e.target.checked }))}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-primary-700">Budoucí kroky</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Goal Filters */}
+                      <div>
+                        <h4 className="font-medium text-primary-900 mb-3">Typ kroků</h4>
+                        <div className="space-y-2">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={tempFilters.showWithGoal}
+                              onChange={(e) => setTempFilters(prev => ({ ...prev, showWithGoal: e.target.checked }))}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-primary-700">S cílem</span>
+                          </label>
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={tempFilters.showWithoutGoal}
+                              onChange={(e) => setTempFilters(prev => ({ ...prev, showWithoutGoal: e.target.checked }))}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-primary-700">Bez cíle</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sort Options */}
+                    <div className="mt-4">
+                      <h4 className="font-medium text-primary-900 mb-3">Řazení</h4>
+                      <div className="flex flex-wrap gap-4">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="sortBy"
+                            value="priority"
+                            checked={tempFilters.sortBy === 'priority'}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'priority' }))}
+                            className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-primary-700">Podle priority</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="sortBy"
+                            value="date"
+                            checked={tempFilters.sortBy === 'date'}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'date' }))}
+                            className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-primary-700">Podle data</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="sortBy"
+                            value="title"
+                            checked={tempFilters.sortBy === 'title'}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'title' }))}
+                            className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-primary-700">Podle názvu</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-3 mt-4">
+                      <button
+                        onClick={resetFilters}
+                        className="px-3 py-2 border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 transition-colors text-sm"
+                      >
+                        Resetovat
+                      </button>
+                      <button
+                        onClick={saveFilterSettings}
+                        disabled={isSavingFilters}
+                        className="flex items-center space-x-2 bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition-all disabled:opacity-50 text-sm"
+                      >
+                        {isSavingFilters ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Ukládám...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            <span>Uložit natrvalo</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Active Filters Summary */}
+            <div className="flex items-center space-x-2 text-sm text-primary-600">
+              <span>Zobrazeno:</span>
+              <span className="font-medium text-primary-900">{filteredSteps.length} kroků</span>
+            </div>
+          </div>
+
+          {/* Add Step Button */}
           <button
             onClick={() => setShowAddStepModal(true)}
-            className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+            className="flex items-center space-x-2 px-3 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Přidat krok</span>
@@ -307,235 +582,194 @@ export const NoWorkflowTab = memo(function NoWorkflowTab({}: NoWorkflowTabProps 
         </div>
       </div>
 
-      {/* Filter Panel */}
-      {showFilters && (
-        <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Filtry a řazení</h3>
-            <button
-              onClick={() => setShowFilters(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Date Filters */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Zobrazit kroky</h4>
-              <div className="space-y-2">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={tempFilters.showOverdue}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, showOverdue: e.target.checked }))}
-                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">Zpožděné kroky</span>
-                </label>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={tempFilters.showToday}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, showToday: e.target.checked }))}
-                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">Dnešní kroky</span>
-                </label>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={tempFilters.showFuture}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, showFuture: e.target.checked }))}
-                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">Budoucí kroky</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Goal Filters */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Typ kroků</h4>
-              <div className="space-y-2">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={tempFilters.showWithGoal}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, showWithGoal: e.target.checked }))}
-                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">S cílem</span>
-                </label>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={tempFilters.showWithoutGoal}
-                    onChange={(e) => setTempFilters(prev => ({ ...prev, showWithoutGoal: e.target.checked }))}
-                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">Bez cíle</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className="mt-6">
-            <h4 className="font-medium text-gray-900 mb-3">Řazení</h4>
-            <div className="flex space-x-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="sortBy"
-                  value="priority"
-                  checked={tempFilters.sortBy === 'priority'}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'priority' }))}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-gray-700">Podle priority</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="sortBy"
-                  value="date"
-                  checked={tempFilters.sortBy === 'date'}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'date' }))}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-gray-700">Podle data</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="sortBy"
-                  value="title"
-                  checked={tempFilters.sortBy === 'title'}
-                  onChange={(e) => setTempFilters(prev => ({ ...prev, sortBy: e.target.value as 'title' }))}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-gray-700">Podle názvu</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Resetovat
-            </button>
-            <button
-              onClick={saveFilterSettings}
-              disabled={isSavingFilters}
-              className="flex items-center space-x-2 bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
-            >
-              {isSavingFilters ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Ukládám...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Uložit filtry</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Steps List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-6">
         {filteredSteps.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🎉</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Všechno hotové!</h3>
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Žádné kroky</h3>
             <p className="text-gray-600 mb-6">
-              Nemáte žádné kroky k dokončení. Můžete si přidat nové kroky nebo si odpočinout.
+              Podle aktuálních filtrů nejsou žádné kroky k zobrazení.
             </p>
             <button
               onClick={() => setShowAddStepModal(true)}
-              className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+              className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors mx-auto"
             >
-              Přidat nový krok
+              <Plus className="w-4 h-4" />
+              <span>Přidat první krok</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-3">
             {filteredSteps.map((step) => {
-              const goal = getStepGoal(step)
-              const overdue = isOverdue(step)
-              const today = isToday(step)
-
+              const stepDate = new Date(step.date)
+              stepDate.setHours(0, 0, 0, 0)
+              const isToday = stepDate.getTime() === today.getTime()
+              const isOverdue = stepDate < today
+              const isFuture = stepDate > today
+              
               return (
                 <div
                   key={step.id}
-                  className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md ${
-                    overdue
-                      ? 'bg-red-50 border-red-200 hover:border-red-300'
-                      : today
-                      ? 'bg-green-50 border-green-200 hover:border-green-300'
-                      : 'bg-white border-gray-200 hover:border-primary-300'
+                  className={`step-card group relative p-4 rounded-lg border transition-all duration-200 cursor-pointer shadow-sm ${
+                    step.completed
+                      ? 'bg-green-50 border-green-200'
+                      : isOverdue
+                      ? 'bg-red-50 border-red-200'
+                      : editingStep?.id === step.id
+                      ? 'bg-primary-50 border-primary-200' // No hover effect when editing
+                      : isToday
+                      ? 'bg-primary-50 border-primary-200 hover:border-primary-300 hover:bg-primary-100'
+                      : 'bg-primary-50 border-primary-200 hover:border-primary-300 hover:bg-primary-100'
                   }`}
-                  onClick={() => setSelectedStepForDetails(step)}
+                  onClick={() => handleStepClick(step)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
-                        {overdue && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <Clock className="w-3 h-3 mr-1" />
-                            Zpožděno
-                          </span>
+                  {/* Step Icon on the left */}
+                  <div className={`absolute -left-2 top-1/2 transform -translate-y-1/2 opacity-70 ${
+                    isOverdue ? 'text-red-400' : isToday ? 'text-primary-400' : 'text-gray-400'
+                  }`}>
+                    <Footprints className="w-5 h-5 fill-current" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    {editingStep?.id === step.id ? (
+                      // Expanded edit mode
+                      <div className="flex-1 ml-4 space-y-3 relative">
+                        <div>
+                          <input
+                            type="text"
+                            value={editingStepData.title || ''}
+                            onChange={(e) => handleStepFieldChange('title', e.target.value)}
+                            className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none"
+                            placeholder="Název kroku"
+                          />
+                        </div>
+                        <div>
+                          <textarea
+                            value={editingStepData.description || ''}
+                            onChange={(e) => handleStepFieldChange('description', e.target.value)}
+                            className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none resize-none"
+                            placeholder="Popis kroku"
+                            rows={2}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={editingStepData.is_important || false}
+                              onChange={(e) => handleStepFieldChange('is_important', e.target.checked)}
+                              className="rounded"
+                            />
+                            <label className="text-sm text-gray-600">Důležité</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={editingStepData.is_urgent || false}
+                              onChange={(e) => handleStepFieldChange('is_urgent', e.target.checked)}
+                              className="rounded"
+                            />
+                            <label className="text-sm text-gray-600">Naléhavé</label>
+                          </div>
+                          <div>
+                            <select
+                              value={editingStepData.goal_id || ''}
+                              onChange={(e) => handleStepFieldChange('goal_id', e.target.value || null)}
+                              className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                            >
+                              <option value="">Bez cíle</option>
+                              {goals.map(goal => (
+                                <option key={goal.id} value={goal.id}>{goal.title}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <input
+                              type="date"
+                              value={editingStepData.date ? formatDateForInput(new Date(editingStepData.date)) : ''}
+                              onChange={(e) => handleStepFieldChange('date', e.target.value)}
+                              className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                            />
+                          </div>
+                        </div>
+                        {isSaving && (
+                          <div className="absolute bottom-0 right-0">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent"></div>
+                          </div>
                         )}
-                        {today && !overdue && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            Dnes
-                          </span>
-                        )}
-                        {goal && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                            <Target className="w-3 h-3 mr-1" />
-                            {goal.title}
-                          </span>
+                        {showSaved && (
+                          <div className="absolute bottom-0 right-0">
+                            <div className="text-xs text-primary-500 font-medium animate-fade-out">Uloženo</div>
+                          </div>
                         )}
                       </div>
-                      
-                      <h3 className="font-medium text-gray-900 mb-1">{step.title}</h3>
-                      {step.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">{step.description}</p>
-                      )}
-                      
-                      <div className="flex items-center space-x-4 mt-3 text-xs text-gray-500">
-                        <span>
-                          {new Date(step.date).toLocaleDateString('cs-CZ', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </span>
-                        {step.step_type && (
-                          <span className="capitalize">{step.step_type}</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleStepComplete(step.id)
-                      }}
-                      className="ml-4 p-2 text-gray-400 hover:text-green-600 transition-colors"
-                    >
-                      <Circle className="w-5 h-5" />
-                    </button>
+                    ) : (
+                      // Normal view
+                      <>
+                        <div className="flex-1 ml-4">
+                          <div className="flex items-center space-x-3">
+                            <h4 className={`font-bold text-gray-900 ${step.completed ? 'line-through text-gray-500' : ''}`}>
+                              {step.title}
+                            </h4>
+                            {isOverdue && (
+                              <span className="text-red-600 text-sm font-medium">
+                                {Math.ceil((today.getTime() - stepDate.getTime()) / (1000 * 60 * 60 * 24))} dní zpožděno
+                              </span>
+                            )}
+                            {isToday && !isOverdue && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                Dnes
+                              </span>
+                            )}
+                            {isFuture && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                Budoucí
+                              </span>
+                            )}
+                          </div>
+                          {step.description && (
+                            <div className="text-sm text-gray-600 truncate mt-1">
+                              {step.description}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStepComplete(step.id)
+                            }}
+                            className={`w-12 h-8 text-white rounded-lg hover:opacity-80 transition-colors flex items-center justify-center ${
+                              step.completed
+                                ? 'bg-green-500'
+                                : isOverdue
+                                ? 'bg-red-500 hover:bg-red-600'
+                                : isToday
+                                ? 'bg-primary-500 hover:bg-primary-600'
+                                : 'bg-primary-500 hover:bg-primary-600'
+                            }`}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedStepForDetails(step)
+                            }}
+                            className={`p-1 hover:bg-gray-100 rounded transition-colors flex items-center justify-center ${
+                              isOverdue ? 'text-red-500 hover:text-red-600' : 'text-primary-500 hover:text-primary-600'
+                            }`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )

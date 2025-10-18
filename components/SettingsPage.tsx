@@ -38,11 +38,21 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const [isSavingAppearance, setIsSavingAppearance] = useState(false)
 
   // Workflow settings state
-  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow' } | null>(null)
+  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow', filters?: any } | null>(null)
   const [newDailyStepsCount, setNewDailyStepsCount] = useState(3)
   const [newWorkflow, setNewWorkflow] = useState<'denni_planovani' | 'zadna_workflow'>('denni_planovani')
   const [isSavingWorkflow, setIsSavingWorkflow] = useState(false)
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<'denni_planovani' | 'zadna_workflow'>('denni_planovani')
+  
+  // Filter settings for No Workflow
+  const [filterSettings, setFilterSettings] = useState({
+    showToday: true,
+    showOverdue: true,
+    showFuture: false,
+    showWithGoal: true,
+    showWithoutGoal: true,
+    sortBy: 'date' as 'date' | 'priority' | 'title'
+  })
 
   const colorOptions = colorPalettes
 
@@ -81,6 +91,11 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
         const userData = await userSettingsRes.json()
         setUserSettings(userData.settings)
         setNewDailyStepsCount(userData.settings?.daily_steps_count || 3)
+        
+        // Load filter settings
+        if (userData.settings?.filters) {
+          setFilterSettings(userData.settings.filters)
+        }
         setNewWorkflow(userData.settings?.workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
         setActiveWorkflowTab(userData.settings?.workflow === 'daily_planning' ? 'denni_planovani' : 'zadna_workflow')
       }
@@ -243,8 +258,34 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
     }
   }
 
+  const handleSaveFilterSettings = async () => {
+    setIsSavingWorkflow(true)
+    try {
+      const response = await fetch('/api/cesta/user-settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filters: filterSettings
+        })
+      })
 
-
+      if (response.ok) {
+        const data = await response.json()
+        setUserSettings(data.settings)
+        alert('Nastavení filtrů bylo uloženo!')
+      } else {
+        const error = await response.json()
+        alert(`Chyba při ukládání nastavení: ${error.error || 'Neznámá chyba'}`)
+      }
+    } catch (error) {
+      console.error('Error saving filter settings:', error)
+      alert('Chyba při ukládání nastavení filtrů')
+    } finally {
+      setIsSavingWorkflow(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -759,9 +800,138 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                           </div>
                         </div>
 
-                        <div className="text-center py-8 text-gray-500">
-                          <p>Tato workflow nevyžaduje žádné další nastavení.</p>
-                          <p className="text-sm mt-2">Jednoduše zobrazuje všechny kroky k dokončení.</p>
+                        <div className="space-y-6">
+                          {/* Filter Settings */}
+                          <div className="bg-white rounded-lg p-6 border border-gray-200">
+                            <div className="mb-4">
+                              <h4 className="font-medium text-gray-900">Nastavení filtrů</h4>
+                              <p className="text-sm text-gray-600">
+                                Nastavte, které kroky se mají zobrazovat v "Žádná workflow"
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Date Filters */}
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-3">Zobrazit kroky</h5>
+                                <div className="space-y-2">
+                                  <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterSettings.showOverdue}
+                                      onChange={(e) => setFilterSettings(prev => ({ ...prev, showOverdue: e.target.checked }))}
+                                      className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                                    />
+                                    <span className="text-gray-700">Zpožděné kroky</span>
+                                  </label>
+                                  <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterSettings.showToday}
+                                      onChange={(e) => setFilterSettings(prev => ({ ...prev, showToday: e.target.checked }))}
+                                      className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                                    />
+                                    <span className="text-gray-700">Dnešní kroky</span>
+                                  </label>
+                                  <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterSettings.showFuture}
+                                      onChange={(e) => setFilterSettings(prev => ({ ...prev, showFuture: e.target.checked }))}
+                                      className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                                    />
+                                    <span className="text-gray-700">Budoucí kroky</span>
+                                  </label>
+                                </div>
+                              </div>
+
+                              {/* Goal Filters */}
+                              <div>
+                                <h5 className="font-medium text-gray-900 mb-3">Typ kroků</h5>
+                                <div className="space-y-2">
+                                  <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterSettings.showWithGoal}
+                                      onChange={(e) => setFilterSettings(prev => ({ ...prev, showWithGoal: e.target.checked }))}
+                                      className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                                    />
+                                    <span className="text-gray-700">S cílem</span>
+                                  </label>
+                                  <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterSettings.showWithoutGoal}
+                                      onChange={(e) => setFilterSettings(prev => ({ ...prev, showWithoutGoal: e.target.checked }))}
+                                      className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                                    />
+                                    <span className="text-gray-700">Bez cíle</span>
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Sort Options */}
+                            <div className="mt-6">
+                              <h5 className="font-medium text-gray-900 mb-3">Řazení</h5>
+                              <div className="flex flex-wrap gap-4">
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="priority"
+                                    checked={filterSettings.sortBy === 'priority'}
+                                    onChange={(e) => setFilterSettings(prev => ({ ...prev, sortBy: e.target.value as 'priority' }))}
+                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <span className="text-gray-700">Podle priority</span>
+                                </label>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="date"
+                                    checked={filterSettings.sortBy === 'date'}
+                                    onChange={(e) => setFilterSettings(prev => ({ ...prev, sortBy: e.target.value as 'date' }))}
+                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <span className="text-gray-700">Podle data</span>
+                                </label>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="sortBy"
+                                    value="title"
+                                    checked={filterSettings.sortBy === 'title'}
+                                    onChange={(e) => setFilterSettings(prev => ({ ...prev, sortBy: e.target.value as 'title' }))}
+                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <span className="text-gray-700">Podle názvu</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Save Button */}
+                            <div className="flex justify-end mt-6">
+                              <button
+                                onClick={handleSaveFilterSettings}
+                                disabled={isSavingWorkflow}
+                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                              >
+                                {isSavingWorkflow ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <span>Ukládám...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4" />
+                                    <span>Uložit filtry</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

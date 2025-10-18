@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { getDailyStepsByUserId, getUserByClerkId, createDailyStep, updateGoalProgressCombined, updateDailyStep } from '@/lib/cesta-db'
+import { getDailyStepsByUserId, getUserByClerkId, createDailyStep, updateGoalProgressCombined, updateDailyStep, updateDailyStepGeneral, DailyStep } from '@/lib/cesta-db'
 
 
 // Force dynamic rendering
@@ -93,23 +93,40 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const { stepId, completed } = await request.json()
+    const requestData = await request.json()
+    const { id, stepId, completed, ...otherFields } = requestData
 
-    if (!stepId || typeof completed !== 'boolean') {
-      return NextResponse.json({ error: 'stepId and completed are required' }, { status: 400 })
+    // Use stepId or id for backward compatibility
+    const stepIdToUse = stepId || id
+
+    if (!stepIdToUse) {
+      return NextResponse.json({ error: 'stepId is required' }, { status: 400 })
     }
 
-    console.log('Updating step:', stepId, 'completed:', completed)
+    console.log('Updating step:', stepIdToUse, 'with data:', requestData)
 
-    const step = await updateDailyStep(stepId, { 
-      completed,
-      completed_at: completed ? new Date() : undefined
-    })
+    let step: DailyStep
+
+    // If only completed field is provided, use the simple update function
+    if (completed !== undefined && Object.keys(otherFields).length === 0) {
+      step = await updateDailyStep(stepIdToUse, { 
+        completed,
+        completed_at: completed ? new Date() : undefined
+      })
+    } else {
+      // Use general update function for other fields
+      const updateData: Partial<DailyStep> = { ...otherFields }
+      if (completed !== undefined) {
+        updateData.completed = completed
+        updateData.completed_at = completed ? new Date() : undefined
+      }
+      step = await updateDailyStepGeneral(stepIdToUse, updateData)
+    }
 
     console.log('Step updated successfully:', step)
 
     // Update goal progress if step is completed
-    if (completed && step.goal_id) {
+    if (step.completed && step.goal_id) {
       await updateGoalProgressCombined(step.goal_id)
     }
 

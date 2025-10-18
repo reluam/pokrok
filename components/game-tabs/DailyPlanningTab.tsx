@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, memo } from 'react'
+import { useState, useEffect, memo, useRef } from 'react'
 import { Goal, Value, DailyStep, Event, UserSettings, DailyPlanning, UserStreak } from '@/lib/cesta-db'
 import { CheckCircle, Clock, Target, BookOpen, Lightbulb, Calendar, Zap, Footprints, Plus, Circle, Star, TrendingUp, AlertCircle, X } from 'lucide-react'
 import { getToday, getTodayString, formatDateForInput } from '@/lib/utils'
@@ -42,7 +42,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [selectedStepForDetails, setSelectedStepForDetails] = useState<DailyStep | null>(null)
   const [editingStep, setEditingStep] = useState<DailyStep | null>(null)
+  const [editingStepData, setEditingStepData] = useState<Partial<DailyStep>>({})
   const [isSaving, setIsSaving] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isPlanningMode, setIsPlanningMode] = useState(false)
@@ -52,6 +54,8 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const [draggedStepId, setDraggedStepId] = useState<string | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [currentInspiration, setCurrentInspiration] = useState<string>('')
+  const [isDragging, setIsDragging] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const today = getToday()
 
@@ -184,9 +188,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   }, [isLoading])
 
   // Drop handler into main planned list (inline planning)
-  const handleDropToMain = async () => {
+  const handleDropToMain = async (dropIndex?: number) => {
     if (draggedStepId) {
-      await handleAddStepToDailyPlan(draggedStepId)
+      await handleAddStepToDailyPlanAtPosition(draggedStepId, dropIndex)
       setDraggedStepId(null)
       setDragOverIndex(null)
     }
@@ -250,6 +254,42 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
     }
   }
 
+  const handleAddStepToDailyPlanAtPosition = async (stepId: string, dropIndex?: number) => {
+    if (!dailyPlanning) return
+    
+    const currentPlannedSteps = dailyPlanning.planned_steps || []
+    if (currentPlannedSteps.includes(stepId)) return
+    
+    let newPlannedSteps: string[]
+    if (dropIndex !== undefined && dropIndex >= 0 && dropIndex <= currentPlannedSteps.length) {
+      // Insert at specific position
+      newPlannedSteps = [...currentPlannedSteps]
+      newPlannedSteps.splice(dropIndex, 0, stepId)
+    } else {
+      // Add to end
+      newPlannedSteps = [...currentPlannedSteps, stepId]
+    }
+    
+    try {
+      const response = await fetch('/api/cesta/daily-planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: today.toISOString().split('T')[0],
+          planned_steps: newPlannedSteps
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDailyPlanning(data.planning)
+        await fetchData() // Refresh data
+      }
+    } catch (error) {
+      console.error('Error adding step to daily plan at position:', error)
+    }
+  }
+
   const handleRemoveStepFromTempPlanning = (stepId: string) => {
     setTempPlannedSteps(prev => prev.filter(id => id !== stepId))
   }
@@ -258,6 +298,116 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
     setIsPlanningMode(true)
     setTempPlannedSteps(plannedStepIds)
   }
+
+  // Expandable edit functions
+  const handleStepClick = (step: DailyStep) => {
+    // Only open if not already editing this step
+    if (editingStep?.id !== step.id) {
+      setEditingStep(step)
+      setEditingStepData({
+        title: step.title,
+        description: step.description || '',
+        date: step.date,
+        goal_id: step.goal_id,
+        is_important: step.is_important,
+        is_urgent: step.is_urgent,
+        step_type: step.step_type,
+        custom_type_name: step.custom_type_name,
+        deadline: step.deadline
+      })
+    }
+  }
+
+  const handleStepFieldChange = async (field: keyof DailyStep, value: any) => {
+    if (!editingStep) return
+
+    const newData = { ...editingStepData, [field]: value }
+    setEditingStepData(newData)
+
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Auto-save after a short delay
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true)
+        console.log('Saving step field:', field, 'value:', value, 'stepId:', editingStep.id)
+        
+        const response = await fetch('/api/cesta/daily-steps', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingStep.id,
+            [field]: value
+          })
+        })
+
+        console.log('Save response status:', response.status)
+        
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Save result:', result)
+          
+          // Update editingStepData to reflect the change immediately
+          setEditingStepData(prev => ({ ...prev, [field]: value }))
+          
+          // Update the step in the local state immediately
+          const updatedStep = { ...editingStep, [field]: value }
+          setEditingStep(updatedStep)
+          
+          // Call onStepUpdate to update parent component's state
+          if (onStepUpdate && result.step) {
+            onStepUpdate(result.step)
+          }
+          
+          // Refresh data in background for consistency
+          setTimeout(() => fetchData(), 100)
+        } else {
+          const error = await response.text()
+          console.error('Save error:', error)
+        }
+      } catch (error) {
+        console.error('Error auto-saving step:', error)
+      } finally {
+        // Keep animation running for total of 1 second from start
+        setTimeout(() => {
+          setIsSaving(false)
+          setShowSaved(true)
+          // Hide "Uloženo" text after 2000ms (1000ms visible + 1000ms dissolve)
+          setTimeout(() => {
+            setShowSaved(false)
+          }, 2000)
+        }, 1000 - 650) // 350ms remaining after 650ms delay
+      }
+    }, 650) // 650ms delay for auto-save
+  }
+
+  const handleStepBlur = () => {
+    // Close editing mode when clicking outside
+    setEditingStep(null)
+    setEditingStepData({})
+  }
+
+  // Close editing mode when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editingStep) {
+        const target = event.target as HTMLElement
+        // Check if click is outside any step card
+        if (!target.closest('.step-card')) {
+          setEditingStep(null)
+          setEditingStepData({})
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [editingStep])
 
   const handleCancelPlanning = () => {
     setIsPlanningMode(false)
@@ -328,6 +478,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, stepId: string) => {
     setDraggedStepId(stepId)
+    setIsDragging(true)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', stepId)
   }
@@ -349,6 +500,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const handleDragEnd = () => {
     setDraggedStepId(null)
     setDragOverIndex(null)
+    setIsDragging(false)
   }
 
   const handleDropFromSelected = (e: React.DragEvent) => {
@@ -713,7 +865,10 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
             <div
               className="border-2 border-dashed border-primary-300 bg-primary-50/20 p-4"
               onDragOver={handleDragOver}
-              onDrop={handleDropToMain}
+              onDrop={(e) => {
+                e.preventDefault()
+                handleDropToMain() // No specific position - add to end
+              }}
             >
               {plannedSteps.length > 0 ? (
                 <div className="grid gap-3">
@@ -728,17 +883,19 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                     return (
                       <div
                         key={step.id}
-                        className={`p-4 rounded-lg border transition-all duration-200 cursor-move ${
-                          isDragging 
-                            ? 'opacity-50 scale-95 shadow-lg' 
-                            : isDragOver 
-                            ? 'border-primary-400 bg-primary-50 scale-105 shadow-md' 
-                            : step.completed
-                            ? 'bg-green-50 border-green-200'
-                            : isOverdue
-                            ? 'bg-red-50 border-red-200'
-                            : 'bg-primary-50/30 border-primary-200 hover:border-primary-300 hover:bg-primary-50/50'
-                        }`}
+        className={`step-card group relative p-4 rounded-lg border transition-all duration-200 cursor-pointer shadow-sm ${
+          isDragging 
+            ? 'opacity-50 scale-95 shadow-lg' 
+            : isDragOver 
+            ? 'border-primary-400 bg-primary-50 scale-105 shadow-md' 
+            : step.completed
+            ? 'bg-green-50 border-green-200'
+            : isOverdue
+            ? 'bg-red-50 border-red-200'
+            : editingStep?.id === step.id
+            ? 'bg-primary-50 border-primary-200' // No hover effect when editing
+            : 'bg-primary-50 border-primary-200 hover:border-primary-300 hover:bg-primary-100'
+        }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, step.id)}
                         onDragEnd={handleDragEnd}
@@ -746,50 +903,146 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                         onDragLeave={() => setDragOverIndex(null)}
                         onDrop={(e) => {
                           e.preventDefault()
-                          setDragOverIndex(null)
+                          handleDropToMain(index)
+                        }}
+                        onClick={() => {
+                          if (!isDragging) {
+                            handleStepClick(step)
+                          }
                         }}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3 flex-1">
-                            <div className="text-gray-400 text-lg">⋮⋮</div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <button
-                                  onClick={() => handleStepComplete(step.id)}
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                    step.completed
-                                      ? 'bg-green-500 text-white'
-                                      : 'border-2 border-primary-300 hover:border-primary-500'
-                                  }`}
-                                >
-                                  {step.completed && <CheckCircle className="w-4 h-4" />}
-                                </button>
-                                <h4 className={`font-medium ${step.completed ? 'line-through text-gray-500' : 'text-primary-900'}`}>
-                                  {step.title}
-                                </h4>
-                                {isOverdue && (
-                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                    Zpožděno
-                                  </span>
+                        {/* Step Icon on the left */}
+                        <div className={`absolute -left-2 top-1/2 transform -translate-y-1/2 opacity-70 ${
+                          isOverdue ? 'text-red-400' : 'text-primary-400'
+                        }`}>
+                          <Footprints className="w-5 h-5 fill-current" />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          {editingStep?.id === step.id ? (
+                            // Expanded edit mode
+                            <div className="flex-1 ml-4 space-y-3 relative">
+                              <div>
+                                <input
+                                  type="text"
+                                  value={editingStepData.title || ''}
+                                  onChange={(e) => handleStepFieldChange('title', e.target.value)}
+                                  className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none"
+                                  placeholder="Název kroku"
+                                />
+                              </div>
+                              <div>
+                                <textarea
+                                  value={editingStepData.description || ''}
+                                  onChange={(e) => handleStepFieldChange('description', e.target.value)}
+                                  className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none resize-none"
+                                  placeholder="Popis kroku"
+                                  rows={2}
+                                />
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={editingStepData.is_important || false}
+                                    onChange={(e) => handleStepFieldChange('is_important', e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  <label className="text-sm text-gray-600">Důležité</label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={editingStepData.is_urgent || false}
+                                    onChange={(e) => handleStepFieldChange('is_urgent', e.target.checked)}
+                                    className="rounded"
+                                  />
+                                  <label className="text-sm text-gray-600">Naléhavé</label>
+                                </div>
+                                <div>
+                                  <select
+                                    value={editingStepData.goal_id || ''}
+                                    onChange={(e) => handleStepFieldChange('goal_id', e.target.value || null)}
+                                    className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                                  >
+                                    <option value="">Bez cíle</option>
+                                    {goals.map(goal => (
+                                      <option key={goal.id} value={goal.id}>{goal.title}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <input
+                                    type="date"
+                                    value={editingStepData.date ? formatDateForInput(new Date(editingStepData.date)) : ''}
+                                    onChange={(e) => handleStepFieldChange('date', e.target.value)}
+                                    className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                                  />
+                                </div>
+                              </div>
+                              {isSaving && (
+                                <div className="absolute bottom-0 right-0">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent"></div>
+                                </div>
+                              )}
+                              {showSaved && (
+                                <div className="absolute bottom-0 right-0">
+                                  <div className="text-xs text-primary-500 font-medium animate-fade-out">Uloženo</div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            // Normal view
+                            <>
+                              <div className="flex-1 ml-4">
+                                <div className="flex items-center space-x-3">
+                                  <h4 className={`font-bold text-gray-900 ${step.completed ? 'line-through text-gray-500' : ''}`}>
+                                    {step.title}
+                                  </h4>
+                                  {isOverdue && (
+                                    <span className="text-red-600 text-sm font-medium">
+                                      {Math.ceil((today.getTime() - stepDate.getTime()) / (1000 * 60 * 60 * 24))} dní zpožděno
+                                    </span>
+                                  )}
+                                </div>
+                                {step.description && (
+                                  <div className="text-sm text-gray-600 truncate mt-1">
+                                    {step.description}
+                                  </div>
                                 )}
                               </div>
-                            {step.description && (
-                              <p className="text-sm text-primary-700 mb-2">{step.description}</p>
-                            )}
-                            {goal && (
-                              <p className="text-xs text-primary-600">
-                                {goal.icon && `${goal.icon} `}{goal.title}
-                              </p>
-                            )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveStepFromPlanning(step.id)}
-                            className="ml-4 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                            title="Odebrat z dnešního plánu"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                              
+                              {/* Action buttons */}
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleStepComplete(step.id)
+                                  }}
+                                  className={`w-12 h-8 text-white rounded-lg hover:opacity-80 transition-colors flex items-center justify-center ${
+                                    step.completed
+                                      ? 'bg-green-500'
+                                      : isOverdue
+                                      ? 'bg-red-500 hover:bg-red-600'
+                                      : 'bg-primary-500 hover:bg-primary-600'
+                                  }`}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRemoveStepFromPlanning(step.id)
+                                  }}
+                                  className={`p-1 hover:bg-gray-100 rounded transition-colors flex items-center justify-center ${
+                                    isOverdue ? 'text-red-500 hover:text-red-600' : 'text-primary-500 hover:text-primary-600'
+                                  }`}
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     )
@@ -850,82 +1103,161 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                       return (
                         <div
                           key={step.id}
-                          className={`group p-4 rounded-lg border transition-all duration-200 cursor-pointer ${
+                          className={`step-card group relative p-4 rounded-lg border transition-all duration-200 cursor-pointer shadow-sm ${
                             step.completed
                               ? 'bg-green-50 border-green-200'
                               : isOverdue
                               ? 'bg-red-50 border-red-200'
-                              : 'bg-primary-50/30 border-primary-200 hover:border-primary-300 hover:bg-primary-50/50'
+                              : editingStep?.id === step.id
+                              ? 'bg-primary-50 border-primary-200' // No hover effect when editing
+                              : 'bg-primary-50 border-primary-200 hover:border-primary-300 hover:bg-primary-100'
                           }`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, step.id)}
+                          onDragEnd={handleDragEnd}
                           onClick={() => {
-                            setSelectedStepForDetails(step)
+                            handleStepClick(step)
                           }}
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-3 flex-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleStepComplete(step.id)
-                                }}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                  step.completed
-                                    ? 'bg-green-500 text-white'
-                                    : 'border-2 border-primary-300 hover:border-primary-500'
-                                }`}
-                                title="Označit jako dokončené"
-                              >
-                                {step.completed && <CheckCircle className="w-4 h-4" />}
-                              </button>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <h4 className="font-medium text-primary-900">{step.title}</h4>
-                                  {isOverdue && (
-                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                      Zpožděno
-                                    </span>
-                                  )}
-                                  {isToday && !isOverdue && (
-                                    <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
-                                      Dnes
-                                    </span>
-                                  )}
+                          {/* Step Icon on the left */}
+                          <div className={`absolute -left-2 top-1/2 transform -translate-y-1/2 opacity-70 ${
+                            isOverdue ? 'text-red-400' : isToday ? 'text-primary-400' : 'text-gray-400'
+                          }`}>
+                            <Footprints className="w-5 h-5 fill-current" />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            {editingStep?.id === step.id ? (
+                              // Expanded edit mode
+                              <div className="flex-1 ml-4 space-y-3 relative">
+                                <div>
+                                  <input
+                                    type="text"
+                                    value={editingStepData.title || ''}
+                                    onChange={(e) => handleStepFieldChange('title', e.target.value)}
+                                    className="w-full text-lg font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none"
+                                    placeholder="Název kroku"
+                                  />
                                 </div>
-                                {step.description && (
-                                  <p className="text-sm text-primary-700 mb-2">{step.description}</p>
+                                <div>
+                                  <textarea
+                                    value={editingStepData.description || ''}
+                                    onChange={(e) => handleStepFieldChange('description', e.target.value)}
+                                    className="w-full text-sm text-gray-600 bg-transparent border-b border-gray-300 focus:border-primary-500 focus:outline-none resize-none"
+                                    placeholder="Popis kroku"
+                                    rows={2}
+                                  />
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={editingStepData.is_important || false}
+                                      onChange={(e) => handleStepFieldChange('is_important', e.target.checked)}
+                                      className="rounded"
+                                    />
+                                    <label className="text-sm text-gray-600">Důležité</label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={editingStepData.is_urgent || false}
+                                      onChange={(e) => handleStepFieldChange('is_urgent', e.target.checked)}
+                                      className="rounded"
+                                    />
+                                    <label className="text-sm text-gray-600">Naléhavé</label>
+                                  </div>
+                                  <div>
+                                    <select
+                                      value={editingStepData.goal_id || ''}
+                                      onChange={(e) => handleStepFieldChange('goal_id', e.target.value || null)}
+                                      className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                                    >
+                                      <option value="">Bez cíle</option>
+                                      {goals.map(goal => (
+                                        <option key={goal.id} value={goal.id}>{goal.title}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <input
+                                      type="date"
+                                      value={editingStepData.date ? formatDateForInput(new Date(editingStepData.date)) : ''}
+                                      onChange={(e) => handleStepFieldChange('date', e.target.value)}
+                                      className="text-sm text-gray-600 bg-transparent border border-gray-300 rounded px-2 py-1"
+                                    />
+                                  </div>
+                                </div>
+                                {isSaving && (
+                                  <div className="absolute bottom-0 right-0">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-500 border-t-transparent"></div>
+                                  </div>
                                 )}
-                                {goal && (
-                                  <p className="text-xs text-primary-600">
-                                    {goal.icon && `${goal.icon} `}{goal.title}
-                                  </p>
+                                {showSaved && (
+                                  <div className="absolute bottom-0 right-0">
+                                    <div className="text-xs text-primary-500 font-medium animate-fade-out">Uloženo</div>
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleAddStepToDailyPlan(step.id)
-                                }}
-                                className="p-1.5 text-primary-500 hover:text-primary-600 hover:bg-primary-100 rounded-full transition-all duration-200"
-                                title="Přidat do dnešního plánu"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedStepForDetails(step)
-                                }}
-                                className="p-1.5 text-primary-500 hover:text-primary-700 hover:bg-primary-100 rounded-full transition-all duration-200"
-                                title="Zobrazit detaily"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </button>
-                            </div>
+                            ) : (
+                              // Normal view
+                              <>
+                                <div className="flex-1 ml-4">
+                                  <div className="flex items-center space-x-3">
+                                    <h4 className={`font-bold text-gray-900 ${step.completed ? 'line-through text-gray-500' : ''}`}>
+                                      {step.title}
+                                    </h4>
+                                    {isOverdue && (
+                                      <span className="text-red-600 text-sm font-medium">
+                                        {Math.ceil((today.getTime() - stepDate.getTime()) / (1000 * 60 * 60 * 24))} dní zpožděno
+                                      </span>
+                                    )}
+                                    {isToday && !isOverdue && (
+                                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                        Dnes
+                                      </span>
+                                    )}
+                                  </div>
+                                  {step.description && (
+                                    <div className="text-sm text-gray-600 truncate mt-1">
+                                      {step.description}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Action buttons */}
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleStepComplete(step.id)
+                                    }}
+                                    className={`w-12 h-8 text-white rounded-lg hover:opacity-80 transition-colors flex items-center justify-center ${
+                                      step.completed
+                                        ? 'bg-green-500'
+                                        : isOverdue
+                                        ? 'bg-red-500 hover:bg-red-600'
+                                        : isToday
+                                        ? 'bg-primary-500 hover:bg-primary-600'
+                                        : 'bg-primary-500 hover:bg-primary-600'
+                                    }`}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleAddStepToDailyPlan(step.id)
+                                    }}
+                                    className={`p-1 hover:bg-gray-100 rounded transition-colors flex items-center justify-center ${
+                                      isOverdue ? 'text-red-500 hover:text-red-600' : 'text-primary-500 hover:text-primary-600'
+                                    }`}
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       )
