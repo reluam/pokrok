@@ -2,7 +2,7 @@
 
 import { useState, useEffect, memo } from 'react'
 import { Goal, Value, DailyStep, Event, UserSettings, DailyPlanning, UserStreak } from '@/lib/cesta-db'
-import { CheckCircle, Clock, Target, BookOpen, Lightbulb, Calendar, Zap, Footprints, Plus, Circle, Star, TrendingUp, AlertCircle } from 'lucide-react'
+import { CheckCircle, Clock, Target, BookOpen, Lightbulb, Calendar, Zap, Footprints, Plus, Circle, Star, TrendingUp, AlertCircle, X } from 'lucide-react'
 import { getToday, getTodayString, formatDateForInput } from '@/lib/utils'
 import { UnifiedStepModal } from '../UnifiedStepModal'
 import { useTranslations } from '@/lib/use-translations'
@@ -50,8 +50,32 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const [newlyAddedSteps, setNewlyAddedSteps] = useState<DailyStep[]>([])
   const [isSavingPlan, setIsSavingPlan] = useState(false)
   const [draggedStepId, setDraggedStepId] = useState<string | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [currentInspiration, setCurrentInspiration] = useState<string>('')
 
   const today = getToday()
+
+  // Inspirations for when all steps are completed
+  const inspirations = [
+    { icon: '🚶‍♂️', text: 'Jdi na procházku a načerpej energii z přírody' },
+    { icon: '🧘‍♀️', text: 'Medituj 10 minut a zklidni mysl' },
+    { icon: '☕', text: 'Dej si dobrý čaj a odpočiň si' },
+    { icon: '📚', text: 'Přečti si kapitolu z oblíbené knihy' },
+    { icon: '🎵', text: 'Poslouchej hudbu, která tě inspiruje' },
+    { icon: '✍️', text: 'Napiš si deník nebo myšlenky' },
+    { icon: '🌱', text: 'Zalij květiny nebo se starej o rostliny' },
+    { icon: '🎨', text: 'Nakresli něco nebo se věnuj kreativitě' },
+    { icon: '💆‍♀️', text: 'Udělej si masáž nebo relaxační cvičení' },
+    { icon: '🍳', text: 'Uvař si něco dobrého a užij si jídlo' },
+    { icon: '📞', text: 'Zavolej někomu blízkému' },
+    { icon: '🌟', text: 'Poděkuj za dnešní úspěchy' }
+  ]
+
+  // Set random inspiration on component mount
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * inspirations.length)
+    setCurrentInspiration(inspirations[randomIndex].text)
+  }, [])
 
   useEffect(() => {
     fetchData()
@@ -72,7 +96,25 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       ])
 
       setUserSettings(settingsData.settings)
-      setDailyPlanning(planningData.planning)
+      // Ensure an empty planning exists for today
+      if (!planningData.planning) {
+        const created = await fetch('/api/cesta/daily-planning', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: today.toISOString().split('T')[0],
+            planned_steps: []
+          })
+        })
+        if (created.ok) {
+          const createdData = await created.json()
+          setDailyPlanning(createdData.planning)
+        } else {
+          setDailyPlanning(null)
+        }
+      } else {
+        setDailyPlanning(planningData.planning)
+      }
       setUserStreak(statsData.streak)
       setStepStats(statsData.stepStats)
     } catch (error) {
@@ -82,8 +124,17 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
     }
   }
 
+  // Combine dailySteps and newlyAddedSteps for complete step list
+  const allSteps = [...dailySteps, ...newlyAddedSteps]
+  const uniqueSteps = allSteps.reduce((acc, step) => {
+    if (!acc.find(s => s.id === step.id)) {
+      acc.push(step)
+    }
+    return acc
+  }, [] as DailyStep[])
+
   // Get all incomplete steps up to today (including today and overdue)
-  const allIncompleteSteps = dailySteps.filter(step => {
+  const allIncompleteSteps = uniqueSteps.filter(step => {
     if (step.completed) return false
     const stepDate = new Date(step.date)
     stepDate.setHours(0, 0, 0, 0)
@@ -93,18 +144,14 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   // Get planned steps for today
   const plannedStepIds = dailyPlanning?.planned_steps || []
   const completedStepIds = dailyPlanning?.completed_steps || []
-  const plannedSteps = dailySteps.filter(step => plannedStepIds.includes(step.id))
-  const completedPlannedSteps = dailySteps.filter(step => completedStepIds.includes(step.id))
   
-  // Get temp planned steps for planning mode (remove duplicates by id)
-  const allSteps = [...dailySteps, ...newlyAddedSteps]
-  const uniqueSteps = allSteps.reduce((acc, step) => {
-    if (!acc.find(s => s.id === step.id)) {
-      acc.push(step)
-    }
-    return acc
-  }, [] as DailyStep[])
-  const tempPlannedStepsData = uniqueSteps.filter(step => tempPlannedSteps.includes(step.id))
+  const plannedSteps = plannedStepIds
+    .map(stepId => uniqueSteps.find(step => step.id === stepId))
+    .filter(Boolean) as DailyStep[]
+  const completedPlannedSteps = uniqueSteps.filter(step => completedStepIds.includes(step.id))
+  const tempPlannedStepsData = tempPlannedSteps
+    .map(stepId => uniqueSteps.find(step => step.id === stepId))
+    .filter(Boolean) as DailyStep[]
   
   // Get available steps for planning (not completed, not already planned, up to today)
   const allAvailableSteps = [...allIncompleteSteps, ...newlyAddedSteps]
@@ -124,16 +171,26 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const needsPlanning = !dailyPlanning
   const hasEnoughSteps = plannedStepIds.length >= (userSettings?.daily_steps_count || 3)
   const totalPlannedSteps = plannedStepIds.length + completedStepIds.length
+  const hasCompletedAnyStep = completedStepIds.length > 0
   const allPlannedStepsCompleted = totalPlannedSteps > 0 && completedStepIds.length === totalPlannedSteps
   const shouldShowPlanning = needsPlanning && !isLoading
 
   // Auto-show planning mode if user needs to plan (but don't reset if already in planning mode)
   useEffect(() => {
-    if (needsPlanning && !isPlanningMode && !isLoading) {
-      setIsPlanningMode(true)
-      setTempPlannedSteps(plannedStepIds)
+    // No modal-based planning; keep inline planning only
+    if (!isLoading) {
+      setIsPlanningMode(false)
     }
-  }, [needsPlanning, isPlanningMode, isLoading])
+  }, [isLoading])
+
+  // Drop handler into main planned list (inline planning)
+  const handleDropToMain = async () => {
+    if (draggedStepId) {
+      await handleAddStepToDailyPlan(draggedStepId)
+      setDraggedStepId(null)
+      setDragOverIndex(null)
+    }
+  }
 
   const handleAddStepToPlanning = async (stepId: string) => {
     if (!dailyPlanning) return
@@ -162,6 +219,34 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const handleAddStepToTempPlanning = (stepId: string) => {
     if (!tempPlannedSteps.includes(stepId)) {
       setTempPlannedSteps(prev => [...prev, stepId])
+    }
+  }
+
+  const handleAddStepToDailyPlan = async (stepId: string) => {
+    if (!dailyPlanning) return
+    
+    const currentPlannedSteps = dailyPlanning.planned_steps || []
+    if (currentPlannedSteps.includes(stepId)) return
+    
+    const newPlannedSteps = [...currentPlannedSteps, stepId]
+    
+    try {
+      const response = await fetch('/api/cesta/daily-planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: today.toISOString().split('T')[0],
+          planned_steps: newPlannedSteps
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDailyPlanning(data.planning)
+        await fetchData() // Refresh data
+      }
+    } catch (error) {
+      console.error('Error adding step to daily plan:', error)
     }
   }
 
@@ -244,6 +329,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
   const handleDragStart = (e: React.DragEvent, stepId: string) => {
     setDraggedStepId(stepId)
     e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', stepId)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -257,10 +343,114 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       handleAddStepToTempPlanning(draggedStepId)
     }
     setDraggedStepId(null)
+    setDragOverIndex(null)
   }
 
   const handleDragEnd = () => {
     setDraggedStepId(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDropFromSelected = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (draggedStepId && tempPlannedSteps.includes(draggedStepId)) {
+      handleRemoveStepFromTempPlanning(draggedStepId)
+    }
+    setDraggedStepId(null)
+  }
+
+  const handleReorderSteps = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return
+    
+    const newSteps = [...tempPlannedSteps]
+    const [movedStep] = newSteps.splice(fromIndex, 1)
+    
+    // Adjust toIndex if we're moving down (because we removed an item above)
+    const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
+    newSteps.splice(adjustedToIndex, 0, movedStep)
+    
+    setTempPlannedSteps(newSteps)
+  }
+
+  const handleReorderMainSteps = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || !dailyPlanning) return
+    
+    const newStepIds = [...plannedStepIds]
+    const [movedStepId] = newStepIds.splice(fromIndex, 1)
+    
+    // Adjust toIndex if we're moving down (because we removed an item above)
+    const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
+    newStepIds.splice(adjustedToIndex, 0, movedStepId)
+    
+    // Update local state immediately for instant feedback
+    setDailyPlanning(prev => prev ? {
+      ...prev,
+      planned_steps: newStepIds
+    } : null)
+    
+    try {
+      const response = await fetch('/api/cesta/daily-planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: today.toISOString().split('T')[0],
+          planned_steps: newStepIds
+        })
+      })
+
+      if (!response.ok) {
+        // Revert on error
+        await fetchData()
+      }
+    } catch (error) {
+      console.error('Error reordering steps:', error)
+      // Revert on error
+      await fetchData()
+    }
+  }
+
+  const handleDragOverWithReorder = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    
+    if (draggedStepId && tempPlannedSteps.includes(draggedStepId)) {
+      const fromIndex = tempPlannedSteps.indexOf(draggedStepId)
+      if (fromIndex !== -1 && fromIndex !== index) {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const midpoint = rect.top + rect.height / 2
+        const dropIndex = e.clientY < midpoint ? index : index + 1
+        
+        // Only reorder if the drop position would actually change the order
+        const wouldChangeOrder = (fromIndex < dropIndex && fromIndex !== dropIndex - 1) || 
+                                (fromIndex > dropIndex && fromIndex !== dropIndex)
+        
+        if (wouldChangeOrder) {
+          handleReorderSteps(fromIndex, dropIndex)
+        }
+      }
+    }
+  }
+
+  const handleDragOverMainWithReorder = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    
+    if (draggedStepId && plannedStepIds.includes(draggedStepId)) {
+      const fromIndex = plannedStepIds.indexOf(draggedStepId)
+      if (fromIndex !== -1 && fromIndex !== index) {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const midpoint = rect.top + rect.height / 2
+        const dropIndex = e.clientY < midpoint ? index : index + 1
+        
+        // Only reorder if the drop position would actually change the order
+        const wouldChangeOrder = (fromIndex < dropIndex && fromIndex !== dropIndex - 1) || 
+                                (fromIndex > dropIndex && fromIndex !== dropIndex)
+        
+        if (wouldChangeOrder) {
+          handleReorderMainSteps(fromIndex, dropIndex)
+        }
+      }
+    }
   }
 
   const handleRemoveStepFromPlanning = async (stepId: string) => {
@@ -349,16 +539,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
         // Add the new step to newlyAddedSteps immediately
         setNewlyAddedSteps(prev => [...prev, result.step])
         
-        // Add to planning if we need more steps
-        if (needsPlanning) {
-          if (isPlanningMode) {
-            // In planning mode, add to temp planned steps
-            setTempPlannedSteps(prev => [...prev, result.step.id])
-          } else {
-            // In normal mode, add to actual planning
-            await handleAddStepToPlanning(result.step.id)
-          }
-        }
+        // Always add to today's planning when adding a new step
+        await handleAddStepToDailyPlan(result.step.id)
+        
         // Update streak
         await fetch('/api/cesta/user-stats', { method: 'POST' })
         setShowAddStepModal(false)
@@ -492,220 +675,10 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-6">
           
-          {/* Planning Modal - only show if user needs to plan */}
-          {shouldShowPlanning && (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center z-50 p-6">
-              <div className="bg-gradient-to-br from-primary-50 to-primary-100 shadow-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-primary-300" style={{boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)'}}>
-                <div className="p-8 flex-1 overflow-y-auto" style={{backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(139, 69, 19, 0.15) 1px, transparent 0)', backgroundSize: '20px 20px'}}>
-                {/* Header with controls */}
-                <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-primary-400" style={{borderStyle: 'dashed'}}>
-                  <div>
-                    <h3 className="text-2xl font-bold text-primary-900" style={{fontFamily: 'serif', textShadow: '1px 1px 2px rgba(0,0,0,0.1)'}}>📔 Denní plánovač</h3>
-                    <p className="text-sm text-primary-700 mt-2 font-medium">
-                      {tempPlannedSteps.length} z {userSettings?.daily_steps_count || 3} kroků vybráno
-                    </p>
-                  </div>
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={handleSkipToday}
-                      disabled={isSavingPlan}
-                      className="px-5 py-2 text-primary-700 hover:text-primary-900 hover:bg-primary-100 border border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                      style={{fontFamily: 'serif', borderRadius: '0'}}
-                    >
-                      ✏️ Přeskočit
-                    </button>
-                    <button
-                      onClick={handleSavePlanning}
-                      disabled={isSavingPlan}
-                      className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
-                      style={{fontFamily: 'serif', borderRadius: '0', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'}}
-                    >
-                      {isSavingPlan ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Ukládám...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>✓</span>
-                          <span>Uložit plán</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Warning if too many steps */}
-                {tempPlannedSteps.length > (userSettings?.daily_steps_count || 3) && (
-                  <div className="bg-primary-100 border-2 border-primary-400 p-4 mb-6" style={{borderStyle: 'dashed', borderRadius: '0'}}>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl">⚠️</span>
-                      <div>
-                        <h4 className="text-sm font-bold text-primary-900" style={{fontFamily: 'serif'}}>Pozor - hodně kroků!</h4>
-                        <p className="text-xs text-primary-800 font-medium">
-                          Máte vybráno {tempPlannedSteps.length} kroků, doporučujeme {userSettings?.daily_steps_count || 3}.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Single table layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Selected Steps Column */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-primary-100 border-2 border-primary-400" style={{borderStyle: 'dashed', borderRadius: '0'}}>
-                      <div>
-                        <h4 className="text-lg font-bold text-primary-900" style={{fontFamily: 'serif'}}>
-                          📝 Vybráno pro dnešek
-                        </h4>
-                        <p className="text-sm text-primary-800 mt-1 font-medium">
-                          {tempPlannedSteps.length} kroků vybráno
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowAddStepModal(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 transition-colors font-bold"
-                        style={{fontFamily: 'serif', borderRadius: '0', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'}}
-                      >
-                        <span>+</span>
-                        <span>Nový</span>
-                      </button>
-                    </div>
-                    <div 
-                      className="min-h-[300px] border-2 border-dashed border-primary-400 p-6 bg-primary-50 transition-colors"
-                      style={{borderRadius: '0'}}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                    >
-                      {tempPlannedStepsData.length > 0 ? (
-                        <div className="space-y-3">
-                          {tempPlannedStepsData.map((step) => {
-                            const goal = goals.find(g => g.id === step.goal_id)
-                            const stepDate = new Date(step.date)
-                            stepDate.setHours(0, 0, 0, 0)
-                            const isOverdue = stepDate < today
-                            
-                            return (
-                              <div
-                                key={step.id}
-                                className="flex items-center justify-between p-4 bg-white rounded-lg border border-primary-200 hover:border-primary-300 hover:shadow-md transition-all"
-                              >
-                                <div className="flex-1">
-                                  <h5 className="font-medium text-gray-900 text-sm mb-1">{step.title}</h5>
-                                  {step.description && (
-                                    <p className="text-xs text-gray-600 mb-2">{step.description}</p>
-                                  )}
-                                  {goal && (
-                                    <p className="text-xs text-gray-500 mb-2">
-                                      {goal.icon && `${goal.icon} `}{goal.title}
-                                    </p>
-                                  )}
-                                  {isOverdue && (
-                                    <span className="inline-block px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                      Zpožděno
-                                    </span>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() => handleRemoveStepFromTempPlanning(step.id)}
-                                  className="ml-3 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
-                                  title="Odebrat z plánu"
-                                >
-                                  <Circle className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-16 text-primary-600">
-                          <div className="text-4xl mb-4">📝</div>
-                          <p className="text-lg font-bold mb-3 text-primary-800" style={{fontFamily: 'serif'}}>Přetáhněte kroky sem</p>
-                          <p className="text-sm text-primary-700 font-medium">nebo klikněte na dostupné kroky</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Available Steps Column */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-primary-100 border-2 border-primary-400" style={{borderStyle: 'dashed', borderRadius: '0'}}>
-                      <div>
-                        <h4 className="text-lg font-bold text-primary-900" style={{fontFamily: 'serif'}}>
-                          📋 Dostupné kroky
-                        </h4>
-                        <p className="text-sm text-primary-800 mt-1 font-medium">
-                          {availableSteps.length} kroků k dispozici
-                        </p>
-                      </div>
-                    </div>
-                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
-                      {availableSteps.map((step) => {
-                        const goal = goals.find(g => g.id === step.goal_id)
-                        const stepDate = new Date(step.date)
-                        stepDate.setHours(0, 0, 0, 0)
-                        const isOverdue = stepDate < today
-                        const isToday = stepDate.getTime() === today.getTime()
-                        
-                        return (
-                          <div
-                            key={step.id}
-                            className={`p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 hover:shadow-md transition-all cursor-pointer ${
-                              isOverdue ? 'bg-red-50 border-red-200' : isToday ? 'bg-blue-50 border-blue-200' : 'bg-white'
-                            } ${draggedStepId === step.id ? 'opacity-50' : ''}`}
-                            onClick={() => handleAddStepToTempPlanning(step.id)}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, step.id)}
-                            onDragEnd={handleDragEnd}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h5 className="font-medium text-gray-900 text-sm mb-1">{step.title}</h5>
-                                {step.description && (
-                                  <p className="text-xs text-gray-600 mb-2">{step.description}</p>
-                                )}
-                                {goal && (
-                                  <p className="text-xs text-gray-500 mb-2">
-                                    {goal.icon && `${goal.icon} `}{goal.title}
-                                  </p>
-                                )}
-                                <div className="flex items-center space-x-2">
-                                  {isOverdue && (
-                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                      Zpožděno
-                                    </span>
-                                  )}
-                                  {isToday && !isOverdue && (
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                      Dnes
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2 ml-3">
-                                <div className="w-4 h-4 flex flex-col space-y-0.5">
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                </div>
-                                <Plus className="w-4 h-4 text-gray-400" />
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Planning Modal removed - inline planning active */}
 
           {/* Normal Mode - Planned Steps for Today */}
-          {!shouldShowPlanning && (
+          {true && (
             <>
               {/* Normal Mode - Planned Steps for Today */}
               <div className="space-y-4">
@@ -737,80 +710,228 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
                   </div>
                 </div>
 
-            {plannedSteps.length > 0 || allPlannedStepsCompleted ? (
-              <div className="grid gap-3">
-                {plannedSteps.map((step) => {
-                  const goal = goals.find(g => g.id === step.goal_id)
-                  const stepDate = new Date(step.date)
-                  stepDate.setHours(0, 0, 0, 0)
-                  const isOverdue = stepDate < today
-                  
-                  return (
-                    <div
-                      key={step.id}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                        step.completed
-                          ? 'bg-green-50 border-green-200'
-                          : isOverdue
-                          ? 'bg-red-50 border-red-200'
-                          : 'bg-white border-gray-200 hover:border-primary-300'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <button
-                              onClick={() => handleStepComplete(step.id)}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                                step.completed
-                                  ? 'bg-green-500 text-white'
-                                  : 'border-2 border-gray-300 hover:border-primary-500'
-                              }`}
-                            >
-                              {step.completed && <CheckCircle className="w-4 h-4" />}
-                            </button>
-                            <h4 className={`font-medium ${step.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                              {step.title}
-                            </h4>
-                            {isOverdue && (
-                              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                Zpožděno
-                              </span>
+            <div
+              className="border-2 border-dashed border-primary-300 bg-primary-50/20 p-4"
+              onDragOver={handleDragOver}
+              onDrop={handleDropToMain}
+            >
+              {plannedSteps.length > 0 ? (
+                <div className="grid gap-3">
+                  {plannedSteps.map((step, index) => {
+                    const goal = goals.find(g => g.id === step.goal_id)
+                    const stepDate = new Date(step.date)
+                    stepDate.setHours(0, 0, 0, 0)
+                    const isOverdue = stepDate < today
+                    const isDragging = draggedStepId === step.id
+                    const isDragOver = dragOverIndex === index
+                    
+                    return (
+                      <div
+                        key={step.id}
+                        className={`p-4 rounded-lg border transition-all duration-200 cursor-move ${
+                          isDragging 
+                            ? 'opacity-50 scale-95 shadow-lg' 
+                            : isDragOver 
+                            ? 'border-primary-400 bg-primary-50 scale-105 shadow-md' 
+                            : step.completed
+                            ? 'bg-green-50 border-green-200'
+                            : isOverdue
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-primary-50/30 border-primary-200 hover:border-primary-300 hover:bg-primary-50/50'
+                        }`}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, step.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOverMainWithReorder(e, index)}
+                        onDragLeave={() => setDragOverIndex(null)}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          setDragOverIndex(null)
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <div className="text-gray-400 text-lg">⋮⋮</div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <button
+                                  onClick={() => handleStepComplete(step.id)}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                    step.completed
+                                      ? 'bg-green-500 text-white'
+                                      : 'border-2 border-primary-300 hover:border-primary-500'
+                                  }`}
+                                >
+                                  {step.completed && <CheckCircle className="w-4 h-4" />}
+                                </button>
+                                <h4 className={`font-medium ${step.completed ? 'line-through text-gray-500' : 'text-primary-900'}`}>
+                                  {step.title}
+                                </h4>
+                                {isOverdue && (
+                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                    Zpožděno
+                                  </span>
+                                )}
+                              </div>
+                            {step.description && (
+                              <p className="text-sm text-primary-700 mb-2">{step.description}</p>
                             )}
+                            {goal && (
+                              <p className="text-xs text-primary-600">
+                                {goal.icon && `${goal.icon} `}{goal.title}
+                              </p>
+                            )}
+                            </div>
                           </div>
-                          {step.description && (
-                            <p className="text-sm text-gray-600 mb-2">{step.description}</p>
-                          )}
-                          {goal && (
-                            <p className="text-xs text-gray-500">
-                              {goal.icon && `${goal.icon} `}{goal.title}
-                            </p>
-                          )}
+                          <button
+                            onClick={() => handleRemoveStepFromPlanning(step.id)}
+                            className="ml-4 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            title="Odebrat z dnešního plánu"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleRemoveStepFromPlanning(step.id)}
-                          className="ml-4 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                          title="Odebrat z dnešního plánu"
-                        >
-                          <Circle className="w-4 h-4" />
-                        </button>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <div className="text-4xl mb-3">📝</div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Žádné naplánované kroky</h3>
-                <p className="text-xs text-gray-600 mb-4">Přidejte kroky pro dnešek</p>
-                <button
-                  onClick={() => setShowAddStepModal(true)}
-                  className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
-                >
-                  Přidat první krok
-                </button>
-              </div>
+                    )
+                  })}
+                </div>
+              ) : (plannedSteps.length === 0 && hasCompletedAnyStep) ? (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">🎉</div>
+                  <h3 className="text-lg font-semibold text-primary-900 mb-2">Skvělá práce!</h3>
+                  <p className="text-sm text-primary-700 mb-4">
+                    Dokončil jsi všechny kroky z dnešního plánu.
+                  </p>
+                  <div className="bg-white rounded-lg p-4 border border-primary-200">
+                    <div className="text-2xl mb-2">✨</div>
+                    <p className="text-sm text-primary-800 font-medium">
+                      {currentInspiration}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-3">📝</div>
+                  <h3 className="text-sm font-semibold text-primary-900 mb-1">Začněte dnešní plán</h3>
+                  <p className="text-xs text-primary-700 mb-4">
+                    Přetáhněte sem krok z "Další kroky" nebo jej přidejte tlačítkem níže.
+                  </p>
+                  <button
+                    onClick={() => setShowAddStepModal(true)}
+                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
+                  >
+                    Přidat krok
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Other Steps Section - show additional steps below planned ones */}
+            {true && (
+              <>
+                {/* Divider */}
+                <div className="flex items-center my-6">
+                  <div className="flex-1 border-t border-gray-300"></div>
+                  <div className="px-4 text-sm text-gray-500 bg-white">Další kroky</div>
+                  <div className="flex-1 border-t border-gray-300"></div>
+                </div>
+
+                {/* Other Steps */}
+                <div className="space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-200">
+                  {allIncompleteSteps
+                    .filter(step => !plannedStepIds.includes(step.id))
+                    .map((step) => {
+                      const goal = goals.find(g => g.id === step.goal_id)
+                      const stepDate = new Date(step.date)
+                      stepDate.setHours(0, 0, 0, 0)
+                      const isOverdue = stepDate < today
+                      const isToday = stepDate.getTime() === today.getTime()
+                      
+                      return (
+                        <div
+                          key={step.id}
+                          className={`group p-4 rounded-lg border transition-all duration-200 cursor-pointer ${
+                            step.completed
+                              ? 'bg-green-50 border-green-200'
+                              : isOverdue
+                              ? 'bg-red-50 border-red-200'
+                              : 'bg-primary-50/30 border-primary-200 hover:border-primary-300 hover:bg-primary-50/50'
+                          }`}
+                          onClick={() => {
+                            setSelectedStepForDetails(step)
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3 flex-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleStepComplete(step.id)
+                                }}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                                  step.completed
+                                    ? 'bg-green-500 text-white'
+                                    : 'border-2 border-primary-300 hover:border-primary-500'
+                                }`}
+                                title="Označit jako dokončené"
+                              >
+                                {step.completed && <CheckCircle className="w-4 h-4" />}
+                              </button>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <h4 className="font-medium text-primary-900">{step.title}</h4>
+                                  {isOverdue && (
+                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                      Zpožděno
+                                    </span>
+                                  )}
+                                  {isToday && !isOverdue && (
+                                    <span className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full">
+                                      Dnes
+                                    </span>
+                                  )}
+                                </div>
+                                {step.description && (
+                                  <p className="text-sm text-primary-700 mb-2">{step.description}</p>
+                                )}
+                                {goal && (
+                                  <p className="text-xs text-primary-600">
+                                    {goal.icon && `${goal.icon} `}{goal.title}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleAddStepToDailyPlan(step.id)
+                                }}
+                                className="p-1.5 text-primary-500 hover:text-primary-600 hover:bg-primary-100 rounded-full transition-all duration-200"
+                                title="Přidat do dnešního plánu"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedStepForDetails(step)
+                                }}
+                                className="p-1.5 text-primary-500 hover:text-primary-700 hover:bg-primary-100 rounded-full transition-all duration-200"
+                                title="Zobrazit detaily"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              </>
             )}
           </div>
 
@@ -906,6 +1027,78 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           goals={goals}
           width="medium"
         />
+      )}
+
+      {/* Step Details Modal */}
+      {selectedStepForDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Detail kroku</h3>
+              <button
+                onClick={() => setSelectedStepForDetails(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">{selectedStepForDetails.title}</h4>
+                {selectedStepForDetails.description && (
+                  <p className="text-sm text-gray-600 mb-3">{selectedStepForDetails.description}</p>
+                )}
+              </div>
+              
+              {(() => {
+                const goal = goals.find(g => g.id === selectedStepForDetails.goal_id)
+                return goal && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>🎯</span>
+                    <span>{goal.icon && `${goal.icon} `}{goal.title}</span>
+                  </div>
+                )
+              })()}
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <span>📅</span>
+                <span>{formatDateForInput(new Date(selectedStepForDetails.date))}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 text-sm">
+                <span className="text-gray-600">Stav:</span>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  selectedStepForDetails.completed 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {selectedStepForDetails.completed ? 'Dokončeno' : 'Nedokončeno'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setSelectedStepForDetails(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Zavřít
+              </button>
+              {!selectedStepForDetails.completed && (
+                <button
+                  onClick={() => {
+                    handleStepComplete(selectedStepForDetails.id)
+                    setSelectedStepForDetails(null)
+                  }}
+                  className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                >
+                  Označit jako dokončené
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

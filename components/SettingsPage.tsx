@@ -38,9 +38,10 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const [isSavingAppearance, setIsSavingAppearance] = useState(false)
 
   // Daily planning settings state
-  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number } | null>(null)
+  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow' } | null>(null)
   const [editingDailyPlanning, setEditingDailyPlanning] = useState(false)
   const [newDailyStepsCount, setNewDailyStepsCount] = useState(3)
+  const [newWorkflow, setNewWorkflow] = useState<'daily_planning' | 'no_workflow'>('daily_planning')
   const [isSavingDailyPlanning, setIsSavingDailyPlanning] = useState(false)
 
   const colorOptions = colorPalettes
@@ -80,6 +81,7 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
         const userData = await userSettingsRes.json()
         setUserSettings(userData.settings)
         setNewDailyStepsCount(userData.settings?.daily_steps_count || 3)
+        setNewWorkflow(userData.settings?.workflow || 'daily_planning')
       }
       
       // Load appearance settings
@@ -188,7 +190,8 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          daily_steps_count: newDailyStepsCount
+          daily_steps_count: newDailyStepsCount,
+          workflow: newWorkflow
         })
       })
 
@@ -537,7 +540,27 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="space-y-4">
+                    <div className="space-y-6">
+                      {/* Workflow Selection */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Workflow</h3>
+                          <p className="text-sm text-gray-600">
+                            {userSettings?.workflow === 'daily_planning' ? 'Denní plánování' : 'Žádná workflow'}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            userSettings?.workflow === 'daily_planning' 
+                              ? 'bg-primary-100 text-primary-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {userSettings?.workflow === 'daily_planning' ? '📅 Denní plánování' : '📋 Žádná workflow'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Daily Steps Count */}
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-medium text-gray-900">Počet denních kroků</h3>
@@ -552,21 +575,72 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                       
                       {editingDailyPlanning && (
                         <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
-                          <h4 className="font-medium text-gray-900 mb-4">Upravit počet denních kroků</h4>
-                          <div className="space-y-4">
+                          <h4 className="font-medium text-gray-900 mb-4">Upravit nastavení workflow</h4>
+                          <div className="space-y-6">
+                            {/* Workflow Selection */}
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Počet kroků (1-10)
+                              <label className="block text-sm font-medium text-gray-700 mb-3">
+                                Typ workflow
                               </label>
-                              <input
-                                type="number"
-                                min="1"
-                                max="10"
-                                value={newDailyStepsCount}
-                                onChange={(e) => setNewDailyStepsCount(parseInt(e.target.value) || 3)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                              />
+                              <div className="space-y-3">
+                                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                  <input
+                                    type="radio"
+                                    name="workflow"
+                                    value="daily_planning"
+                                    checked={newWorkflow === 'daily_planning'}
+                                    onChange={(e) => setNewWorkflow(e.target.value as 'daily_planning' | 'no_workflow')}
+                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-lg">📅</span>
+                                      <span className="font-medium text-gray-900">Denní plánování</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                      Každý den si naplánujete 3-5 kroků a postupně je plníte
+                                    </p>
+                                  </div>
+                                </label>
+                                
+                                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                  <input
+                                    type="radio"
+                                    name="workflow"
+                                    value="no_workflow"
+                                    checked={newWorkflow === 'no_workflow'}
+                                    onChange={(e) => setNewWorkflow(e.target.value as 'daily_planning' | 'no_workflow')}
+                                    className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-lg">📋</span>
+                                      <span className="font-medium text-gray-900">Žádná workflow</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                      Zobrazí se všechny kroky k dokončení (dnešní a zpožděné)
+                                    </p>
+                                  </div>
+                                </label>
+                              </div>
                             </div>
+
+                            {/* Daily Steps Count - only show for daily_planning */}
+                            {newWorkflow === 'daily_planning' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Počet kroků (1-10)
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  value={newDailyStepsCount}
+                                  onChange={(e) => setNewDailyStepsCount(parseInt(e.target.value) || 3)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                              </div>
+                            )}
                             <div className="flex space-x-3">
                               <button
                                 onClick={handleSaveDailyPlanningSettings}

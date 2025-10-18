@@ -170,6 +170,7 @@ async function initializeCestaDatabase() {
         id VARCHAR(255) PRIMARY KEY,
         user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         daily_steps_count INTEGER DEFAULT 3,
+        workflow VARCHAR(20) DEFAULT 'daily_planning' CHECK (workflow IN ('daily_planning', 'no_workflow')),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         UNIQUE(user_id)

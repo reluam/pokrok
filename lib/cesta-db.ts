@@ -172,6 +172,7 @@ export interface UserSettings {
   id: string
   user_id: string
   daily_steps_count: number
+  workflow: 'daily_planning' | 'no_workflow'
   created_at: Date
   updated_at: Date
 }
@@ -1851,14 +1852,21 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
   }
 }
 
-export async function createOrUpdateUserSettings(userId: string, dailyStepsCount: number): Promise<UserSettings> {
+export async function createOrUpdateUserSettings(userId: string, dailyStepsCount?: number, workflow?: 'daily_planning' | 'no_workflow'): Promise<UserSettings> {
   try {
+    // Get existing settings to preserve values not being updated
+    const existingSettings = await getUserSettings(userId)
+    
+    const finalDailyStepsCount = dailyStepsCount ?? existingSettings?.daily_steps_count ?? 3
+    const finalWorkflow = workflow ?? existingSettings?.workflow ?? 'daily_planning'
+    
     const settings = await sql`
-      INSERT INTO user_settings (id, user_id, daily_steps_count)
-      VALUES (${crypto.randomUUID()}, ${userId}, ${dailyStepsCount})
+      INSERT INTO user_settings (id, user_id, daily_steps_count, workflow)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${finalDailyStepsCount}, ${finalWorkflow})
       ON CONFLICT (user_id) 
       DO UPDATE SET 
-        daily_steps_count = ${dailyStepsCount},
+        daily_steps_count = ${finalDailyStepsCount},
+        workflow = ${finalWorkflow},
         updated_at = NOW()
       RETURNING *
     `

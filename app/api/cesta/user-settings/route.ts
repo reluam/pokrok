@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     
     // If no settings exist, create default ones
     if (!settings) {
-      const defaultSettings = await createOrUpdateUserSettings(dbUser.id, 3)
+      const defaultSettings = await createOrUpdateUserSettings(dbUser.id, 3, 'daily_planning')
       return NextResponse.json({ settings: defaultSettings })
     }
 
@@ -45,13 +45,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const { daily_steps_count } = await request.json()
+    const { daily_steps_count, workflow } = await request.json()
 
-    if (typeof daily_steps_count !== 'number' || daily_steps_count < 1 || daily_steps_count > 10) {
+    if (daily_steps_count && (typeof daily_steps_count !== 'number' || daily_steps_count < 1 || daily_steps_count > 10)) {
       return NextResponse.json({ error: 'Invalid daily_steps_count. Must be between 1 and 10.' }, { status: 400 })
     }
 
-    const settings = await createOrUpdateUserSettings(dbUser.id, daily_steps_count)
+    if (workflow && !['daily_planning', 'no_workflow'].includes(workflow)) {
+      return NextResponse.json({ error: 'Invalid workflow. Must be daily_planning or no_workflow.' }, { status: 400 })
+    }
+
+    const settings = await createOrUpdateUserSettings(dbUser.id, daily_steps_count, workflow)
     
     return NextResponse.json({ settings })
   } catch (error) {
