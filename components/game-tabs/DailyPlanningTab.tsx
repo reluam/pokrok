@@ -228,6 +228,25 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
     }
   }
 
+  const saveOptimumStats = async (plannedStepsCount: number) => {
+    try {
+      const completedStepsCount = dailyPlanning?.completed_steps?.length || 0
+      const totalStepsCount = dailySteps.length + newlyAddedSteps.length
+      
+      await fetch('/api/cesta/optimum-stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plannedStepsCount,
+          completedStepsCount,
+          totalStepsCount
+        })
+      })
+    } catch (error) {
+      console.error('Error saving optimum stats:', error)
+    }
+  }
+
   const handleAddStepToDailyPlan = async (stepId: string) => {
     if (!dailyPlanning) return
     
@@ -249,6 +268,8 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       if (response.ok) {
         const data = await response.json()
         setDailyPlanning(data.planning)
+        // Save optimum stats
+        await saveOptimumStats(newPlannedSteps.length)
         // Don't call fetchData() here as it resets the plan
       }
     } catch (error) {
@@ -285,6 +306,8 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       if (response.ok) {
         const data = await response.json()
         setDailyPlanning(data.planning)
+        // Save optimum stats
+        await saveOptimumStats(newPlannedSteps.length)
         // Don't call fetchData() here as it resets the plan
       }
     } catch (error) {
@@ -552,7 +575,10 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
         })
       })
 
-      if (!response.ok) {
+      if (response.ok) {
+        // Save optimum stats
+        await saveOptimumStats(newStepIds.length)
+      } else {
         // Revert on error
         await fetchData()
       }
@@ -676,6 +702,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           planned_steps: updatedPlannedSteps,
           completed_steps: updatedCompletedSteps
         })
+
+        // Save optimum stats
+        await saveOptimumStats(updatedPlannedSteps.length)
       }
 
       // Update newlyAddedSteps to mark step as completed
@@ -771,6 +800,22 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
             </div>
             <div className="text-center">
               <div className="flex items-center space-x-1">
+                <Target className="w-4 h-4 text-blue-500" />
+                <span className={`font-semibold ${
+                  (plannedStepIds.length - (userSettings?.daily_steps_count || 3)) > 0 
+                    ? 'text-orange-600' 
+                    : (plannedStepIds.length - (userSettings?.daily_steps_count || 3)) < 0 
+                    ? 'text-red-600' 
+                    : 'text-green-600'
+                }`}>
+                  {(plannedStepIds.length - (userSettings?.daily_steps_count || 3)) > 0 ? '+' : ''}
+                  {plannedStepIds.length - (userSettings?.daily_steps_count || 3)}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">Optimum</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center space-x-1">
                 <TrendingUp className="w-4 h-4 text-green-500" />
                 <span className="font-semibold">{stepStats.completed}/{stepStats.total}</span>
               </div>
@@ -796,24 +841,6 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
           </div>
         )}
 
-        {hasEnoughSteps && !allPlannedStepsCompleted && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-green-800">Denní plán je připraven</h3>
-                <p className="text-xs text-green-700">
-                  Máte naplánováno {plannedStepIds.length} kroků na dnešek
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-sm font-semibold text-green-800">
-                  ✓ {completedStepIds.length}/{totalPlannedSteps}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
 

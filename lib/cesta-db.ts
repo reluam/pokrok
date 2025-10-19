@@ -213,6 +213,7 @@ export interface DailyStats {
   planned_steps_count: number
   completed_steps_count: number
   total_steps_count: number
+  optimum_deviation: number // How many steps over/under the daily target
   created_at: Date
   updated_at: Date
 }
@@ -2125,17 +2126,19 @@ export async function createOrUpdateDailyStats(
   date: Date, 
   plannedStepsCount: number, 
   completedStepsCount: number, 
-  totalStepsCount: number
+  totalStepsCount: number,
+  optimumDeviation: number
 ): Promise<DailyStats> {
   try {
     const stats = await sql`
-      INSERT INTO daily_stats (id, user_id, date, planned_steps_count, completed_steps_count, total_steps_count)
-      VALUES (${crypto.randomUUID()}, ${userId}, ${date.toISOString().split('T')[0]}, ${plannedStepsCount}, ${completedStepsCount}, ${totalStepsCount})
+      INSERT INTO daily_stats (id, user_id, date, planned_steps_count, completed_steps_count, total_steps_count, optimum_deviation)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${date.toISOString().split('T')[0]}, ${plannedStepsCount}, ${completedStepsCount}, ${totalStepsCount}, ${optimumDeviation})
       ON CONFLICT (user_id, date) 
       DO UPDATE SET 
         planned_steps_count = daily_stats.planned_steps_count + ${plannedStepsCount},
         completed_steps_count = daily_stats.completed_steps_count + ${completedStepsCount},
         total_steps_count = daily_stats.total_steps_count + ${totalStepsCount},
+        optimum_deviation = ${optimumDeviation},
         updated_at = NOW()
       RETURNING *
     `

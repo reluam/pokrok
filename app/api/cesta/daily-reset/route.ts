@@ -55,13 +55,17 @@ export async function POST(request: NextRequest) {
       return stepDate.getTime() === yesterday.getTime()
     })
 
+    // Calculate optimum deviation (how many steps over/under the daily target)
+    const optimumDeviation = plannedStepsCount - userSettings.daily_steps_count
+
     // Update user statistics
     await createOrUpdateDailyStats(
       dbUser.id, 
       yesterday, 
       plannedStepsCount, 
       completedStepsCount, 
-      yesterdayStepsFiltered.length
+      yesterdayStepsFiltered.length,
+      optimumDeviation
     )
 
     // Create empty planning for today
