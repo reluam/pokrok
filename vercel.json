@@ -5,8 +5,17 @@
     },
     "app/api/articles/[id]/route.ts": {
       "maxDuration": 10
+    },
+    "app/api/cesta/daily-reset/route.ts": {
+      "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/daily-reset",
+      "schedule": "0 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

@@ -38,7 +38,7 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const [isSavingAppearance, setIsSavingAppearance] = useState(false)
 
   // Workflow settings state
-  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow', filters?: any } | null>(null)
+  const [userSettings, setUserSettings] = useState<{ daily_steps_count: number, workflow: 'daily_planning' | 'no_workflow', daily_reset_hour: number, filters?: any } | null>(null)
   const [newDailyStepsCount, setNewDailyStepsCount] = useState(3)
   const [newWorkflow, setNewWorkflow] = useState<'denni_planovani' | 'zadna_workflow'>('denni_planovani')
   const [isSavingWorkflow, setIsSavingWorkflow] = useState(false)
@@ -225,6 +225,31 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
       alert('Chyba při změně workflow')
     } finally {
       setIsSavingWorkflow(false)
+    }
+  }
+
+  const handleSettingChange = async (field: string, value: any) => {
+    if (!userSettings) return
+    
+    try {
+      const response = await fetch('/api/cesta/user-settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          [field]: value
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUserSettings(data.settings)
+      } else {
+        console.error('Error updating setting:', field, value)
+      }
+    } catch (error) {
+      console.error('Error updating setting:', error)
     }
   }
 
@@ -713,6 +738,30 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                                 className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-semibold"
                               />
                               <span className="text-gray-600">kroků denně</span>
+                            </div>
+                          </div>
+
+                          {/* Čas resetování denního plánu */}
+                          <div className="bg-white rounded-lg p-6 border border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h4 className="font-medium text-gray-900">Čas resetování denního plánu</h4>
+                                <p className="text-sm text-gray-600">
+                                  V kolik hodin se má denní plán vyresetovat (0-23)
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-4">
+                              <input
+                                type="number"
+                                min="0"
+                                max="23"
+                                value={userSettings?.daily_reset_hour || 0}
+                                onChange={(e) => handleSettingChange('daily_reset_hour', parseInt(e.target.value) || 0)}
+                                className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-semibold"
+                              />
+                              <span className="text-gray-600">hodin (00:00 = půlnoc)</span>
                             </div>
                           </div>
 

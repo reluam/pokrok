@@ -101,29 +101,9 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
 
       setUserSettings(settingsData.settings)
       
-      // Check if we need to reset daily planning for a new day
+      // Simply set the daily planning - no complex reset logic
       if (planningData.planning) {
-        const planningDate = new Date(planningData.planning.date)
-        const todayDate = new Date(today.toISOString().split('T')[0])
-        
-        // If planning is from a previous day, reset it for today
-        if (planningDate.getTime() !== todayDate.getTime()) {
-          console.log('Resetting daily planning for new day')
-          const resetPlanning = await fetch('/api/cesta/daily-planning', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              date: today.toISOString().split('T')[0],
-              planned_steps: []
-            })
-          })
-          if (resetPlanning.ok) {
-            const resetData = await resetPlanning.json()
-            setDailyPlanning(resetData.planning)
-          }
-        } else {
-          setDailyPlanning(planningData.planning)
-        }
+        setDailyPlanning(planningData.planning)
       } else {
         // Ensure an empty planning exists for today
         const created = await fetch('/api/cesta/daily-planning', {

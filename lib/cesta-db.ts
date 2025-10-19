@@ -173,6 +173,7 @@ export interface UserSettings {
   user_id: string
   daily_steps_count: number
   workflow: 'daily_planning' | 'no_workflow'
+  daily_reset_hour: number
   filters?: {
     showToday: boolean
     showOverdue: boolean
@@ -201,6 +202,17 @@ export interface UserStreak {
   current_streak: number
   longest_streak: number
   last_activity_date: Date
+  created_at: Date
+  updated_at: Date
+}
+
+export interface DailyStats {
+  id: string
+  user_id: string
+  date: Date
+  planned_steps_count: number
+  completed_steps_count: number
+  total_steps_count: number
   created_at: Date
   updated_at: Date
 }
@@ -1918,6 +1930,7 @@ export async function createOrUpdateUserSettings(
   userId: string, 
   dailyStepsCount?: number, 
   workflow?: 'daily_planning' | 'no_workflow',
+  dailyResetHour?: number,
   filters?: UserSettings['filters']
 ): Promise<UserSettings> {
   try {
@@ -1926,6 +1939,7 @@ export async function createOrUpdateUserSettings(
     
     const finalDailyStepsCount = dailyStepsCount ?? existingSettings?.daily_steps_count ?? 3
     const finalWorkflow = workflow ?? existingSettings?.workflow ?? 'daily_planning'
+    const finalDailyResetHour = dailyResetHour ?? existingSettings?.daily_reset_hour ?? 0
     const finalFilters = filters ?? existingSettings?.filters ?? {
       showToday: true,
       showOverdue: true,
@@ -1936,12 +1950,13 @@ export async function createOrUpdateUserSettings(
     }
     
     const settings = await sql`
-      INSERT INTO user_settings (id, user_id, daily_steps_count, workflow, filters)
-      VALUES (${crypto.randomUUID()}, ${userId}, ${finalDailyStepsCount}, ${finalWorkflow}, ${JSON.stringify(finalFilters)})
+      INSERT INTO user_settings (id, user_id, daily_steps_count, workflow, daily_reset_hour, filters)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${finalDailyStepsCount}, ${finalWorkflow}, ${finalDailyResetHour}, ${JSON.stringify(finalFilters)})
       ON CONFLICT (user_id) 
       DO UPDATE SET 
         daily_steps_count = ${finalDailyStepsCount},
         workflow = ${finalWorkflow},
+        daily_reset_hour = ${finalDailyResetHour},
         filters = ${JSON.stringify(finalFilters)},
         updated_at = NOW()
       RETURNING *
@@ -2101,5 +2116,60 @@ export async function getUserStepStatistics(userId: string): Promise<{ completed
   } catch (error) {
     console.error('Error fetching user step statistics:', error)
     return { completed: 0, total: 0 }
+  }
+}
+
+// Daily Statistics functions
+export async function createOrUpdateDailyStats(
+  userId: string, 
+  date: Date, 
+  plannedStepsCount: number, 
+  completedStepsCount: number, 
+  totalStepsCount: number
+): Promise<DailyStats> {
+  try {
+    const stats = await sql`
+      INSERT INTO daily_stats (id, user_id, date, planned_steps_count, completed_steps_count, total_steps_count)
+      VALUES (${crypto.randomUUID()}, ${userId}, ${date.toISOString().split('T')[0]}, ${plannedStepsCount}, ${completedStepsCount}, ${totalStepsCount})
+      ON CONFLICT (user_id, date) 
+      DO UPDATE SET 
+        planned_steps_count = daily_stats.planned_steps_count + ${plannedStepsCount},
+        completed_steps_count = daily_stats.completed_steps_count + ${completedStepsCount},
+        total_steps_count = daily_stats.total_steps_count + ${totalStepsCount},
+        updated_at = NOW()
+      RETURNING *
+    `
+    return stats[0] as DailyStats
+  } catch (error) {
+    console.error('Error creating/updating daily stats:', error)
+    throw error
+  }
+}
+
+export async function getDailyStats(userId: string, date: Date): Promise<DailyStats | null> {
+  try {
+    const stats = await sql`
+      SELECT * FROM daily_stats 
+      WHERE user_id = ${userId} AND date = ${date.toISOString().split('T')[0]}
+    `
+    return stats[0] as DailyStats || null
+  } catch (error) {
+    console.error('Error fetching daily stats:', error)
+    return null
+  }
+}
+
+export async function getUserDailyStats(userId: string, days: number = 30): Promise<DailyStats[]> {
+  try {
+    const stats = await sql`
+      SELECT * FROM daily_stats 
+      WHERE user_id = ${userId} 
+      ORDER BY date DESC 
+      LIMIT ${days}
+    `
+    return stats as DailyStats[]
+  } catch (error) {
+    console.error('Error fetching user daily stats:', error)
+    return []
   }
 }
