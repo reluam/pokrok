@@ -100,8 +100,32 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       ])
 
       setUserSettings(settingsData.settings)
-      // Ensure an empty planning exists for today
-      if (!planningData.planning) {
+      
+      // Check if we need to reset daily planning for a new day
+      if (planningData.planning) {
+        const planningDate = new Date(planningData.planning.date)
+        const todayDate = new Date(today.toISOString().split('T')[0])
+        
+        // If planning is from a previous day, reset it for today
+        if (planningDate.getTime() !== todayDate.getTime()) {
+          console.log('Resetting daily planning for new day')
+          const resetPlanning = await fetch('/api/cesta/daily-planning', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: today.toISOString().split('T')[0],
+              planned_steps: []
+            })
+          })
+          if (resetPlanning.ok) {
+            const resetData = await resetPlanning.json()
+            setDailyPlanning(resetData.planning)
+          }
+        } else {
+          setDailyPlanning(planningData.planning)
+        }
+      } else {
+        // Ensure an empty planning exists for today
         const created = await fetch('/api/cesta/daily-planning', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -116,8 +140,6 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
         } else {
           setDailyPlanning(null)
         }
-      } else {
-        setDailyPlanning(planningData.planning)
       }
       setUserStreak(statsData.streak)
       setStepStats(statsData.stepStats)
@@ -247,7 +269,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       if (response.ok) {
         const data = await response.json()
         setDailyPlanning(data.planning)
-        await fetchData() // Refresh data
+        // Don't call fetchData() here as it resets the plan
       }
     } catch (error) {
       console.error('Error adding step to daily plan:', error)
@@ -283,7 +305,7 @@ export const DailyPlanningTab = memo(function DailyPlanningTab({
       if (response.ok) {
         const data = await response.json()
         setDailyPlanning(data.planning)
-        await fetchData() // Refresh data
+        // Don't call fetchData() here as it resets the plan
       }
     } catch (error) {
       console.error('Error adding step to daily plan at position:', error)
