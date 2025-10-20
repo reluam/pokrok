@@ -12,6 +12,18 @@ export interface User {
   updated_at: Date
 }
 
+export interface Area {
+  id: string
+  user_id: string
+  name: string
+  description?: string
+  color: string
+  icon?: string
+  order: number
+  created_at: Date
+  updated_at: Date
+}
+
 export interface Value {
   id: string
   user_id: string
@@ -41,6 +53,7 @@ export interface Goal {
   progress_current?: number
   progress_unit?: string
   icon?: string
+  area_id?: string
   created_at: string | Date
   updated_at: string | Date
 }
@@ -61,6 +74,7 @@ export interface DailyStep {
   custom_type_name?: string
   deadline?: Date
   metric_id?: string
+  area_id?: string
   isCompleting?: boolean // Loading state for completion
 }
 
@@ -896,70 +910,91 @@ export async function getUpdatedGoalAfterStepCompletion(goalId: string): Promise
 
 export async function updateGoal(goalId: string, userId: string, goalData: Partial<Goal>): Promise<Goal> {
   try {
+    console.log('DB: updateGoal called with:', { goalId, userId, goalData })
+    // Ensure optional columns exist for forward compatibility
+    try {
+      await sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS area_id VARCHAR(255)`
+    } catch (e) {
+      console.warn('DB: Failed to ensure area_id column exists (may already exist):', e)
+    }
     // Build dynamic update query to only update provided fields
-    const updateFields = []
-    const values = []
-    
+    const setParts: string[] = []
+    const values: any[] = []
+
     if (goalData.title !== undefined) {
-      updateFields.push('title = $' + (values.length + 1))
+      setParts.push(`title = $${setParts.length + 1}`)
       values.push(goalData.title)
     }
     if (goalData.description !== undefined) {
-      updateFields.push('description = $' + (values.length + 1))
+      setParts.push(`description = $${setParts.length + 1}`)
       values.push(goalData.description)
     }
     if (goalData.target_date !== undefined) {
-      updateFields.push('target_date = $' + (values.length + 1))
+      setParts.push(`target_date = $${setParts.length + 1}`)
       values.push(goalData.target_date)
     }
     if (goalData.priority !== undefined) {
-      updateFields.push('priority = $' + (values.length + 1))
+      setParts.push(`priority = $${setParts.length + 1}`)
       values.push(goalData.priority)
     }
     if (goalData.category !== undefined) {
-      updateFields.push('category = $' + (values.length + 1))
+      setParts.push(`category = $${setParts.length + 1}`)
       values.push(goalData.category)
     }
     if (goalData.progress_type !== undefined) {
-      updateFields.push('progress_type = $' + (values.length + 1))
+      setParts.push(`progress_type = $${setParts.length + 1}`)
       values.push(goalData.progress_type)
     }
     if (goalData.progress_target !== undefined) {
-      updateFields.push('progress_target = $' + (values.length + 1))
+      setParts.push(`progress_target = $${setParts.length + 1}`)
       values.push(goalData.progress_target)
     }
     if (goalData.progress_current !== undefined) {
-      updateFields.push('progress_current = $' + (values.length + 1))
+      setParts.push(`progress_current = $${setParts.length + 1}`)
       values.push(goalData.progress_current)
     }
     if (goalData.progress_unit !== undefined) {
-      updateFields.push('progress_unit = $' + (values.length + 1))
+      setParts.push(`progress_unit = $${setParts.length + 1}`)
       values.push(goalData.progress_unit)
     }
-    
+    if (goalData.area_id !== undefined && goalData.area_id !== null) {
+      setParts.push(`area_id = $${setParts.length + 1}`)
+      values.push(goalData.area_id)
+      console.log('DB: Adding area_id to update:', goalData.area_id)
+    } else if (goalData.area_id === null) {
+      setParts.push('area_id = NULL')
+      console.log('DB: Setting area_id to NULL')
+    } else {
+      console.log('DB: area_id not provided or undefined:', goalData.area_id)
+    }
+
     // Always update the updated_at field
-    updateFields.push('updated_at = NOW()')
-    
-    if (updateFields.length === 1) { // Only updated_at
+    setParts.push('updated_at = NOW()')
+
+    if (setParts.length === 1) { // Only updated_at
       throw new Error('No fields to update')
     }
-    
+
     const query = `
       UPDATE goals 
-      SET ${updateFields.join(', ')}
+      SET ${setParts.join(', ')}
       WHERE id = $${values.length + 1} AND user_id = $${values.length + 2}
       RETURNING *
     `
-    
-    values.push(goalId, userId)
-    
-    const updatedGoal = await sql.unsafe(query) as unknown as any[]
-    
-    if (updatedGoal.length === 0) {
+
+    const params = [...values, goalId, userId]
+    console.log('DB: Executing query:', query)
+    console.log('DB: With values:', params)
+
+    const updated = await sql.query(query, params)
+    const row = (updated as any[])[0]
+    console.log('DB: Updated goal result:', row)
+
+    if (!row) {
       throw new Error('Goal not found or access denied')
     }
-    
-    return updatedGoal[0] as Goal
+
+    return row as Goal
   } catch (error) {
     console.error('Error updating goal:', error)
     throw error
@@ -1227,8 +1262,8 @@ export async function createCategorySettings(
   try {
     const id = crypto.randomUUID()
     const result = await sql`
-      INSERT INTO category_settings (id, user_id, short_term_days, long_term_days)
-      VALUES (${id}, ${userId}, ${shortTermDays}, ${longTermDays})
+      INSERT INTO category_settings (id, user_id, category, short_term_days, long_term_days)
+      VALUES (${id}, ${userId}, 'short-term', ${shortTermDays}, ${longTermDays})
       RETURNING *
     `
     return result[0] as CategorySettings
@@ -2174,5 +2209,133 @@ export async function getUserDailyStats(userId: string, days: number = 30): Prom
   } catch (error) {
     console.error('Error fetching user daily stats:', error)
     return []
+  }
+}
+
+// Areas functions
+export async function createArea(
+  userId: string,
+  name: string,
+  description?: string,
+  color: string = '#3B82F6',
+  icon?: string,
+  order: number = 0
+): Promise<Area> {
+  try {
+    const area = await sql`
+      INSERT INTO areas (id, user_id, name, description, color, icon, "order")
+      VALUES (${crypto.randomUUID()}, ${userId}, ${name}, ${description || null}, ${color}, ${icon || null}, ${order})
+      RETURNING *
+    `
+    return area[0] as Area
+  } catch (error) {
+    console.error('Error creating area:', error)
+    throw error
+  }
+}
+
+export async function getAreas(userId: string): Promise<Area[]> {
+  try {
+    const areas = await sql`
+      SELECT * FROM areas 
+      WHERE user_id = ${userId} 
+      ORDER BY "order" ASC, created_at ASC
+    `
+    return areas as Area[]
+  } catch (error) {
+    console.error('Error fetching areas:', error)
+    return []
+  }
+}
+
+export async function updateArea(
+  areaId: string,
+  updates: Partial<Pick<Area, 'name' | 'description' | 'color' | 'icon' | 'order'>>
+): Promise<Area> {
+  try {
+    const setParts = []
+    const values = []
+    
+    if (updates.name !== undefined) {
+      setParts.push(`name = $${setParts.length + 1}`)
+      values.push(updates.name)
+    }
+    if (updates.description !== undefined) {
+      setParts.push(`description = $${setParts.length + 1}`)
+      values.push(updates.description)
+    }
+    if (updates.color !== undefined) {
+      setParts.push(`color = $${setParts.length + 1}`)
+      values.push(updates.color)
+    }
+    if (updates.icon !== undefined) {
+      setParts.push(`icon = $${setParts.length + 1}`)
+      values.push(updates.icon)
+    }
+    if (updates.order !== undefined) {
+      setParts.push(`"order" = $${setParts.length + 1}`)
+      values.push(updates.order)
+    }
+    
+    if (setParts.length === 0) {
+      throw new Error('No updates provided')
+    }
+    
+    setParts.push('updated_at = NOW()')
+    
+    // Use a safer approach with template literals
+    const query = `
+      UPDATE areas 
+      SET ${setParts.join(', ')}
+      WHERE id = $${values.length + 1}
+      RETURNING *
+    `
+    
+    const area = await sql.query(query, [...values, areaId])
+    return area[0] as Area
+  } catch (error) {
+    console.error('Error updating area:', error)
+    throw error
+  }
+}
+
+export async function deleteArea(areaId: string): Promise<void> {
+  try {
+    await sql`
+      DELETE FROM areas 
+      WHERE id = ${areaId}
+    `
+  } catch (error) {
+    console.error('Error deleting area:', error)
+    throw error
+  }
+}
+
+export async function createDefaultAreas(userId: string): Promise<Area[]> {
+  const defaultAreas = [
+    { name: 'Finance', description: 'Finanční cíle a plánování', color: '#10B981', icon: '💰', order: 0 },
+    { name: 'Zdraví', description: 'Fyzické i duševní zdraví', color: '#EF4444', icon: '❤️', order: 1 },
+    { name: 'Vztahy', description: 'Rodina, přátelé, partnerství', color: '#8B5CF6', icon: '👥', order: 2 },
+    { name: 'Kariéra', description: 'Profesní růst a pracovní cíle', color: '#F59E0B', icon: '💼', order: 3 },
+    { name: 'Zábava a odpočinek', description: 'Volný čas a relaxace', color: '#06B6D4', icon: '🎯', order: 4 }
+  ]
+
+  try {
+    const areas = []
+    for (const areaData of defaultAreas) {
+      const area = await createArea(
+        userId,
+        areaData.name,
+        areaData.description,
+        areaData.color,
+        areaData.icon,
+        areaData.order
+      )
+      areas.push(area)
+    }
+    return areas
+  } catch (error) {
+    console.error('Error creating default areas:', error)
+    throw error
   }
 }

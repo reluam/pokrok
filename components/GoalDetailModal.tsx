@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, memo, useEffect } from 'react'
-import { Goal, DailyStep, GoalMetric, Note } from '@/lib/cesta-db'
-import { X, Calendar, Target, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type, FileText } from 'lucide-react'
+import { Goal, DailyStep, GoalMetric, Note, Area } from '@/lib/cesta-db'
+import { X, Calendar, Target, Settings, CheckCircle, Circle, AlertCircle, Info, Gauge, Plus, Edit, Trash2, DollarSign, Percent, Ruler, Clock as ClockIcon, Type, FileText, Palette } from 'lucide-react'
 import { Tooltip } from './Tooltip'
 import { getIconComponent, getIconEmoji } from '@/lib/icon-utils'
 import { UnifiedStepModal } from './UnifiedStepModal'
@@ -44,6 +44,9 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   const [isLoadingNotes, setIsLoadingNotes] = useState(false)
   const [showAddNoteModal, setShowAddNoteModal] = useState(false)
   const [isSubmittingNote, setIsSubmittingNote] = useState(false)
+  const [areas, setAreas] = useState<Area[]>([])
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Load metrics when metrics tab is opened
   useEffect(() => {
@@ -58,6 +61,11 @@ export const GoalDetailModal = memo(function GoalDetailModal({
       loadNotes()
     }
   }, [activeTab, goal.id])
+
+  // Load areas on mount
+  useEffect(() => {
+    loadAreas()
+  }, [])
 
   const loadMetrics = async () => {
     setIsLoadingMetrics(true)
@@ -100,33 +108,87 @@ export const GoalDetailModal = memo(function GoalDetailModal({
     }
   }
 
-  const handleSave = async () => {
+  const loadAreas = async () => {
+    setIsLoadingAreas(true)
     try {
-      const response = await fetch(`/api/cesta/goals/${goal.id}`, {
+      const response = await fetch('/api/cesta/areas')
+      if (response.ok) {
+        const data = await response.json()
+        setAreas(data.areas || [])
+      }
+    } catch (error) {
+      console.error('Error loading areas:', error)
+    } finally {
+      setIsLoadingAreas(false)
+    }
+  }
+
+  const handleSave = async () => {
+    console.log('🎯 GoalDetailModal: handleSave called')
+    console.log('🎯 GoalDetailModal: editedGoal:', editedGoal)
+    setIsSaving(true)
+    try {
+      const url = `${window.location.origin}/api/cesta/goals/${goal.id}`
+      console.log('🎯 GoalDetailModal: Current location:', window.location.href)
+      console.log('🎯 GoalDetailModal: Current origin:', window.location.origin)
+      const payload = {
+        title: editedGoal.title,
+        description: editedGoal.description,
+        target_date: editedGoal.target_date,
+        area_id: editedGoal.area_id
+      }
+      
+      console.log('🎯 GoalDetailModal: Making PATCH request to:', url)
+      console.log('🎯 GoalDetailModal: Payload:', payload)
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: editedGoal.title,
-          description: editedGoal.description,
-          target_date: editedGoal.target_date
-        })
+        body: JSON.stringify(payload)
       })
 
+      console.log('🎯 GoalDetailModal: save response status:', response.status)
+      console.log('🎯 GoalDetailModal: save response headers:', Object.fromEntries(response.headers.entries()))
+      let bodyText = ''
+      try {
+        bodyText = await response.text()
+        console.log('🎯 GoalDetailModal: save response body:', bodyText)
+      } catch (e) {
+        console.warn('🎯 GoalDetailModal: failed to read response text')
+      }
+
       if (response.ok) {
-        // Call the parent's onEdit callback to refresh data
-        if (onEdit) {
-          onEdit(editedGoal)
+        let updated
+        try {
+          updated = bodyText ? JSON.parse(bodyText) : null
+        } catch (e) {
+          console.warn('🎯 GoalDetailModal: failed to parse JSON, using editedGoal')
         }
-        // Update local goal state
-        Object.assign(goal, editedGoal)
+
+        const serverGoal = updated?.goal ?? editedGoal
+
+        // Call the parent's onEdit callback to refresh data with server goal
+        if (onEdit) {
+          onEdit(serverGoal as any)
+        }
+        // Update local goal state from server
+        Object.assign(goal, serverGoal)
+        // Close the modal after successful save
+        onClose()
       } else {
-        const error = await response.json()
-        console.error('Error saving goal:', error)
-        alert(`${translations?.app.errorSavingGoal || 'Chyba při ukládání cíle'}: ${error.error || (translations?.common.unknownError || 'Neznámá chyba')}`)
+        let errorMsg = 'Unknown error'
+        try {
+          const parsed = bodyText ? JSON.parse(bodyText) : null
+          errorMsg = parsed?.error || errorMsg
+        } catch {}
+        console.error('Error saving goal:', errorMsg)
+        alert(`${translations?.app.errorSavingGoal || 'Chyba při ukládání cíle'}: ${errorMsg || (translations?.common.unknownError || 'Neznámá chyba')}`)
       }
     } catch (error) {
       console.error('Error saving goal:', error)
       alert(translations?.app.errorSavingGoal || 'Chyba při ukládání cíle')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -136,7 +198,12 @@ export const GoalDetailModal = memo(function GoalDetailModal({
   }
 
   const handleFieldChange = (field: keyof Goal, value: any) => {
-    setEditedGoal(prev => ({ ...prev, [field]: value }))
+    console.log('🎯 GoalDetailModal: handleFieldChange called:', { field, value })
+    setEditedGoal(prev => {
+      const newGoal = { ...prev, [field]: value }
+      console.log('🎯 GoalDetailModal: new editedGoal:', newGoal)
+      return newGoal
+    })
   }
 
   const handleAddMetric = async (metricData: any) => {
@@ -401,6 +468,31 @@ export const GoalDetailModal = memo(function GoalDetailModal({
                     onChange={(e) => handleFieldChange('target_date', e.target.value ? new Date(e.target.value) : null)}
                     className="px-2 py-1 text-sm border border-gray-300 rounded focus:border-primary-500 focus:outline-none hover:border-gray-400 transition-colors"
                   />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4 mb-3">
+                <div className="flex items-center space-x-2">
+                  <Palette className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Životní oblast:</span>
+                  <select
+                    value={editedGoal.area_id || ''}
+                    onChange={(e) => handleFieldChange('area_id', e.target.value || null)}
+                    className="px-2 py-1 text-sm border border-gray-300 rounded focus:border-primary-500 focus:outline-none hover:border-gray-400 transition-colors"
+                  >
+                    <option value="">Bez oblasti</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id}>
+                        {area.name}
+                      </option>
+                    ))}
+                  </select>
+                  {editedGoal.area_id && areas.find(a => a.id === editedGoal.area_id) && (
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: areas.find(a => a.id === editedGoal.area_id)?.color }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1175,10 +1267,17 @@ export const GoalDetailModal = memo(function GoalDetailModal({
             {translations?.common.close || 'Zavřít'}
           </button>
           <button
-            onClick={handleSave}
-            className="px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors"
+            onClick={() => {
+              console.log('🎯 GoalDetailModal: Save button clicked')
+              handleSave()
+            }}
+            disabled={isSaving}
+            className="px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            {translations?.common.save || 'Uložit'}
+            {isSaving && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
+            <span>{translations?.common.save || 'Uložit'}</span>
           </button>
           {onDelete && (
             <button
