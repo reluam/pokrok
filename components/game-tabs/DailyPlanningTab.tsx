@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, memo, useRef } from 'react'
+import React, { useState, useEffect, memo, useRef, useCallback } from 'react'
 import { DailyStep, Event, Goal, Value, DailyPlanning, Area } from '@/lib/cesta-db'
 import { Calendar, Target, MapPin, Plus, Check, X, ArrowLeft, Footprints, RotateCcw } from 'lucide-react'
 import { useTranslations } from '@/lib/use-translations'
@@ -43,6 +43,13 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
   const [areas, setAreas] = useState<Area[]>([])
   const [isDirty, setIsDirty] = useState(false)
   const lastSavedRef = useRef<string>('')
+  const editingStepRef = useRef<DailyStep | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Update ref when editingStep changes
+  useEffect(() => {
+    editingStepRef.current = editingStep
+  }, [editingStep])
 
   // Get today's date
   const today = new Date()
@@ -74,31 +81,94 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
     return new Date(a.date).getTime() - new Date(b.date).getTime()
   })
 
-  // Auto-save functionality
-  useEffect(() => {
-    if (!editingStep || editingStep.id === 'new-step') return
+  // Auto-save function
+  const performAutoSave = useCallback(async () => {
+    const currentStep = editingStepRef.current
+    if (!currentStep) return
 
-    const timeoutId = setTimeout(async () => {
-      if (onStepUpdate && isDirty) {
-        setIsSaving(true)
-        setSaveStatus('saving')
-        
-        try {
-          await onStepUpdate(editingStep.id, editingStep)
-          setSaveStatus('saved')
-          setTimeout(() => setSaveStatus('idle'), 2000)
-          lastSavedRef.current = JSON.stringify(editingStep)
-          setIsDirty(false)
-        } catch (error) {
-          console.error('Error saving step:', error)
-        } finally {
-          setIsSaving(false)
+    console.log('⏰ Autosave timeout executing:', { 
+      stepId: currentStep.id, 
+      title: currentStep.title 
+    })
+    
+    setIsSaving(true)
+    setSaveStatus('saving')
+    
+    try {
+      if (currentStep.id === 'new-step') {
+        // Auto-save new step only if it has a title
+        if (!onStepAdd || !currentStep.title?.trim()) {
+          console.log('❌ New step autosave skipped:', { 
+            hasOnStepAdd: !!onStepAdd, 
+            hasTitle: !!currentStep.title?.trim() 
+          })
+          return
         }
+
+        console.log('✅ Saving new step:', currentStep.title)
+
+        const newStep: Partial<DailyStep> = {
+          title: currentStep.title,
+          description: currentStep.description,
+          date: currentStep.date,
+          goal_id: currentStep.goal_id,
+          is_important: currentStep.is_important,
+          is_urgent: currentStep.is_urgent
+        }
+
+        const created = await onStepAdd(newStep) as DailyStep | void
+
+        if (created && (created as DailyStep).id) {
+          console.log('✅ New step created and added to plan automatically')
+        }
+        
+        console.log('✅ New step saved, closing editor')
+        setEditingStep(null)
+        setIsDirty(false)
+      } else {
+        // Auto-save existing step
+        if (!onStepUpdate) return
+        await onStepUpdate(currentStep.id, currentStep)
+        lastSavedRef.current = JSON.stringify(currentStep)
+        setIsDirty(false)
       }
+      
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
+    } catch (error) {
+      console.error('Error auto-saving step:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [onStepAdd, onStepUpdate])
+
+  // Trigger auto-save when editingStep changes
+  useEffect(() => {
+    if (!editingStep || !isDirty) return
+
+    console.log('🔄 Autosave triggered:', { 
+      stepId: editingStep.id, 
+      title: editingStep.title, 
+      isDirty 
+    })
+
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      performAutoSave()
     }, 1000)
 
-    return () => clearTimeout(timeoutId)
-  }, [editingStep, onStepUpdate, isDirty])
+    // Cleanup timeout on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [editingStep, performAutoSave])
 
   const handleStepClick = (step: DailyStep) => {
     setEditingStep(step)
@@ -106,15 +176,18 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
     setIsDirty(false)
   }
 
-  const handleStepFieldChange = (field: keyof DailyStep, value: any) => {
+  const handleStepFieldChange = useCallback((field: keyof DailyStep, value: any) => {
     if (!editingStep) return
+    
+    console.log('📝 Field change:', { field, value, stepId: editingStep.id })
     
     setEditingStep({
       ...editingStep,
       [field]: value
     })
     setIsDirty(true)
-  }
+    console.log('✅ Set isDirty to true')
+  }, [editingStep])
 
   const handleSaveNewStep = async () => {
     if (!editingStep || !onStepAdd) return
@@ -314,16 +387,7 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
                   <div className="text-sm opacity-70">Uloženo</div>
                 )}
                 
-                {step.id === 'new-step' ? (
-                  <button
-                    onClick={handleSaveNewStep}
-                    title="Uložit"
-                    aria-label="Uložit"
-                    className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                ) : (
+                {step.id !== 'new-step' && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleComplete(step.id)}
@@ -525,7 +589,7 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
       <div className="px-6 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Denní plán</h3>
+            <h3 className="text-xl font-bold text-gray-900">Denní plán</h3>
             <div className="mt-2 flex items-center space-x-2">
               <div className="text-xs text-gray-500">{sortedPlannedSteps.length} kroků</div>
               <div className="h-2 w-40 bg-gray-200 rounded-full overflow-hidden">
@@ -550,16 +614,9 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
                 step_type: 'custom'
               } as DailyStep)}
               title="Přidat krok"
-              className="p-1 bg-primary-600 text-white rounded hover:bg-primary-700"
+              className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-            </button>
-            <button
-              onClick={clearPlan}
-              title="Vyčistit plán"
-              className="p-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-            >
-              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>

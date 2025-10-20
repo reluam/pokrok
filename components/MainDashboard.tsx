@@ -834,6 +834,15 @@ export const MainDashboard = memo(function MainDashboard() {
                            </button>
                          </div>
                        </div>
+                       <button
+                         onClick={() => setShowGoalOnboarding(true)}
+                         className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                         title="Přidat cíl"
+                       >
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                         </svg>
+                       </button>
                      </div>
                      <p className="text-sm text-gray-600 hidden lg:block">Přehled cílů podle životních oblastí</p>
                    </div>
@@ -888,9 +897,12 @@ export const MainDashboard = memo(function MainDashboard() {
                      </div>
                      <button
                        onClick={() => setShowDailyCheckInAddModal(true)}
-                       className="px-3 py-1.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium text-sm"
+                       className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                       title="Přidat krok"
                      >
-                       + Přidat krok
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                       </svg>
                      </button>
                    </div>
                    <p className="text-sm text-gray-600">{translations?.app.whatWillYouDoToday || 'Co dnes uděláte?'}</p>

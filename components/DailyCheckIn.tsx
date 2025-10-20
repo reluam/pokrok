@@ -175,6 +175,51 @@ const DailyCheckIn = memo(function DailyCheckIn({
     }
   }, [showAddStepModal, goals])
 
+  // Auto-save functionality
+  useEffect(() => {
+    if (!editingStep || !isDirty) return
+
+    const timeoutId = setTimeout(async () => {
+      setIsSaving(true)
+      setSaveStatus('saving')
+      
+      try {
+        if (editingStep.id === 'new-step') {
+          // Auto-save new step only if it has a title
+          if (!onStepAdd || !editingStep.title?.trim()) return
+
+          const newStep: Partial<DailyStep> = {
+            title: editingStep.title,
+            description: editingStep.description,
+            date: editingStep.date,
+            goal_id: editingStep.goal_id,
+            is_important: editingStep.is_important,
+            is_urgent: editingStep.is_urgent
+          }
+
+          await onStepAdd(newStep)
+          setEditingStep(null)
+          setIsDirty(false)
+          onAddStepModalClose?.()
+        } else {
+          // Auto-save existing step
+          if (!onStepUpdate) return
+          await onStepUpdate(editingStep.id, editingStep)
+          setIsDirty(false)
+        }
+        
+        setSaveStatus('saved')
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      } catch (error) {
+        console.error('Error auto-saving step:', error)
+      } finally {
+        setIsSaving(false)
+      }
+    }, 1000)
+
+    return () => clearTimeout(timeoutId)
+  }, [editingStep, onStepUpdate, onStepAdd, isDirty, onAddStepModalClose])
+
   // Close editor when clicking outside
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -251,16 +296,7 @@ const DailyCheckIn = memo(function DailyCheckIn({
                   <div className="text-sm opacity-70">Uloženo</div>
                 )}
                 
-                {step.id === 'new-step' ? (
-                  <button
-                    onClick={handleSaveNewStep}
-                    title="Uložit"
-                    aria-label="Uložit"
-                    className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                ) : (
+                {step.id !== 'new-step' && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleAddToDailyPlan(step.id)}
@@ -441,81 +477,46 @@ const DailyCheckIn = memo(function DailyCheckIn({
   }
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-900">Další kroky</h3>
-      </div>
+    <div className="p-4 space-y-4">
+      {/* New step modal */}
+      {showAddStepModal && (
+        <div className="mb-4">
+          {renderStep({
+            id: 'new-step',
+            user_id: '',
+            title: '',
+            description: '',
+            date: new Date(),
+            goal_id: '',
+            is_important: false,
+            is_urgent: false,
+            completed: false,
+            created_at: new Date(),
+            step_type: 'custom'
+          } as DailyStep, true)}
+        </div>
+      )}
 
-      <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-        {/* New step modal */}
-        {showAddStepModal && (
-          <div className="mb-4">
-            {renderStep({
-              id: 'new-step',
-              user_id: '',
-              title: '',
-              description: '',
-              date: new Date(),
-              goal_id: '',
-              is_important: false,
-              is_urgent: false,
-              completed: false,
-              created_at: new Date(),
-              step_type: 'custom'
-            } as DailyStep, true)}
-          </div>
+      {/* All steps without section headers */}
+      <div className="space-y-2">
+        {sortedOverdueSteps.map(step => 
+          renderStep(step, editingStep?.id === step.id)
         )}
-
-        {/* Overdue steps */}
-        {sortedOverdueSteps.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-red-600 mb-2">
-              Zpožděné ({sortedOverdueSteps.length})
-            </h4>
-            <div className="space-y-2">
-              {sortedOverdueSteps.map(step => 
-                renderStep(step, editingStep?.id === step.id)
-              )}
-            </div>
-          </div>
+        {sortedTodaySteps.map(step => 
+          renderStep(step, editingStep?.id === step.id)
         )}
-
-        {/* Today's steps */}
-        {sortedTodaySteps.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              Dnešní ({sortedTodaySteps.length})
-            </h4>
-            <div className="space-y-2">
-              {sortedTodaySteps.map(step => 
-                renderStep(step, editingStep?.id === step.id)
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Future steps */}
-        {sortedFutureSteps.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              Budoucí ({sortedFutureSteps.length})
-            </h4>
-            <div className="space-y-2">
-              {sortedFutureSteps.map(step => 
-                renderStep(step, editingStep?.id === step.id)
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* No steps message */}
-        {availableSteps.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            <Footprints className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>Žádné další kroky</p>
-          </div>
+        {sortedFutureSteps.map(step => 
+          renderStep(step, editingStep?.id === step.id)
         )}
       </div>
+
+      {/* No steps message */}
+      {availableSteps.length === 0 && (
+        <div className="text-center text-gray-500 py-8">
+          <Footprints className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p>Žádné další kroky</p>
+        </div>
+      )}
     </div>
   )
 })
