@@ -147,14 +147,23 @@ const DailyCheckIn = memo(function DailyCheckIn({
     }
 
     try {
+      setIsSaving(true)
+      setSaveStatus('saving')
+      
       // Saving from DailyCheckIn should NOT add to daily plan automatically
       await onStepAdd(newStep)
       setEditingStep(null)
+      setIsDirty(false)
       onAddStepModalClose?.()
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (error) {
       console.error('Error creating step:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
+
 
   // Initialize inline add modal with a writable step model
   useEffect(() => {
@@ -175,39 +184,19 @@ const DailyCheckIn = memo(function DailyCheckIn({
     }
   }, [showAddStepModal, goals])
 
-  // Auto-save functionality
+  // Auto-save for existing steps, manual save for new steps
   useEffect(() => {
-    if (!editingStep || !isDirty) return
+    if (!editingStep || !isDirty || editingStep.id === 'new-step') return
 
     const timeoutId = setTimeout(async () => {
       setIsSaving(true)
       setSaveStatus('saving')
       
       try {
-        if (editingStep.id === 'new-step') {
-          // Auto-save new step only if it has a title
-          if (!onStepAdd || !editingStep.title?.trim()) return
-
-          const newStep: Partial<DailyStep> = {
-            title: editingStep.title,
-            description: editingStep.description,
-            date: editingStep.date,
-            goal_id: editingStep.goal_id,
-            is_important: editingStep.is_important,
-            is_urgent: editingStep.is_urgent
-          }
-
-          await onStepAdd(newStep)
-          setEditingStep(null)
-          setIsDirty(false)
-          onAddStepModalClose?.()
-        } else {
-          // Auto-save existing step
-          if (!onStepUpdate) return
-          await onStepUpdate(editingStep.id, editingStep)
-          setIsDirty(false)
-        }
-        
+        // Auto-save existing step
+        if (!onStepUpdate) return
+        await onStepUpdate(editingStep.id, editingStep)
+        setIsDirty(false)
         setSaveStatus('saved')
         setTimeout(() => setSaveStatus('idle'), 2000)
       } catch (error) {
@@ -218,7 +207,7 @@ const DailyCheckIn = memo(function DailyCheckIn({
     }, 1000)
 
     return () => clearTimeout(timeoutId)
-  }, [editingStep, onStepUpdate, onStepAdd, isDirty, onAddStepModalClose])
+  }, [editingStep, onStepUpdate, isDirty])
 
   // Close editor when clicking outside
   useEffect(() => {
@@ -282,41 +271,26 @@ const DailyCheckIn = memo(function DailyCheckIn({
               />
             </div>
 
-            {/* Action buttons moved to title row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {/* Empty space for alignment */}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                {saveStatus === 'saving' && (
-                  <div className="text-sm opacity-70">Ukládám...</div>
-                )}
-                {saveStatus === 'saved' && (
-                  <div className="text-sm opacity-70">Uloženo</div>
-                )}
-                
-                {step.id !== 'new-step' && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleAddToDailyPlan(step.id)}
-                      title="Do plánu"
-                      aria-label="Do plánu"
-                      className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleComplete(step.id)}
-                      title="Dokončit"
-                      aria-label="Dokončit"
-                      className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+            {/* Save status */}
+            <div className="flex items-center justify-end">
+              {saveStatus === 'saving' && (
+                <div className="text-sm opacity-70">Ukládám...</div>
+              )}
+              {saveStatus === 'saved' && (
+                <div className="text-sm opacity-70">Uloženo</div>
+              )}
+              
+              {step.id === 'new-step' && (
+                <button
+                  onClick={handleSaveNewStep}
+                  disabled={isSaving || !editingStep?.title?.trim()}
+                  title="Uložit krok"
+                  aria-label="Uložit krok"
+                  className="inline-flex items-center justify-center px-3 py-1 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Uložit
+                </button>
+              )}
             </div>
 
             {/* Editable controls - properly organized */}
@@ -382,6 +356,28 @@ const DailyCheckIn = memo(function DailyCheckIn({
                 </button>
               </div>
             </div>
+
+            {/* Action buttons for existing steps - moved to bottom */}
+            {step.id !== 'new-step' && (
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => handleAddToDailyPlan(step.id)}
+                  title="Do plánu"
+                  aria-label="Do plánu"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleComplete(step.id)}
+                  title="Dokončit"
+                  aria-label="Dokončit"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )

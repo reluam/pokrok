@@ -142,11 +142,11 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
     }
   }, [onStepAdd, onStepUpdate])
 
-  // Trigger auto-save when editingStep changes
+  // Auto-save for existing steps, manual save for new steps
   useEffect(() => {
-    if (!editingStep || !isDirty) return
+    if (!editingStep || !isDirty || editingStep.id === 'new-step') return
 
-    console.log('🔄 Autosave triggered:', { 
+    console.log('🔄 Autosave triggered for existing step:', { 
       stepId: editingStep.id, 
       title: editingStep.title, 
       isDirty 
@@ -202,6 +202,9 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
     }
 
     try {
+      setIsSaving(true)
+      setSaveStatus('saving')
+      
       // New step created inside DailyPlanningTab SHOULD be added to plan immediately
       const created = await onStepAdd(newStep) as DailyStep | void
 
@@ -223,10 +226,16 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
         }
       }
       setEditingStep(null)
+      setIsDirty(false)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (error) {
       console.error('Error creating step:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
+
 
   const handleAddStepToPlan = async (stepId: string) => {
     const newPlannedSteps = [...plannedStepIds, stepId]
@@ -373,41 +382,26 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
               />
             </div>
 
-            {/* Action buttons moved to title row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {/* left filler removed per request */}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                {saveStatus === 'saving' && (
-                  <div className="text-sm opacity-70">Ukládám...</div>
-                )}
-                {saveStatus === 'saved' && (
-                  <div className="text-sm opacity-70">Uloženo</div>
-                )}
-                
-                {step.id !== 'new-step' && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleComplete(step.id)}
-                      title="Dokončit"
-                      aria-label="Dokončit"
-                      className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleRemoveFromPlan(step.id)}
-                      title="Odstranit z plánu"
-                      aria-label="Odstranit z plánu"
-                      className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+            {/* Save status */}
+            <div className="flex items-center justify-end">
+              {saveStatus === 'saving' && (
+                <div className="text-sm opacity-70">Ukládám...</div>
+              )}
+              {saveStatus === 'saved' && (
+                <div className="text-sm opacity-70">Uloženo</div>
+              )}
+              
+              {step.id === 'new-step' && (
+                <button
+                  onClick={handleSaveNewStep}
+                  disabled={isSaving || !editingStep?.title?.trim()}
+                  title="Uložit krok"
+                  aria-label="Uložit krok"
+                  className="inline-flex items-center justify-center px-3 py-1 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Uložit
+                </button>
+              )}
             </div>
 
             {/* Editable controls */}
@@ -464,6 +458,28 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
                 </button>
               </div>
             </div>
+
+            {/* Action buttons for existing steps - moved to bottom */}
+            {step.id !== 'new-step' && (
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => handleComplete(step.id)}
+                  title="Dokončit"
+                  aria-label="Dokončit"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleRemoveFromPlan(step.id)}
+                  title="Odstranit z plánu"
+                  aria-label="Odstranit z plánu"
+                  className="inline-flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )
