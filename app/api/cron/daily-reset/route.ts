@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       SELECT u.id, u.clerk_id, us.daily_reset_hour
       FROM users u
       JOIN user_settings us ON u.id = us.user_id
-      WHERE us.workflow = 'daily_planning' AND us.daily_reset_hour = ${currentHour}
+      WHERE us.workflow = 'daily_planning'
     `
     
     console.log(`Found ${users.length} users to reset at hour ${currentHour}`)
@@ -59,13 +59,17 @@ export async function POST(request: NextRequest) {
           return stepDate.getTime() === yesterday.getTime()
         })
 
+        // Calculate optimum deviation (how many steps over/under the daily target)
+        const optimumDeviation = plannedStepsCount - 3 // Default daily target is 3
+
         // Update user statistics
         await createOrUpdateDailyStats(
           user.id, 
           yesterday, 
           plannedStepsCount, 
           completedStepsCount, 
-          yesterdayStepsFiltered.length
+          yesterdayStepsFiltered.length,
+          optimumDeviation
         )
 
         // Create empty planning for today
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
         results.push({
           userId: user.id,
           success: false,
-          error: error.message
+          error: error instanceof Error ? error.message : 'Unknown error'
         })
       }
     }

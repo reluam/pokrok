@@ -17,21 +17,21 @@ Cron job je nakonfigurován v `vercel.json`:
   "crons": [
     {
       "path": "/api/cron/daily-reset",
-      "schedule": "0 * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
 ```
 
-- **Schedule**: `0 * * * *` = každou hodinu v 0 minut
+- **Schedule**: `0 4 * * *` = každý den ve 4:00 ráno
 - **Path**: `/api/cron/daily-reset` = endpoint pro cron job
 
 ## 3. Jak to funguje
 
-1. **Každou hodinu** Vercel zavolá `/api/cron/daily-reset`
-2. **Endpoint zkontroluje** všechny uživatele s `daily_planning` workflow
-3. **Pro každého uživatele** zkontroluje, jestli je čas na reset (podle `daily_reset_hour`)
-4. **Pokud ano**, resetuje denní plán a uloží statistiky
+1. **Každý den ve 4:00 ráno** Vercel zavolá `/api/cron/daily-reset`
+2. **Endpoint resetuje** všechny uživatele s `daily_planning` workflow
+3. **Pro každého uživatele** resetuje denní plán a uloží statistiky
+4. **Čas resetu je pevně nastaven** na 4:00 ráno (nelze měnit v nastavení)
 
 ## 4. Testování
 

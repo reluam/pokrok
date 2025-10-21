@@ -139,6 +139,11 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const handleSettingChange = async (field: string, value: any) => {
     if (!userSettings) return
     
+    // Don't allow changing daily_reset_hour as it's now fixed at 4 AM
+    if (field === 'daily_reset_hour') {
+      return
+    }
+    
     try {
       const response = await fetch('/api/cesta/user-settings', {
         method: 'PATCH',
@@ -644,7 +649,10 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                           <div>
                             <h4 className="font-medium text-gray-900">Čas resetu denního plánu</h4>
                             <p className="text-sm text-gray-600">
-                              V kolik hodin se má denní plán resetovat (00:00 = půlnoc)
+                              Denní plán se resetuje automaticky ve 4:00 ráno
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              ⚠️ Možnost změny času se připravuje
                             </p>
                           </div>
                         </div>
@@ -654,11 +662,11 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                             type="number"
                             min="0"
                             max="23"
-                            value={userSettings?.daily_reset_hour || 0}
-                            onChange={(e) => handleSettingChange('daily_reset_hour', parseInt(e.target.value) || 0)}
-                            className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-semibold"
+                            value={4}
+                            disabled
+                            className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center text-lg font-semibold bg-gray-100 text-gray-500 cursor-not-allowed"
                           />
-                          <span className="text-gray-600">hodin (00:00 = půlnoc)</span>
+                          <span className="text-gray-500">hodin (04:00 = 4:00 ráno)</span>
                         </div>
                       </div>
 
