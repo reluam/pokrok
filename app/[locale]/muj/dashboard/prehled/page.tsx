@@ -2810,8 +2810,6 @@ export default function OverviewPage() {
         return renderRPGDashboardView()
       case 'game-map':
         return renderGameMapView()
-      case 'daily-game':
-        return renderOnboardingView() // Fallback
       default:
         return renderTimelineView()
     }
