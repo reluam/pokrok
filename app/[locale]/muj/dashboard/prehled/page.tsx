@@ -1012,7 +1012,7 @@ export default function OverviewPage() {
         .filter(habit => selectedHabits.includes(habit.id))
         .map(habit => ({
           ...habit,
-          frequency: 'daily',
+          frequency: 'daily' as const,
           streak: 0
         }))
       setHabits(newHabits)
