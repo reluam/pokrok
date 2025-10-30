@@ -12,6 +12,11 @@ function DynamicCestaLayoutContent({ children }: DynamicCestaLayoutProps) {
   const pathname = usePathname()
   const { title, subtitle } = usePageContext()
 
+  // Don't show layout for game pages
+  if (pathname.includes('/muj/game')) {
+    return <>{children}</>
+  }
+
   return (
     <CestaLayout 
       title={title}

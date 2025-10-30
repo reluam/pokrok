@@ -2,7 +2,11 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { getUserByClerkId } from '@/lib/cesta-db'
 
-export default async function MojePage() {
+export default async function GameLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const { userId } = await auth()
   
   if (!userId) {
@@ -16,7 +20,6 @@ export default async function MojePage() {
     hasCompletedOnboarding = user?.has_completed_onboarding || false
   } catch (error) {
     console.error('Error checking onboarding status:', error)
-    // If we can't check, assume onboarding is needed
     hasCompletedOnboarding = false
   }
 
@@ -24,6 +27,10 @@ export default async function MojePage() {
     redirect('/onboarding')
   }
 
-  // Redirect to game instead of dashboard
-  redirect('/muj/game')
+  return (
+    <div className="min-h-screen">
+      {children}
+    </div>
+  )
 }
+

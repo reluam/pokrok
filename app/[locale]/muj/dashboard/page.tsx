@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import { MainDashboard } from '@/components/MainDashboard'
 import { getUserByClerkId } from '@/lib/cesta-db'
 
 export default async function MojePage() {
@@ -24,6 +25,5 @@ export default async function MojePage() {
     redirect('/onboarding')
   }
 
-  // Redirect to game instead of dashboard
-  redirect('/muj/game')
+  return <MainDashboard />
 }

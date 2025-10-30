@@ -500,7 +500,7 @@ const DailyPlanningTab = memo(function DailyPlanningTab({
         onDragEnd={handleDragEnd}
       >
         {/* Left decorative icon */}
-        <div className="absolute -left-2 top-1/2 -translate-y-1/2 text-primary-300 opacity-80">
+        <div className={`absolute -left-2 top-1/2 -translate-y-1/2 opacity-80 ${isOverdue ? 'text-red-500' : 'text-primary-300'}`}>
           <Footprints className="w-5 h-5" />
         </div>
 
