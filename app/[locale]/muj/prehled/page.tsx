@@ -1012,6 +1012,7 @@ export default function OverviewPage() {
         .filter(habit => selectedHabits.includes(habit.id))
         .map(habit => ({
           ...habit,
+          frequency: 'daily' as const,
           streak: 0
         }))
       setHabits(newHabits)
@@ -2809,8 +2810,6 @@ export default function OverviewPage() {
         return renderRPGDashboardView()
       case 'game-map':
         return renderGameMapView()
-      case 'daily-game':
-        return renderOnboardingView() // Fallback
       default:
         return renderTimelineView()
     }
