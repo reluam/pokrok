@@ -5,7 +5,7 @@ import { GameState, GamePhase, Character, DailyStats, Habit, GameTask, Achieveme
 
 export const useGameState = () => {
   const [gameState, setGameState] = useState<GameState>({
-    phase: 'onboarding',
+    phase: 'daily-setup',
     character: null,
     dailyStats: null,
     habits: [],
@@ -47,16 +47,6 @@ export const useGameState = () => {
     setGameState(prev => ({ ...prev, phase }))
   }, [])
 
-  const createCharacter = useCallback((characterData: Omit<Character, 'id' | 'level' | 'experience' | 'createdAt'>) => {
-    const newCharacter: Character = {
-      ...characterData,
-      id: `char_${Date.now()}`,
-      level: 1,
-      experience: 0,
-      createdAt: new Date()
-    }
-    setGameState(prev => ({ ...prev, character: newCharacter, phase: 'daily-setup' }))
-  }, [])
 
   const setDailyStats = useCallback((stats: DailyStats) => {
     setGameState(prev => ({ ...prev, dailyStats: stats, energy: stats.energy, phase: 'playing' }))
@@ -150,7 +140,6 @@ export const useGameState = () => {
   return {
     gameState,
     updateGamePhase,
-    createCharacter,
     setDailyStats,
     addHabit,
     updateHabit,

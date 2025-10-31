@@ -23,8 +23,6 @@ export function DailySetupView() {
     setDailyStats(stats)
   }
 
-  const character = gameState.character
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full" style={{
@@ -36,36 +34,10 @@ export function DailySetupView() {
             textShadow: '2px 2px 0px #000000',
             color: '#2d5016'
           }}>DENNÍ NASTAVENÍ</h1>
-          <p className="text-gray-600">Jak se cítíš dnes, {character?.name}?</p>
+          <p className="text-gray-600">Jak se cítíš dnes?</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Character Preview */}
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">TVOJE POSTAVA</h2>
-            <div className="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-gray-300 flex items-center justify-center bg-gray-100">
-              <div className="w-24 h-24 rounded-full relative" style={{ backgroundColor: character?.appearance.skinColor || '#FDBCB4' }}>
-                {/* Hair */}
-                <div 
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-8 rounded-full"
-                  style={{ backgroundColor: character?.appearance.hairColor || '#8B4513' }}
-                />
-                {/* Eyes */}
-                <div 
-                  className="absolute top-6 left-4 w-3 h-3 rounded-full"
-                  style={{ backgroundColor: character?.appearance.eyeColor || '#4A90E2' }}
-                />
-                <div 
-                  className="absolute top-6 right-4 w-3 h-3 rounded-full"
-                  style={{ backgroundColor: character?.appearance.eyeColor || '#4A90E2' }}
-                />
-                {/* Smile */}
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-8 h-4 border-b-2 border-gray-600 rounded-full"></div>
-              </div>
-            </div>
-            <p className="text-gray-600">{character?.name}</p>
-          </div>
-
+        <div className="max-w-md mx-auto">
           {/* Daily Stats */}
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-4">TVOJE POCITY</h2>

@@ -25,8 +25,37 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Get base URL for Clerk configuration
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://pokrok.vercel.app')
+  
+  // In development, use local routes with locale
+  // In production, use environment variables or defaults
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  
+  const signInUrl = isDevelopment 
+    ? `${baseUrl}/cs/muj/sign-in`
+    : (process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || 'https://accounts.pokrok.app/sign-in')
+    
+  const signUpUrl = isDevelopment
+    ? `${baseUrl}/cs/muj/sign-up`
+    : (process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || 'https://accounts.pokrok.app/sign-up')
+  
+  const afterSignInUrl = isDevelopment
+    ? `${baseUrl}/cs/muj`
+    : (process.env.NEXT_PUBLIC_CLERK_FALLBACK_REDIRECT_URL || 'https://muj.pokrok.app')
+    
+  const afterSignOutUrl = isDevelopment
+    ? `${baseUrl}/cs/muj/sign-in`
+    : (process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL || 'https://muj.pokrok.app/sign-in')
+  
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl={signInUrl}
+      signUpUrl={signUpUrl}
+      afterSignInUrl={afterSignInUrl}
+      afterSignOutUrl={afterSignOutUrl}
+    >
       <html>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />

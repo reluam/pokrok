@@ -85,24 +85,8 @@ export function GameWorldView() {
       <div className="bg-white rounded-xl shadow-lg p-4 mb-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center bg-gray-100">
-              <div className="w-8 h-8 rounded-full relative" style={{ backgroundColor: gameState.character?.appearance.skinColor || '#FDBCB4' }}>
-                <div 
-                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-3 rounded-full"
-                  style={{ backgroundColor: gameState.character?.appearance.hairColor || '#8B4513' }}
-                />
-                <div 
-                  className="absolute top-2 left-1 w-1 h-1 rounded-full"
-                  style={{ backgroundColor: gameState.character?.appearance.eyeColor || '#4A90E2' }}
-                />
-                <div 
-                  className="absolute top-2 right-1 w-1 h-1 rounded-full"
-                  style={{ backgroundColor: gameState.character?.appearance.eyeColor || '#4A90E2' }}
-                />
-              </div>
-            </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{gameState.character?.name}</h1>
+              <h1 className="text-lg font-bold text-gray-900">Hráč</h1>
               <p className="text-xs text-gray-600">Level {gameState.level} • {gameState.experience} XP</p>
             </div>
           </div>

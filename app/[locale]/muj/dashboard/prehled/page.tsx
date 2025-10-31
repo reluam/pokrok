@@ -94,17 +94,7 @@ export default function OverviewPage() {
   const [showAreasModal, setShowAreasModal] = useState(false)
   const [showGoalsModal, setShowGoalsModal] = useState(false)
   
-  // Character & Game State
-  const [character, setCharacter] = useState<{
-    name: string
-    avatar: string
-    appearance: {
-      hairColor: string
-      skinColor: string
-      eyeColor: string
-    }
-  } | null>(null)
-  const [gamePhase, setGamePhase] = useState<'onboarding' | 'character-creation' | 'daily-setup' | 'playing' | 'menu'>('onboarding')
+  const [gamePhase, setGamePhase] = useState<'daily-setup' | 'playing' | 'menu'>('daily-setup')
   const [dailyStats, setDailyStats] = useState<{
     energy: number
     mood: number
@@ -119,15 +109,7 @@ export default function OverviewPage() {
     streak: number
   }>>([])
   
-  // Onboarding states
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([])
-  const [selectedHabits, setSelectedHabits] = useState<string[]>([])
   
-  // Character creation states
-  const [characterName, setCharacterName] = useState('')
-  const [hairColor, setHairColor] = useState('#8B4513')
-  const [skinColor, setSkinColor] = useState('#FDBCB4')
-  const [eyeColor, setEyeColor] = useState('#4A90E2')
   
   // Daily setup states
   const [energyLevel, setEnergyLevel] = useState(50)
@@ -979,257 +961,6 @@ export default function OverviewPage() {
                   )
   }
 
-  const renderOnboardingView = () => {
-    const availableGoals = goalProgress.slice(0, 6) // Show first 6 goals
-    const availableHabits = [
-      { id: 'exercise', name: 'Cvičení', description: 'Pravidelné cvičení' },
-      { id: 'reading', name: 'Čtení', description: 'Denní čtení knih' },
-      { id: 'meditation', name: 'Meditace', description: 'Meditace nebo mindfulness' },
-      { id: 'journaling', name: 'Deník', description: 'Psaní do deníku' },
-      { id: 'learning', name: 'Učení', description: 'Učení nových dovedností' },
-      { id: 'social', name: 'Sociální kontakt', description: 'Kontakt s přáteli' }
-    ]
-
-    const toggleGoal = (goalId: string) => {
-      setSelectedGoals(prev => 
-        prev.includes(goalId) 
-          ? prev.filter(id => id !== goalId)
-          : [...prev, goalId]
-      )
-    }
-
-    const toggleHabit = (habitId: string) => {
-      setSelectedHabits(prev => 
-        prev.includes(habitId) 
-          ? prev.filter(id => id !== habitId)
-          : [...prev, habitId]
-      )
-    }
-
-    const completeOnboarding = () => {
-      // Add selected habits to habits state
-      const newHabits = availableHabits
-        .filter(habit => selectedHabits.includes(habit.id))
-        .map(habit => ({
-          ...habit,
-          frequency: 'daily' as const,
-          streak: 0
-        }))
-      setHabits(newHabits)
-      
-      // Move to character creation
-      setGamePhase('character-creation')
-    }
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full" style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: '8px'
-        }}>
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4" style={{
-              textShadow: '2px 2px 0px #000000',
-              color: '#2d5016'
-            }}>VÍTEJ V ŽIVOTNÍ HŘE!</h1>
-            <p className="text-gray-600">Vyber si cíle a návyky pro svou cestu</p>
-          </div>
-
-          {/* Goals Selection */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">TVOJE CÍLE</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableGoals.map((goal) => (
-                <div
-                  key={goal.id}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 ${
-                    selectedGoals.includes(goal.id)
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-300 bg-gray-50 hover:border-blue-500'
-                  }`}
-                  onClick={() => toggleGoal(goal.id)}
-                >
-                  <div className="flex items-center mb-2">
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${goal.color} flex items-center justify-center mr-3`}>
-                      <span className="text-white text-xs">{goal.icon || '🎯'}</span>
-                    </div>
-                    <h3 className="font-bold text-gray-900">{goal.title}</h3>
-                  </div>
-                  <p className="text-xs text-gray-600">{goal.completedSteps}/{goal.totalSteps} kroků</p>
-                  {selectedGoals.includes(goal.id) && (
-                    <div className="mt-2 text-green-600 font-bold">✓ VYBRÁNO</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Habits Selection */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">TVOJE NÁVYKY</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableHabits.map((habit) => (
-                <div
-                  key={habit.id}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 ${
-                    selectedHabits.includes(habit.id)
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-300 bg-gray-50 hover:border-purple-500'
-                  }`}
-                  onClick={() => toggleHabit(habit.id)}
-                >
-                  <h3 className="font-bold text-gray-900 mb-2">{habit.name}</h3>
-                  <p className="text-xs text-gray-600">{habit.description}</p>
-                  {selectedHabits.includes(habit.id) && (
-                    <div className="mt-2 text-purple-600 font-bold">✓ VYBRÁNO</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Continue Button */}
-          <div className="text-center">
-            <button
-              onClick={completeOnboarding}
-              disabled={selectedGoals.length === 0}
-              className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
-                selectedGoals.length > 0
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              POKRAČOVAT ({selectedGoals.length} cílů, {selectedHabits.length} návyků)
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const renderCharacterCreationView = () => {
-    const createCharacter = () => {
-      if (!characterName.trim()) return
-      
-      const newCharacter = {
-        name: characterName.trim(),
-        avatar: '👤', // Default avatar
-        appearance: {
-          hairColor,
-          skinColor,
-          eyeColor
-        }
-      }
-      
-      setCharacter(newCharacter)
-      setGamePhase('daily-setup')
-    }
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-100 via-blue-50 to-purple-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full" style={{
-          fontFamily: '"Press Start 2P", monospace',
-          fontSize: '8px'
-        }}>
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4" style={{
-              textShadow: '2px 2px 0px #000000',
-              color: '#2d5016'
-            }}>VYTVOŘ SVOU POSTAVU</h1>
-            <p className="text-gray-600">Jak se bude jmenovat a jak bude vypadat?</p>
-          </div>
-
-          {/* Character Preview */}
-          <div className="text-center mb-8">
-            <div className="inline-block p-8 bg-gray-100 rounded-xl">
-              <div className="text-6xl mb-2">👤</div>
-              <div className="text-lg font-bold">{characterName || 'TVOJE JMÉNO'}</div>
-            </div>
-          </div>
-
-          {/* Name Input */}
-          <div className="mb-6">
-            <label className="block text-sm font-bold text-gray-900 mb-2">JMÉNO POSTAVY</label>
-            <input
-              type="text"
-              value={characterName}
-              onChange={(e) => setCharacterName(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-              placeholder="Zadej jméno..."
-              maxLength={20}
-            />
-          </div>
-
-          {/* Appearance Customization */}
-          <div className="space-y-4 mb-8">
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">BARVA VLASŮ</label>
-              <div className="flex space-x-2">
-                {['#8B4513', '#000000', '#FFD700', '#FF69B4', '#FF0000'].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setHairColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      hairColor === color ? 'border-gray-900' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">BARVA PLEŤI</label>
-              <div className="flex space-x-2">
-                {['#FDBCB4', '#F4C2A1', '#E6B8A2', '#D2B48C', '#8B4513'].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSkinColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      skinColor === color ? 'border-gray-900' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">BARVA OČÍ</label>
-              <div className="flex space-x-2">
-                {['#4A90E2', '#8B4513', '#228B22', '#FFD700', '#000000'].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setEyeColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      eyeColor === color ? 'border-gray-900' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Create Button */}
-          <div className="text-center">
-            <button
-              onClick={createCharacter}
-              disabled={!characterName.trim()}
-              className={`px-8 py-4 rounded-xl font-bold transition-all duration-300 ${
-                characterName.trim()
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              VYTVOŘIT POSTAVU
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const renderDailySetupView = () => {
     const startDay = () => {
       const stats = {
@@ -1255,15 +986,7 @@ export default function OverviewPage() {
               textShadow: '2px 2px 0px #000000',
               color: '#2d5016'
             }}>DENNÍ NASTAVENÍ</h1>
-            <p className="text-gray-600">Jak se cítíš dnes, {character?.name}?</p>
-          </div>
-
-          {/* Character Display */}
-          <div className="text-center mb-8">
-            <div className="inline-block p-4 bg-gray-100 rounded-xl">
-              <div className="text-4xl mb-2">👤</div>
-              <div className="text-sm font-bold">{character?.name}</div>
-            </div>
+            <p className="text-gray-600">Jak se cítíš dnes?</p>
           </div>
 
           {/* Energy Level */}
@@ -2773,10 +2496,6 @@ export default function OverviewPage() {
     // Handle game phases first
     if (viewMode === 'daily-game') {
       switch (gamePhase) {
-        case 'onboarding':
-          return renderOnboardingView()
-        case 'character-creation':
-          return renderCharacterCreationView()
         case 'daily-setup':
           return renderDailySetupView()
         case 'playing':
@@ -2784,7 +2503,7 @@ export default function OverviewPage() {
         case 'menu':
           return renderMenuView()
         default:
-          return renderOnboardingView()
+          return renderDailySetupView()
       }
     }
     

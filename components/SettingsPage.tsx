@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, memo } from 'react'
-import { Save, Globe, Edit2, Plus, Trash2, Palette } from 'lucide-react'
+import { Save, Globe, Edit2, Plus, Trash2, Palette, LogOut } from 'lucide-react'
 import { usePageContext } from './PageContext'
 import { useTranslations, useLocale, type Locale } from '@/lib/use-translations'
 import { colorPalettes, applyColorTheme } from '@/lib/color-utils'
 import { useRouter, usePathname } from 'next/navigation'
 import { Area } from '@/lib/cesta-db'
+import { useClerk } from '@clerk/nextjs'
 
 interface CategorySettings {
   id: string
@@ -25,6 +26,7 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
   const currentLocale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
+  const clerk = useClerk()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'categories' | 'language' | 'appearance' | 'main-panel' | 'steps' | 'areas'>('language')
   
@@ -827,6 +829,31 @@ export const SettingsPage = memo(function SettingsPage({}: SettingsPageProps = {
                   <p className="text-gray-600">
                     Spravujte své životní oblasti - přidávejte, upravujte nebo odstraňujte oblasti podle svých potřeb.
                   </p>
+                </div>
+
+                {/* Logout Section */}
+                <div className="mb-8">
+                  <div className="bg-white border border-red-200 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Účet</h3>
+                    <p className="text-gray-600 mb-6">
+                      Odhlaste se ze svého účtu
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await clerk.signOut()
+                          router.push('https://accounts.pokrok.app/sign-in')
+                        } catch (error) {
+                          console.error('Error signing out:', error)
+                          alert('Chyba při odhlašování. Zkuste to prosím znovu.')
+                        }
+                      }}
+                      className="flex items-center space-x-2 bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Odhlásit se</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Areas List */}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserButton, useClerk } from '@clerk/nextjs'
 import { Settings, Home, Target, Footprints, FileText } from 'lucide-react'
 import { memo } from 'react'
 import { useTranslations } from '@/lib/use-translations'
@@ -16,6 +16,16 @@ interface CestaLayoutProps {
 export const CestaLayout = memo(function CestaLayout({ children, title, subtitle, currentPage }: CestaLayoutProps) {
   const router = useRouter()
   const { translations } = useTranslations()
+  const clerk = useClerk()
+
+  const handleSignOut = async () => {
+    try {
+      await clerk.signOut()
+      router.push('https://accounts.pokrok.app/sign-in')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <div className="h-screen bg-background flex flex-col">
@@ -105,7 +115,18 @@ export const CestaLayout = memo(function CestaLayout({ children, title, subtitle
             
             {/* Right side - User Button */}
             <div className="flex-shrink-0">
-              <UserButton afterSignOutUrl="https://accounts.pokrok.app/sign-in" />
+              <UserButton 
+                afterSignOutUrl="https://accounts.pokrok.app/sign-in"
+                appearance={{
+                  elements: {
+                    userButtonPopoverActionButton__signOut: {
+                      '&:hover': {
+                        backgroundColor: '#fee2e2',
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
           </div>
         </div>

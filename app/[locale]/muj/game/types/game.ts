@@ -1,5 +1,5 @@
 // Game Types
-export type GamePhase = 'onboarding' | 'character-creation' | 'daily-setup' | 'playing' | 'menu'
+export type GamePhase = 'daily-setup' | 'playing' | 'menu'
 
 export interface Character {
   id: string
